@@ -1,0 +1,57 @@
+import { forwardRef, type InputHTMLAttributes } from 'react';
+import { cn } from '@/utils';
+
+interface SearchProps extends InputHTMLAttributes<HTMLInputElement> {
+  onClear?: () => void;
+}
+
+const Search = forwardRef<HTMLInputElement, SearchProps>(
+  ({ className, value, onChange, onClear, placeholder = 'Search...', ...props }, ref) => {
+    return (
+      <div className="relative w-full max-w-xs">
+        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+          <svg
+            className="h-4 w-4 text-neutral-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+        </div>
+        <input
+          ref={ref}
+          type="text"
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          className={cn(
+            'w-full rounded-lg border border-neutral-300 bg-white py-2 pl-10 pr-8 text-sm text-neutral-900 placeholder-neutral-400 transition-colors focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500',
+            className
+          )}
+          {...props}
+        />
+        {value && onClear && (
+          <button
+            onClick={onClear}
+            className="absolute inset-y-0 right-0 flex items-center pr-2 text-neutral-400 hover:text-neutral-600"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
+      </div>
+    );
+  }
+);
+
+Search.displayName = 'Search';
+
+export default Search;
+

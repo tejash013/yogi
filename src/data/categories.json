@@ -1,0 +1,91 @@
+[
+  {
+    "id": "cat-001",
+    "name": "Pizza",
+    "description": "Wood-fired pizzas with fresh ingredients",
+    "image": "/images/categories/pizza.jpg",
+    "icon": "🍕",
+    "isActive": true,
+    "sortOrder": 1,
+    "itemCount": 8,
+    "createdAt": "2025-01-15T10:00:00Z"
+  },
+  {
+    "id": "cat-002",
+    "name": "Main Course",
+    "description": "Hearty main dishes for a fulfilling meal",
+    "image": "/images/categories/main-course.jpg",
+    "icon": "🍽️",
+    "isActive": true,
+    "sortOrder": 2,
+    "itemCount": 15,
+    "createdAt": "2025-01-15T10:00:00Z"
+  },
+  {
+    "id": "cat-003",
+    "name": "Salads",
+    "description": "Fresh and healthy salad options",
+    "image": "/images/categories/salads.jpg",
+    "icon": "🥗",
+    "isActive": true,
+    "sortOrder": 3,
+    "itemCount": 6,
+    "createdAt": "2025-01-15T10:00:00Z"
+  },
+  {
+    "id": "cat-004",
+    "name": "Desserts",
+    "description": "Sweet treats and delightful desserts",
+    "image": "/images/categories/desserts.jpg",
+    "icon": "🍰",
+    "isActive": true,
+    "sortOrder": 4,
+    "itemCount": 10,
+    "createdAt": "2025-01-15T10:00:00Z"
+  },
+  {
+    "id": "cat-005",
+    "name": "Appetizers",
+    "description": "Start your meal with these delicious bites",
+    "image": "/images/categories/appetizers.jpg",
+    "icon": "🥟",
+    "isActive": true,
+    "sortOrder": 5,
+    "itemCount": 12,
+    "createdAt": "2025-01-15T10:00:00Z"
+  },
+  {
+    "id": "cat-006",
+    "name": "Beverages",
+    "description": "Refreshing drinks and beverages",
+    "image": "/images/categories/beverages.jpg",
+    "icon": "🥤",
+    "isActive": true,
+    "sortOrder": 6,
+    "itemCount": 9,
+    "createdAt": "2025-01-15T10:00:00Z"
+  },
+  {
+    "id": "cat-007",
+    "name": "Soups",
+    "description": "Warm and comforting soup selections",
+    "image": "/images/categories/soups.jpg",
+    "icon": "🍜",
+    "isActive": true,
+    "sortOrder": 7,
+    "itemCount": 4,
+    "createdAt": "2025-01-15T10:00:00Z"
+  },
+  {
+    "id": "cat-008",
+    "name": "Burgers",
+    "description": "Juicy burgers with premium toppings",
+    "image": "/images/categories/burgers.jpg",
+    "icon": "🍔",
+    "isActive": true,
+    "sortOrder": 8,
+    "itemCount": 7,
+    "createdAt": "2025-01-15T10:00:00Z"
+  }
+]
+

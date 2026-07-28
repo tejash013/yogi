@@ -1,0 +1,132 @@
+export const colors = {
+  primary: {
+    50: '#fef2e8',
+    100: '#fde0c5',
+    200: '#fbcda2',
+    300: '#f9b87a',
+    400: '#f7a657',
+    500: '#f59334',
+    600: '#e67e1a',
+    700: '#c96b12',
+    800: '#a8580d',
+    900: '#8a4709',
+  },
+  secondary: {
+    50: '#e8f5f0',
+    100: '#c5e6d8',
+    200: '#9ed6be',
+    300: '#72c5a3',
+    400: '#4fb88e',
+    500: '#2dab79',
+    600: '#239668',
+    700: '#1a8057',
+    800: '#126b47',
+    900: '#0a5637',
+  },
+  neutral: {
+    50: '#fafafa',
+    100: '#f5f5f5',
+    200: '#e5e5e5',
+    300: '#d4d4d4',
+    400: '#a3a3a3',
+    500: '#737373',
+    600: '#525252',
+    700: '#404040',
+    800: '#262626',
+    900: '#171717',
+  },
+  success: '#22c55e',
+  error: '#ef4444',
+  warning: '#f59e0b',
+  info: '#3b82f6',
+} as const;
+
+export const typography = {
+  fontFamily: {
+    sans: "'Inter', system-ui, -apple-system, sans-serif",
+    heading: "'Inter', system-ui, -apple-system, sans-serif",
+    mono: "'JetBrains Mono', 'Fira Code', monospace",
+  },
+  fontSize: {
+    xs: '0.75rem',
+    sm: '0.875rem',
+    base: '1rem',
+    lg: '1.125rem',
+    xl: '1.25rem',
+    '2xl': '1.5rem',
+    '3xl': '1.875rem',
+    '4xl': '2.25rem',
+    '5xl': '3rem',
+  },
+  fontWeight: {
+    normal: 400,
+    medium: 500,
+    semibold: 600,
+    bold: 700,
+  },
+} as const;
+
+export const spacing = {
+  px: '1px',
+  0: '0',
+  0.5: '0.125rem',
+  1: '0.25rem',
+  1.5: '0.375rem',
+  2: '0.5rem',
+  2.5: '0.625rem',
+  3: '0.75rem',
+  3.5: '0.875rem',
+  4: '1rem',
+  5: '1.25rem',
+  6: '1.5rem',
+  7: '1.75rem',
+  8: '2rem',
+  9: '2.25rem',
+  10: '2.5rem',
+  12: '3rem',
+  14: '3.5rem',
+  16: '4rem',
+  18: '4.5rem',
+  20: '5rem',
+  22: '5.5rem',
+  24: '6rem',
+  28: '7rem',
+  30: '7.5rem',
+  32: '8rem',
+  36: '9rem',
+  40: '10rem',
+} as const;
+
+export const shadows = {
+  sm: '0 1px 2px rgba(0, 0, 0, 0.05)',
+  DEFAULT: '0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)',
+  md: '0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06)',
+  lg: '0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05)',
+  xl: '0 20px 25px rgba(0, 0, 0, 0.1), 0 10px 10px rgba(0, 0, 0, 0.04)',
+  soft: '0 2px 8px rgba(0, 0, 0, 0.06)',
+  card: '0 4px 16px rgba(0, 0, 0, 0.08)',
+  dropdown: '0 8px 32px rgba(0, 0, 0, 0.12)',
+  modal: '0 16px 48px rgba(0, 0, 0, 0.2)',
+} as const;
+
+export const borderRadius = {
+  none: '0',
+  sm: '0.375rem',
+  DEFAULT: '0.5rem',
+  md: '0.5rem',
+  lg: '0.75rem',
+  xl: '1rem',
+  '2xl': '1.5rem',
+  full: '9999px',
+} as const;
+
+const theme = {
+  colors,
+  typography,
+  spacing,
+  shadows,
+  borderRadius,
+};
+
+export default theme;
+

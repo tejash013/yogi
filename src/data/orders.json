@@ -1,0 +1,136 @@
+[
+  {
+    "id": "ord-001",
+    "orderNumber": "ORD-001",
+    "userId": "usr-001",
+    "userName": "John Doe",
+    "tableNumber": 5,
+    "items": [
+      {
+        "id": "item-001",
+        "menuItemId": "menu-001",
+        "name": "Margherita Pizza",
+        "quantity": 2,
+        "unitPrice": 12.99,
+        "totalPrice": 25.98,
+        "specialInstructions": "Extra cheese"
+      },
+      {
+        "id": "item-002",
+        "menuItemId": "menu-003",
+        "name": "Caesar Salad",
+        "quantity": 1,
+        "unitPrice": 9.99,
+        "totalPrice": 9.99
+      }
+    ],
+    "subtotal": 35.97,
+    "tax": 2.88,
+    "discount": 0,
+    "total": 38.85,
+    "status": "preparing",
+    "paymentStatus": "unpaid",
+    "paymentMethod": "cash",
+    "deliveryType": "dine-in",
+    "specialInstructions": "No onions in salad",
+    "createdAt": "2025-03-20T18:30:00Z",
+    "updatedAt": "2025-03-20T18:35:00Z"
+  },
+  {
+    "id": "ord-002",
+    "orderNumber": "ORD-002",
+    "userId": "usr-002",
+    "userName": "Jane Smith",
+    "tableNumber": 3,
+    "items": [
+      {
+        "id": "item-003",
+        "menuItemId": "menu-002",
+        "name": "Grilled Salmon",
+        "quantity": 1,
+        "unitPrice": 24.99,
+        "totalPrice": 24.99
+      },
+      {
+        "id": "item-004",
+        "menuItemId": "menu-004",
+        "name": "Chocolate Lava Cake",
+        "quantity": 2,
+        "unitPrice": 8.99,
+        "totalPrice": 17.98
+      }
+    ],
+    "subtotal": 42.97,
+    "tax": 3.44,
+    "discount": 5.00,
+    "total": 41.41,
+    "status": "completed",
+    "paymentStatus": "paid",
+    "paymentMethod": "card",
+    "deliveryType": "dine-in",
+    "createdAt": "2025-03-20T19:00:00Z",
+    "updatedAt": "2025-03-20T20:15:00Z"
+  },
+  {
+    "id": "ord-003",
+    "orderNumber": "ORD-003",
+    "userId": "usr-003",
+    "userName": "Mike Johnson",
+    "items": [
+      {
+        "id": "item-005",
+        "menuItemId": "menu-005",
+        "name": "BBQ Chicken Wings",
+        "quantity": 1,
+        "unitPrice": 11.99,
+        "totalPrice": 11.99
+      },
+      {
+        "id": "item-006",
+        "menuItemId": "menu-006",
+        "name": "Mango Smoothie",
+        "quantity": 2,
+        "unitPrice": 5.99,
+        "totalPrice": 11.98
+      }
+    ],
+    "subtotal": 23.97,
+    "tax": 1.92,
+    "discount": 0,
+    "total": 25.89,
+    "status": "pending",
+    "paymentStatus": "unpaid",
+    "paymentMethod": "online",
+    "deliveryType": "delivery",
+    "deliveryAddress": "123 Main Street, Apt 4B, New York, NY 10001",
+    "createdAt": "2025-03-20T19:30:00Z",
+    "updatedAt": "2025-03-20T19:30:00Z"
+  },
+  {
+    "id": "ord-004",
+    "orderNumber": "ORD-004",
+    "userId": "usr-001",
+    "userName": "John Doe",
+    "items": [
+      {
+        "id": "item-007",
+        "menuItemId": "menu-004",
+        "name": "Chocolate Lava Cake",
+        "quantity": 1,
+        "unitPrice": 8.99,
+        "totalPrice": 8.99
+      }
+    ],
+    "subtotal": 8.99,
+    "tax": 0.72,
+    "discount": 0,
+    "total": 9.71,
+    "status": "ready",
+    "paymentStatus": "paid",
+    "paymentMethod": "upi",
+    "deliveryType": "takeaway",
+    "createdAt": "2025-03-20T19:45:00Z",
+    "updatedAt": "2025-03-20T19:55:00Z"
+  }
+]
+

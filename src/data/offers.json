@@ -1,0 +1,58 @@
+[
+  {
+    "id": "offer-001",
+    "title": "Happy Hour Special",
+    "description": "Get 20% off on all beverages between 4 PM - 7 PM",
+    "image": "/images/offers/happy-hour.jpg",
+    "discountType": "percentage",
+    "discountValue": 20,
+    "validUntil": "2025-12-31T23:59:59Z",
+    "terms": ["Valid only between 4 PM - 7 PM", "Cannot be clubbed with other offers", "Minimum order of $10"],
+    "isActive": true
+  },
+  {
+    "id": "offer-002",
+    "title": "Weekend Family Feast",
+    "description": "Buy 2 main courses and get 1 dessert free",
+    "image": "/images/offers/family-feast.jpg",
+    "discountType": "fixed",
+    "discountValue": 8.99,
+    "validUntil": "2025-12-31T23:59:59Z",
+    "terms": ["Valid only on weekends", "Free dessert of equal or lesser value", "Dine-in only"],
+    "isActive": true
+  },
+  {
+    "id": "offer-003",
+    "title": "First Order Discount",
+    "description": "New customers get $10 off on their first order above $30",
+    "image": "/images/offers/first-order.jpg",
+    "discountType": "fixed",
+    "discountValue": 10,
+    "validUntil": "2025-12-31T23:59:59Z",
+    "terms": ["Valid for first-time customers only", "Minimum order of $30", "Use code: FIRST10"],
+    "isActive": true
+  },
+  {
+    "id": "offer-004",
+    "title": "Lunch Combo",
+    "description": "Any main course + beverage at just $14.99",
+    "image": "/images/offers/lunch-combo.jpg",
+    "discountType": "fixed",
+    "discountValue": 5,
+    "validUntil": "2025-12-31T23:59:59Z",
+    "terms": ["Valid Monday - Friday, 11 AM - 3 PM", "Combo includes one main course and one beverage"],
+    "isActive": true
+  },
+  {
+    "id": "offer-005",
+    "title": "Party Platter Deal",
+    "description": "Order party platters for 4 or more and get 15% off",
+    "image": "/images/offers/party-platter.jpg",
+    "discountType": "percentage",
+    "discountValue": 15,
+    "validUntil": "2025-12-31T23:59:59Z",
+    "terms": ["Valid on orders of 4 or more people", "Party platters menu only", "Advance booking required"],
+    "isActive": true
+  }
+]
+

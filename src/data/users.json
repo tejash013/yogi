@@ -1,0 +1,78 @@
+[
+  {
+    "id": "usr-001",
+    "email": "john.doe@example.com",
+    "firstName": "John",
+    "lastName": "Doe",
+    "phone": "+1-555-0101",
+    "role": "customer",
+    "avatar": "/images/avatars/user-1.jpg",
+    "createdAt": "2025-01-10T08:00:00Z",
+    "updatedAt": "2025-03-15T12:00:00Z"
+  },
+  {
+    "id": "usr-002",
+    "email": "jane.smith@example.com",
+    "firstName": "Jane",
+    "lastName": "Smith",
+    "phone": "+1-555-0102",
+    "role": "customer",
+    "avatar": "/images/avatars/user-2.jpg",
+    "createdAt": "2025-01-15T09:00:00Z",
+    "updatedAt": "2025-03-18T14:00:00Z"
+  },
+  {
+    "id": "usr-003",
+    "email": "mike.j@example.com",
+    "firstName": "Mike",
+    "lastName": "Johnson",
+    "phone": "+1-555-0103",
+    "role": "customer",
+    "createdAt": "2025-02-01T10:00:00Z",
+    "updatedAt": "2025-03-10T16:00:00Z"
+  },
+  {
+    "id": "usr-admin-001",
+    "email": "admin@restaurantos.com",
+    "firstName": "Sarah",
+    "lastName": "Williams",
+    "phone": "+1-555-1001",
+    "role": "admin",
+    "avatar": "/images/avatars/admin-1.jpg",
+    "createdAt": "2024-06-01T08:00:00Z",
+    "updatedAt": "2025-03-20T10:00:00Z"
+  },
+  {
+    "id": "usr-kitchen-001",
+    "email": "kitchen@restaurantos.com",
+    "firstName": "Carlos",
+    "lastName": "Rodriguez",
+    "phone": "+1-555-2001",
+    "role": "kitchen",
+    "avatar": "/images/avatars/chef-1.jpg",
+    "createdAt": "2024-08-15T08:00:00Z",
+    "updatedAt": "2025-03-19T09:00:00Z"
+  },
+  {
+    "id": "usr-cashier-001",
+    "email": "cashier@restaurantos.com",
+    "firstName": "Emily",
+    "lastName": "Brown",
+    "phone": "+1-555-3001",
+    "role": "cashier",
+    "createdAt": "2024-09-01T08:00:00Z",
+    "updatedAt": "2025-03-18T11:00:00Z"
+  },
+  {
+    "id": "usr-owner-001",
+    "email": "owner@restaurantos.com",
+    "firstName": "Robert",
+    "lastName": "Chen",
+    "phone": "+1-555-9001",
+    "role": "owner",
+    "avatar": "/images/avatars/owner-1.jpg",
+    "createdAt": "2024-01-01T08:00:00Z",
+    "updatedAt": "2025-03-20T08:00:00Z"
+  }
+]
+
