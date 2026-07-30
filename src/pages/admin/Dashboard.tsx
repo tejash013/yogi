@@ -1,48 +1,171 @@
-import { Card } from '@/components/ui';
+import { useMemo, useState } from 'react';
+import { Button, Card, CardHeader, CardContent, Badge } from '@/components/ui';
 import { PageHeader } from '@/components/common';
 
+type DashboardBadgeVariant = 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | 'neutral';
+
+const stats: Array<{ label: string; value: string; badge: string; variant: DashboardBadgeVariant }> = [
+  { label: 'Total Orders', value: '156', badge: '+12%', variant: 'primary' },
+  { label: 'Revenue', value: '$4,892', badge: '+8%', variant: 'success' },
+  { label: 'Customers', value: '89', badge: '+5%', variant: 'info' },
+  { label: 'Active Tables', value: '12/20', badge: '60%', variant: 'secondary' },
+];
+
+const recentOrders = [
+  { order: 'ORD-001', table: 5, status: 'Preparing', total: 38.85 },
+  { order: 'ORD-002', table: 3, status: 'Completed', total: 41.41 },
+  { order: 'ORD-003', table: 8, status: 'Pending', total: 25.89 },
+  { order: 'ORD-004', table: 1, status: 'Ready', total: 52.25 },
+];
+
+const statusOptions = ['All', 'Pending', 'Preparing', 'Ready', 'Completed'] as const;
+
 export default function AdminDashboard() {
-  const stats = [
-    { label: 'Total Orders', value: '156', change: '+12%', color: 'text-primary-500' },
-    { label: 'Revenue', value: '$4,892', change: '+8%', color: 'text-green-500' },
-    { label: 'Customers', value: '89', change: '+5%', color: 'text-blue-500' },
-    { label: 'Active Tables', value: '12/20', change: '60%', color: 'text-purple-500' },
-  ];
+  const [selectedStatus, setSelectedStatus] = useState<typeof statusOptions[number]>('All');
+
+  const filteredOrders = useMemo(
+    () =>
+      selectedStatus === 'All'
+        ? recentOrders
+        : recentOrders.filter((order) => order.status === selectedStatus),
+    [selectedStatus]
+  );
+
+  const totalSales = useMemo(
+    () => filteredOrders.reduce((sum, order) => sum + order.total, 0),
+    [filteredOrders]
+  );
 
   return (
-    <div>
-      <PageHeader title="Admin Dashboard" description="Overview of your restaurant" />
+    <div className="space-y-6">
+      <PageHeader title="Admin Dashboard" description="Overview of your restaurant operations" />
 
-      {/* Stats Grid */}
-      <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <Card key={stat.label}>
-            <p className="text-sm text-neutral-500">{stat.label}</p>
-            <div className="mt-1 flex items-end justify-between">
-              <p className="text-2xl font-bold text-neutral-900 dark:text-white">{stat.value}</p>
-              <span className={`text-sm font-medium ${stat.color}`}>{stat.change}</span>
+      <div className="grid gap-6 xl:grid-cols-[1.8fr_1fr]">
+        <Card className="overflow-hidden">
+          <div className="bg-gradient-to-r from-primary-500 via-primary-600 to-primary-700 p-6 text-white sm:p-8">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-sm uppercase tracking-[0.3em] text-primary-100">RestaurantOS</p>
+                <h2 className="mt-2 text-3xl font-semibold">Performance summary</h2>
+                <p className="mt-2 max-w-xl text-sm text-primary-100/90">Monitor the latest revenue, orders, and table status across your restaurant in one place.</p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <button className="rounded-2xl border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20">New Order</button>
+                <button className="rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-primary-700 transition hover:bg-neutral-100">Export</button>
+              </div>
+            </div>
+          </div>
+
+          <CardContent className="grid gap-4 p-6 sm:grid-cols-2">
+            {stats.map((item) => (
+              <div key={item.label} className="rounded-[1.25rem] border border-neutral-200 bg-white p-5 shadow-sm dark:border-neutral-700 dark:bg-neutral-900">
+                <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">{item.label}</p>
+                <div className="mt-3 flex items-end justify-between gap-4">
+                  <p className="text-3xl font-semibold text-neutral-900 dark:text-white">{item.value}</p>
+                  <Badge variant={item.variant} size="sm">{item.badge}</Badge>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="mb-4">
+            <div>
+              <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Quick actions</p>
+              <h3 className="text-xl font-semibold text-neutral-900 dark:text-white">Operations</h3>
+            </div>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              {[
+                { label: 'New menu item', value: 'Create', color: 'bg-primary-500' },
+                { label: 'Pending orders', value: '4', color: 'bg-secondary-500' },
+              ].map((item) => (
+                <div key={item.label} className="rounded-3xl bg-neutral-50 p-4 dark:bg-neutral-900">
+                  <p className="text-sm text-neutral-500">{item.label}</p>
+                  <p className="mt-3 text-2xl font-semibold text-neutral-900 dark:text-white">{item.value}</p>
+                </div>
+              ))}
+            </div>
+            <div className="rounded-3xl border border-dashed border-neutral-200 bg-neutral-50 p-5 dark:border-neutral-700 dark:bg-neutral-900">
+              <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Today's activity</p>
+              <ul className="mt-4 space-y-3 text-sm text-neutral-700 dark:text-neutral-300">
+                <li className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-sm dark:bg-neutral-800">
+                  <span>Orders placed</span>
+                  <span className="font-semibold text-neutral-900 dark:text-white">42</span>
+                </li>
+                <li className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-sm dark:bg-neutral-800">
+                  <span>Tables served</span>
+                  <span className="font-semibold text-neutral-900 dark:text-white">18</span>
+                </li>
+                <li className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-sm dark:bg-neutral-800">
+                  <span>New reservations</span>
+                  <span className="font-semibold text-neutral-900 dark:text-white">6</span>
+                </li>
+              </ul>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {stats.map((item) => (
+          <Card key={item.label} className="border-transparent bg-white/80 shadow-soft">
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">{item.label}</p>
+            <div className="mt-4 flex items-center justify-between gap-4">
+              <p className="text-3xl font-semibold text-neutral-900 dark:text-white">{item.value}</p>
+              <span className="rounded-full bg-neutral-100 px-3 py-1 text-sm font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">{item.badge}</span>
             </div>
           </Card>
         ))}
       </div>
 
-      {/* Recent Orders */}
       <Card>
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">Recent Orders</h3>
-          <button className="text-sm text-primary-500 hover:text-primary-600">View All</button>
-        </div>
-        <div className="divide-y divide-neutral-200 dark:divide-neutral-700">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="flex items-center justify-between py-3">
-              <div>
-                <p className="font-medium text-neutral-900 dark:text-white">ORD-00{i}</p>
-                <p className="text-sm text-neutral-500">Table {i + 2} • {['Pending', 'Preparing', 'Ready'][i % 3]}</p>
-              </div>
-              <span className="font-medium text-neutral-900 dark:text-white">${(10 + i * 5).toFixed(2)}</span>
+        <CardHeader>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 className="text-xl font-semibold text-neutral-900 dark:text-white">Recent orders</h3>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">Live order updates and tracking overview.</p>
             </div>
-          ))}
-        </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {statusOptions.map((status) => (
+                <Button
+                  key={status}
+                  variant={selectedStatus === status ? 'primary' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedStatus(status)}
+                >
+                  {status}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="rounded-3xl border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">Filtered order total</p>
+              <p className="text-lg font-semibold text-neutral-900 dark:text-white">${totalSales.toFixed(2)}</p>
+            </div>
+          </div>
+          {filteredOrders.length === 0 ? (
+            <p className="rounded-3xl border border-dashed border-neutral-200 bg-neutral-50 p-6 text-center text-sm text-neutral-500 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400">No orders match the selected filter.</p>
+          ) : (
+            filteredOrders.map((order) => (
+              <div key={order.order} className="flex flex-col gap-3 rounded-3xl border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="font-semibold text-neutral-900 dark:text-white">{order.order}</p>
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400">Table {order.table}</p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 text-sm">
+                  <Badge variant={order.status === 'Completed' ? 'success' : order.status === 'Pending' ? 'warning' : 'primary'} size="sm">{order.status}</Badge>
+                  <span className="font-semibold text-neutral-900 dark:text-white">${order.total.toFixed(2)}</span>
+                </div>
+              </div>
+            ))
+          )}
+        </CardContent>
       </Card>
     </div>
   );

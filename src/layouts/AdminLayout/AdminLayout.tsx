@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Navbar from '@/components/common/Navbar';
 import Sidebar, { type SidebarItem } from '@/components/common/Sidebar';
-import Footer from '@/components/common/Footer';
+import Logo from '@/components/common/Logo';
 import { ROUTES } from '@/constants';
 
 const sidebarItems: SidebarItem[] = [
@@ -124,8 +124,24 @@ export default function AdminLayout() {
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
         />
-        <main className="flex-1 p-4 sm:p-6 lg:ml-64 lg:p-8">
-          <Outlet />
+        <main className="flex-1 bg-neutral-100 p-4 sm:p-6 lg:ml-64 lg:p-8 dark:bg-neutral-950">
+          <div className="mx-auto w-full max-w-7xl">
+            <div className="mb-6 hidden rounded-[1.75rem] border border-neutral-200 bg-white/90 p-5 shadow-soft backdrop-blur dark:border-neutral-700 dark:bg-neutral-900/90 lg:flex lg:items-center lg:justify-between">
+              <div className="flex items-center gap-4">
+                <Logo size="sm" showText={true} />
+                <div>
+                  <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Admin Control Center</p>
+                  <h1 className="text-2xl font-semibold text-neutral-900 dark:text-white">RestaurantOS Admin</h1>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <button className="rounded-2xl border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800">Overview</button>
+                <button className="rounded-2xl bg-primary-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-600">Create Report</button>
+                <button className="rounded-2xl bg-secondary-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-secondary-600">New Item</button>
+              </div>
+            </div>
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

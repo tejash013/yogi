@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import type { Offer } from '@/types';
 
 interface OfferBannerProps {
@@ -13,7 +14,11 @@ export default function OfferBanner({ offer }: OfferBannerProps) {
     'from-amber-500 to-orange-600',
   ];
 
-  const randomGradient = gradientColors[Math.floor(Math.random() * gradientColors.length)];
+  const randomGradient = useMemo(() => {
+    const hash = Array.from(offer.id)
+      .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return gradientColors[hash % gradientColors.length];
+  }, [offer.id]);
 
   return (
     <div

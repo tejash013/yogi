@@ -1,4 +1,4 @@
-import { Card, Table, Badge, Search } from '@/components/ui';
+import { Card, CardHeader, CardContent, Table, Badge, Search } from '@/components/ui';
 import { PageHeader } from '@/components/common';
 import type { Column } from '@/components/ui';
 
@@ -35,12 +35,26 @@ const columns: Column<InventoryRow>[] = [
 
 export default function Inventory() {
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader
         title="Inventory"
-        description="Track your inventory levels"
+        description="Track your inventory levels and avoid stockouts"
         actions={<Search placeholder="Search inventory..." />}
       />
+
+      <Card className="rounded-[1.5rem] border-neutral-200 dark:border-neutral-700">
+        <CardContent className="grid gap-4 p-6 sm:grid-cols-2">
+          <div className="rounded-3xl bg-neutral-50 p-5 dark:bg-neutral-900">
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">Low stock items</p>
+            <p className="mt-3 text-3xl font-semibold text-neutral-900 dark:text-white">2</p>
+          </div>
+          <div className="rounded-3xl bg-neutral-50 p-5 dark:bg-neutral-900">
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">Total inventory lines</p>
+            <p className="mt-3 text-3xl font-semibold text-neutral-900 dark:text-white">4</p>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card padding="none">
         <Table columns={columns} data={data} />
       </Card>

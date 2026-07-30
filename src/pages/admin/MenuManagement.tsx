@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Card, Table, Badge, Search } from '@/components/ui';
+import { Button, Card, CardHeader, CardContent, Table, Badge, Search } from '@/components/ui';
 import { PageHeader } from '@/components/common';
 import type { Column } from '@/components/ui';
 
@@ -37,21 +37,62 @@ const columns: Column<MenuItemRow>[] = [
 export default function MenuManagement() {
   const [search, setSearch] = useState('');
 
+  const filteredItems = useMemo(
+    () =>
+      data.filter((item) =>
+        item.name.toLowerCase().includes(search.toLowerCase()) ||
+        item.category.toLowerCase().includes(search.toLowerCase())
+      ),
+    [search]
+  );
+
+  const availableCount = filteredItems.filter((item) => item.status === 'Available').length;
+  const outOfStockCount = filteredItems.filter((item) => item.status !== 'Available').length;
+
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader
         title="Menu Management"
-        description="Manage your restaurant menu items"
+        description="Manage your restaurant menu items and availability"
         actions={
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <Search placeholder="Search menu..." value={search} onChange={(e) => setSearch(e.target.value)} onClear={() => setSearch('')} />
             <Button>Add New Item</Button>
           </div>
         }
       />
 
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card className="rounded-[1.5rem] border-neutral-200 p-6 shadow-soft dark:border-neutral-700">
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">Total items</p>
+          <p className="mt-4 text-3xl font-semibold text-neutral-900 dark:text-white">{filteredItems.length}</p>
+          <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">Search results are updated live.</p>
+        </Card>
+        <Card className="rounded-[1.5rem] border-neutral-200 p-6 shadow-soft dark:border-neutral-700">
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">Available</p>
+          <p className="mt-4 text-3xl font-semibold text-neutral-900 dark:text-white">{availableCount}</p>
+          <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">Includes dishes ready to serve.</p>
+        </Card>
+        <Card className="rounded-[1.5rem] border-neutral-200 p-6 shadow-soft dark:border-neutral-700">
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">Out of stock</p>
+          <p className="mt-4 text-3xl font-semibold text-neutral-900 dark:text-white">{outOfStockCount}</p>
+          <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">Filtered count for unavailable items.</p>
+        </Card>
+      </div>
+
       <Card padding="none">
-        <Table columns={columns} data={data} />
+        <CardHeader>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 className="text-xl font-semibold text-neutral-900 dark:text-white">Menu items</h3>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">Browse and maintain all dishes in your restaurant menu.</p>
+            </div>
+            <Button variant="outline">Sync Menu</Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Table columns={columns} data={filteredItems} />
+        </CardContent>
       </Card>
     </div>
   );

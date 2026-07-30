@@ -59,7 +59,9 @@ export default function OwnerLayout() {
   return (
     <div className="flex min-h-screen flex-col bg-neutral-50 dark:bg-neutral-900">
       <Navbar
-        showMobileMenu={true}
+        brand="RestaurantOS Owner"
+        showThemeToggle={true}
+        showMobileMenu={false}
         rightContent={
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -74,10 +76,34 @@ export default function OwnerLayout() {
       <div className="flex flex-1">
         <Sidebar
           items={sidebarItems}
+          variant="owner"
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
         />
-        <main className="flex-1 p-4 sm:p-6 lg:ml-64 lg:p-8">
+        <main className="flex-1 p-4 sm:p-6 lg:ml-72 lg:p-8">
+          <div className="mb-6 rounded-[2rem] border border-neutral-200 bg-white/90 p-6 shadow-soft dark:border-neutral-700 dark:bg-neutral-900/90">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-sm uppercase tracking-[0.24em] text-neutral-500 dark:text-neutral-400">Owner panel</p>
+                <h1 className="mt-2 text-2xl font-semibold text-neutral-900 dark:text-white">Welcome back, Owner</h1>
+                <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">Access revenue, analytics, expenses and reports from one place.</p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-3xl bg-neutral-50 p-4 text-center dark:bg-neutral-900">
+                  <p className="text-sm text-neutral-500">Total revenue</p>
+                  <p className="mt-2 text-xl font-semibold text-neutral-900 dark:text-white">$48.2K</p>
+                </div>
+                <div className="rounded-3xl bg-neutral-50 p-4 text-center dark:bg-neutral-900">
+                  <p className="text-sm text-neutral-500">New reports</p>
+                  <p className="mt-2 text-xl font-semibold text-neutral-900 dark:text-white">6</p>
+                </div>
+                <div className="rounded-3xl bg-neutral-50 p-4 text-center dark:bg-neutral-900">
+                  <p className="text-sm text-neutral-500">Profit margin</p>
+                  <p className="mt-2 text-xl font-semibold text-neutral-900 dark:text-white">26%</p>
+                </div>
+              </div>
+            </div>
+          </div>
           <Outlet />
         </main>
       </div>

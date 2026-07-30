@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui';
 import { FoodCard, CategoryCard, OfferBanner } from '@/components/customer';
@@ -16,6 +16,8 @@ export default function CustomerHome() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const categoryScrollRef = useRef<HTMLDivElement>(null);
+  const offerScrollRef = useRef<HTMLDivElement>(null);
+  const [activeOfferIndex, setActiveOfferIndex] = useState(0);
 
   const popularItems = menuItems.filter((item) => item.isPopular);
   const recommendedItems = menuItems.filter((item) => item.isRecommended);
@@ -27,6 +29,62 @@ export default function CustomerHome() {
   const filteredItems = selectedCategory
     ? menuItems.filter((item) => item.categoryId === selectedCategory)
     : [];
+
+  const displayOffers = offers.length > 0 ? [...offers, offers[0]] : [];
+
+  useEffect(() => {
+    if (!offerScrollRef.current || offers.length === 0) {
+      return;
+    }
+
+    let resetTimeout: number | undefined;
+
+    const slideNext = () => {
+      setActiveOfferIndex((prevIndex) => {
+        const container = offerScrollRef.current;
+        const isOnClone = prevIndex === displayOffers.length - 1;
+
+        if (isOnClone) {
+          if (container) {
+            container.scrollLeft = 0;
+          }
+          return 0;
+        }
+
+        const nextIndex = prevIndex + 1;
+        const offerCard = container?.children[nextIndex] as HTMLElement | undefined;
+
+        if (offerCard && container) {
+          const offsetLeft = offerCard.offsetLeft;
+          const offsetWidth = offerCard.offsetWidth;
+          const containerWidth = container.clientWidth;
+          const targetScrollLeft = offsetLeft - (containerWidth - offsetWidth) / 2;
+
+          container.scrollTo({ left: targetScrollLeft, behavior: 'smooth' });
+        }
+
+        if (nextIndex === displayOffers.length - 1) {
+          resetTimeout = window.setTimeout(() => {
+            if (offerScrollRef.current) {
+              offerScrollRef.current.scrollLeft = 0;
+              setActiveOfferIndex(0);
+            }
+          }, 500);
+        }
+
+        return nextIndex;
+      });
+    };
+
+    const interval = window.setInterval(slideNext, 2000);
+
+    return () => {
+      window.clearInterval(interval);
+      if (resetTimeout) {
+        window.clearTimeout(resetTimeout);
+      }
+    };
+  }, [displayOffers.length, offers.length]);
 
   const scrollCategory = (direction: 'left' | 'right') => {
     if (categoryScrollRef.current) {
@@ -60,9 +118,17 @@ export default function CustomerHome() {
           <h2 className="text-lg font-bold text-neutral-900 dark:text-white">Today's Offers</h2>
           <span className="text-xs font-medium text-primary-500">View All</span>
         </div>
-        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-          {offers.map((offer) => (
-            <div key={offer.id} className="min-w-[280px] flex-shrink-0">
+        <div
+          ref={offerScrollRef}
+          className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide"
+        >
+          {displayOffers.map((offer, index) => (
+            <div
+              key={`${offer.id}-${index}`}
+              className={`min-w-[280px] flex-shrink-0 transition-transform duration-500 ${
+                index === activeOfferIndex ? 'scale-100' : 'scale-95 opacity-80'
+              }`}
+            >
               <OfferBanner offer={offer} />
             </div>
           ))}

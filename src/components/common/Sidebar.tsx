@@ -14,9 +14,10 @@ interface SidebarProps {
   items: SidebarItem[];
   isOpen: boolean;
   onClose: () => void;
+  variant?: 'default' | 'owner';
 }
 
-export default function Sidebar({ items, isOpen, onClose }: SidebarProps) {
+export default function Sidebar({ items, isOpen, onClose, variant = 'default' }: SidebarProps) {
   const location = useLocation();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
@@ -45,7 +46,10 @@ export default function Sidebar({ items, isOpen, onClose }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] w-64 border-r border-neutral-200 bg-white transition-transform duration-300 dark:border-neutral-700 dark:bg-neutral-900 lg:translate-x-0',
+          'fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] w-64 transition-transform duration-300 lg:translate-x-0',
+          variant === 'owner'
+            ? 'border-r border-neutral-800 bg-neutral-950 text-neutral-100'
+            : 'border-r border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
@@ -65,7 +69,11 @@ export default function Sidebar({ items, isOpen, onClose }: SidebarProps) {
                         className={cn(
                           'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                           active
-                            ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'
+                            ? variant === 'owner'
+                              ? 'bg-primary-600/10 text-primary-300'
+                              : 'bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'
+                            : variant === 'owner'
+                            ? 'text-neutral-300 hover:bg-white/5 hover:text-white'
                             : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-white'
                         )}
                       >
@@ -105,7 +113,11 @@ export default function Sidebar({ items, isOpen, onClose }: SidebarProps) {
                                 className={cn(
                                   'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                                   isActive(child.href)
-                                    ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'
+                                    ? variant === 'owner'
+                                      ? 'bg-primary-600/10 text-primary-300'
+                                      : 'bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'
+                                    : variant === 'owner'
+                                    ? 'text-neutral-400 hover:bg-white/5 hover:text-white'
                                     : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-700 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-white'
                                 )}
                               >
@@ -126,7 +138,11 @@ export default function Sidebar({ items, isOpen, onClose }: SidebarProps) {
                       className={cn(
                         'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                         active
-                          ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'
+                          ? variant === 'owner'
+                            ? 'bg-primary-600/10 text-primary-300'
+                            : 'bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'
+                          : variant === 'owner'
+                          ? 'text-neutral-300 hover:bg-white/5 hover:text-white'
                           : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-white'
                       )}
                     >
