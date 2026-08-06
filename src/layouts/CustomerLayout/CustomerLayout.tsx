@@ -1,33 +1,87 @@
-import { Outlet } from 'react-router-dom';
+import { Link, Outlet, useNavigate } from 'react-router-dom';
+import { Navbar, Footer } from '@/components/common';
+import type { NavItem } from '@/components/common/Navbar';
 import { BottomNav } from '@/components/customer';
-import { useCartStore } from '@/store';
+import { ROUTES } from '@/constants';
+import { useAuthStore, useCartStore } from '@/store';
+
+const navItems: NavItem[] = [
+  { label: 'Home', href: ROUTES.CUSTOMER.HOME },
+  { label: 'Menu', href: ROUTES.CUSTOMER.MENU },
+  { label: 'My Orders', href: ROUTES.CUSTOMER.MY_ORDERS },
+  { label: 'Favorites', href: ROUTES.CUSTOMER.FAVORITES },
+  { label: 'Rewards', href: ROUTES.CUSTOMER.REWARDS },
+  { label: 'Coupons', href: ROUTES.CUSTOMER.COUPONS },
+  { label: 'Feedback', href: ROUTES.CUSTOMER.FEEDBACK },
+];
 
 export default function CustomerLayout() {
+  const navigate = useNavigate();
   const cartItems = useCartStore((s) => s.items);
   const cartCount = cartItems.reduce((sum, i) => sum + i.quantity, 0);
+  const { isAuthenticated, user, logout } = useAuthStore();
+
+  const handleLogout = () => {
+    logout();
+    navigate(ROUTES.AUTH.LOGIN);
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-neutral-50 pb-16 dark:bg-neutral-900 lg:pb-0">
-      {/* Top Bar */}
-      <header className="sticky top-0 z-30 border-b border-neutral-200 bg-white/95 backdrop-blur-lg dark:border-neutral-700 dark:bg-neutral-900/95">
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-500">
-              <span className="text-sm font-bold text-white">R</span>
-            </div>
-            <span className="text-base font-bold text-neutral-900 dark:text-white">
-              RestaurantOS
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            {cartCount > 0 && (
-              <div className="rounded-full bg-primary-50 px-2.5 py-0.5 text-xs font-semibold text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
-                {cartCount} in cart
-              </div>
+      {/* Header */}
+      <Navbar
+        items={navItems}
+        rightContent={
+          <>
+            <Link
+              to={ROUTES.CUSTOMER.CART}
+              className="relative rounded-lg p-2 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-neutral-800 dark:hover:text-neutral-300"
+              title="Cart"
+            >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
+              </svg>
+              {cartCount > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary-500 text-[10px] font-bold text-white">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+
+            {isAuthenticated ? (
+              <>
+                <Link
+                  to={ROUTES.CUSTOMER.PROFILE}
+                  className="hidden rounded-lg px-3 py-2 text-sm font-medium text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-white md:block"
+                >
+                  {user?.firstName ? `Hi, ${user.firstName}` : 'Profile'}
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="hidden rounded-lg bg-neutral-100 px-4 py-2 text-sm font-semibold text-neutral-700 transition-colors hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700 md:block"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to={ROUTES.AUTH.LOGIN}
+                  className="hidden rounded-lg px-3 py-2 text-sm font-medium text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-white md:block"
+                >
+                  Login
+                </Link>
+                <Link
+                  to={ROUTES.AUTH.REGISTER}
+                  className="hidden rounded-lg bg-primary-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-600 md:block"
+                >
+                  Register
+                </Link>
+              </>
             )}
-          </div>
-        </div>
-      </header>
+          </>
+        }
+      />
 
       {/* Main Content */}
       <main className="flex-1">
@@ -36,9 +90,11 @@ export default function CustomerLayout() {
         </div>
       </main>
 
+      {/* Footer (Desktop) */}
+      <Footer />
+
       {/* Bottom Navigation (Mobile) */}
       <BottomNav />
     </div>
   );
 }
-
