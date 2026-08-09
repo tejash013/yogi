@@ -1,8 +1,17 @@
-# Customer Layout Update Task
+# Error Fix Checklist
 
-## Steps
-- [x] Explore customer pages, layout, routes, and reusable components
-- [x] Confirm plan with user
-- [x] Update `src/layouts/CustomerLayout/CustomerLayout.tsx` to add Navbar (header with links to all customer pages + cart badge + theme toggle) and Footer
-- [x] Add Login / Register links to header (shown when logged out); Profile / Logout shown when logged in
-- [x] Verify layout compiles / renders
+## TypeScript Build Errors (`npm run build`)
+
+1. [x] `src/api/endpoints.ts`: Remove unused `User` import
+2. [x] `src/components/customer/OrderCard.tsx`: Restore `isCurrent` prop and use it with "Current" badge
+3. [x] `src/pages/admin/Employees.tsx`: Remove unused `CardHeader` import
+4. [x] `src/pages/admin/Inventory.tsx`: Remove unused `CardHeader` import
+5. [x] `src/pages/admin/MenuManagement.tsx`: Add missing `useMemo` import
+6. [x] `src/pages/customer/Cart.tsx`: Remove unused `tax` and `total` from store destructure
+7. [x] `src/pages/customer/Home.tsx`: Remove unused `Button` import
+8. [x] `src/pages/customer/Rewards.tsx`: Remove unused `Badge` and `Button` imports
+
+## Verification
+- [x] Run `npm run build` to confirm all type errors are fixed (PASSED ✓)
+- [x] Run `npm run lint` to confirm no lint errors (0 errors, warnings only)
+

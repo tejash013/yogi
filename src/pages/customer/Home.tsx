@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui';
 import { FoodCard, CategoryCard, OfferBanner } from '@/components/customer';
 import { ROUTES } from '@/constants';
 import type { MenuItem, Category, Offer } from '@/types';

@@ -1,4 +1,4 @@
-import { Button, Card, CardHeader, CardContent, Table, Badge, Search } from '@/components/ui';
+import { Button, Card, CardContent, Table, Badge, Search } from '@/components/ui';
 import { PageHeader } from '@/components/common';
 import type { Column } from '@/components/ui';
 

@@ -1,0 +1,41 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { useParams, Link } from 'react-router-dom';
+import { Button, Card, Badge } from '@/components/ui';
+import { Timeline } from '@/components/customer';
+import { ROUTES, ORDER_STATUS_LABELS } from '@/constants';
+import { formatCurrency, formatTime } from '@/utils';
+import ordersData from '@/data/orders.json';
+const orders = ordersData;
+// Map an order status to its timeline progress steps.
+const ORDER_FLOW = ['pending', 'confirmed', 'preparing', 'ready', 'completed'];
+function buildTimelineSteps(status) {
+    const currentIndex = ORDER_FLOW.indexOf(status);
+    return ORDER_FLOW.map((step, index) => ({
+        label: ORDER_STATUS_LABELS[step],
+        completed: index < currentIndex,
+        isCurrent: index === currentIndex,
+    }));
+}
+export default function OrderTracking() {
+    const { orderId } = useParams();
+    const order = orders.find((o) => o.id.toLowerCase() === orderId?.toLowerCase() ||
+        o.orderNumber.toLowerCase() === orderId?.toLowerCase());
+    // Back button shared by both states.
+    const backButton = (_jsxs(Link, { to: ROUTES.CUSTOMER.MY_ORDERS, className: "inline-flex items-center gap-1.5 text-sm font-medium text-neutral-500 transition-colors hover:text-primary-500", children: [_jsx("svg", { className: "h-4 w-4", fill: "none", stroke: "currentColor", viewBox: "0 0 24 24", children: _jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M15 19l-7-7 7-7" }) }), "Back to Orders"] }));
+    // Order not found -> empty state.
+    if (!order) {
+        return (_jsxs("div", { className: "space-y-6 pb-8", children: [backButton, _jsxs("div", { className: "flex min-h-[55vh] flex-col items-center justify-center rounded-2xl border border-neutral-200 bg-white p-8 text-center dark:border-neutral-700 dark:bg-neutral-800", children: [_jsx("div", { className: "mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-neutral-100 text-4xl dark:bg-neutral-700", children: "\uD83D\uDD0D" }), _jsx("h1", { className: "mb-2 text-xl font-bold text-neutral-900 dark:text-white", children: "Order Not Found" }), _jsxs("p", { className: "mb-6 max-w-sm text-sm text-neutral-500", children: ["We couldn't find an order matching", ' ', _jsxs("span", { className: "font-semibold text-neutral-700 dark:text-neutral-300", children: ["#", orderId] }), ". Please check the order number and try again."] }), _jsx(Link, { to: ROUTES.CUSTOMER.MY_ORDERS, children: _jsx(Button, { variant: "outline", children: "View My Orders" }) })] })] }));
+    }
+    const isCancelled = order.status === 'cancelled';
+    return (_jsxs("div", { className: "space-y-6 pb-8", children: [backButton, _jsx(Card, { className: "overflow-hidden border-0 bg-gradient-to-br from-primary-500 to-primary-600 text-white", children: _jsxs("div", { className: "flex items-center justify-between", children: [_jsxs("div", { children: [_jsxs("div", { className: "flex items-center gap-2", children: [_jsx("p", { className: "text-sm text-white/70", children: "Order" }), _jsx(Badge, { variant: "neutral", size: "sm", className: "!bg-white/90 !text-primary-600", children: order.orderNumber })] }), _jsx("h1", { className: "mt-1 text-2xl font-bold", children: "Tracking Your Order" }), _jsxs("p", { className: "mt-1 text-sm text-white/70", children: ["Updated ", formatTime(order.updatedAt)] })] }), _jsxs("div", { className: "rounded-xl bg-white/20 p-3 text-center backdrop-blur-sm", children: [_jsx("p", { className: "text-2xl font-bold", children: order.status === 'preparing'
+                                        ? '~15'
+                                        : order.status === 'ready'
+                                            ? '~5'
+                                            : isCancelled
+                                                ? '0'
+                                                : '~10' }), _jsx("p", { className: "text-xs text-white/70", children: "mins" })] })] }) }), _jsxs(Card, { children: [_jsxs("div", { className: "mb-6 flex items-center justify-between", children: [_jsx("h3", { className: "font-semibold text-neutral-900 dark:text-white", children: "Order Progress" }), _jsx(Badge, { variant: order.status === 'completed'
+                                    ? 'success'
+                                    : order.status === 'cancelled'
+                                        ? 'neutral'
+                                        : 'primary', children: isCancelled ? 'Cancelled' : ORDER_STATUS_LABELS[order.status] })] }), isCancelled ? (_jsxs("div", { className: "flex flex-col items-center justify-center py-10 text-center", children: [_jsx("div", { className: "mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-neutral-100 text-2xl dark:bg-neutral-700", children: "\u2716\uFE0F" }), _jsx("p", { className: "font-semibold text-neutral-900 dark:text-white", children: "This order was cancelled" }), _jsx("p", { className: "mt-1 text-sm text-neutral-500", children: "Please contact the restaurant or place a new order." })] })) : order.status === 'completed' ? (_jsxs("div", { className: "flex flex-col items-center justify-center py-10 text-center", children: [_jsx("div", { className: "mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-2xl dark:bg-green-900/30", children: "\u2705" }), _jsx("p", { className: "font-semibold text-neutral-900 dark:text-white", children: "Your order has been completed" }), _jsx("p", { className: "mt-1 text-sm text-neutral-500", children: "Thank you for dining with us!" })] })) : (_jsx(Timeline, { steps: buildTimelineSteps(order.status) }))] }), _jsxs(Card, { children: [_jsx("h3", { className: "mb-3 font-semibold text-neutral-900 dark:text-white", children: "Order Items" }), _jsxs("div", { className: "space-y-2 text-sm", children: [order.items.map((item) => (_jsxs("div", { className: "flex justify-between", children: [_jsxs("span", { className: "text-neutral-600 dark:text-neutral-400", children: [item.name, " x", item.quantity, item.specialInstructions && (_jsxs("span", { className: "block text-xs text-neutral-400", children: ["Note: ", item.specialInstructions] }))] }), _jsx("span", { className: "font-medium", children: formatCurrency(item.totalPrice) })] }, item.id))), _jsx("hr", { className: "border-neutral-100 dark:border-neutral-700" }), _jsxs("div", { className: "flex justify-between text-neutral-500", children: [_jsx("span", { children: "Subtotal" }), _jsx("span", { children: formatCurrency(order.subtotal) })] }), _jsxs("div", { className: "flex justify-between text-neutral-500", children: [_jsx("span", { children: "Tax" }), _jsx("span", { children: formatCurrency(order.tax) })] }), order.discount > 0 && (_jsxs("div", { className: "flex justify-between text-green-600", children: [_jsx("span", { children: "Discount" }), _jsxs("span", { children: ["-", formatCurrency(order.discount)] })] })), _jsx("hr", { className: "border-neutral-100 dark:border-neutral-700" }), _jsxs("div", { className: "flex justify-between font-semibold", children: [_jsx("span", { children: "Total" }), _jsx("span", { className: "text-primary-500", children: formatCurrency(order.total) })] }), order.paymentStatus && (_jsxs("div", { className: "flex justify-between pt-1 text-xs text-neutral-400", children: [_jsx("span", { children: "Payment" }), _jsx("span", { className: "capitalize", children: order.paymentStatus.replace('_', ' ') })] }))] })] }), _jsxs("div", { className: "flex gap-3", children: [_jsx(Link, { to: ROUTES.CUSTOMER.FEEDBACK, className: "flex-1", children: _jsxs(Button, { variant: "outline", fullWidth: true, children: [_jsx("svg", { className: "mr-1.5 h-4 w-4", fill: "none", stroke: "currentColor", viewBox: "0 0 24 24", children: _jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M5 3l14 9-14 9V3z" }) }), "Give Feedback"] }) }), _jsx(Link, { to: ROUTES.CUSTOMER.MENU, className: "flex-1", children: _jsxs(Button, { fullWidth: true, children: [_jsx("svg", { className: "mr-1.5 h-4 w-4", fill: "none", stroke: "currentColor", viewBox: "0 0 24 24", children: _jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M12 4v16m8-8H4" }) }), "Order More"] }) })] })] }));
+}

@@ -1,74 +1,207 @@
-import { Card } from '@/components/ui';
+import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  FiAlertCircle,
+  FiCheckCircle,
+  FiClock,
+  FiDollarSign,
+  FiRefreshCcw,
+  FiShoppingBag,
+  FiTrendingUp,
+} from 'react-icons/fi';
 import { PageHeader } from '@/components/common';
+import { Button, Card, EmptyState } from '@/components/ui';
+import { CashierStatsCard, PaymentStatusBadge } from '@/components/cashier';
+import { formatINR, useCashierStore } from '@/store';
+import { ORDER_TYPE_LABELS, PAYMENT_METHOD_LABELS } from '@/types/cashier';
+import { ROUTES } from '@/constants';
+import { getRelativeTime } from '@/utils';
 
 export default function CashierDashboard() {
+  const navigate = useNavigate();
+  const orders = useCashierStore((s) => s.orders);
+  const payments = useCashierStore((s) => s.payments);
+
+  const stats = useMemo(() => {
+    const today = new Date().toDateString();
+    const todayOrders = orders.filter(
+      (o) => new Date(o.createdAt).toDateString() === today
+    );
+    const todayPaid = payments.filter(
+      (p) => p.status === 'paid' && new Date(p.date).toDateString() === today
+    );
+    const todaySales = todayPaid.reduce((s, p) => s + p.amount, 0);
+    const paidBills = todayOrders.filter((o) => o.paymentStatus === 'paid').length;
+    const pendingPayments = orders.filter(
+      (o) => o.paymentStatus === 'unpaid' || o.paymentStatus === 'pending' || o.paymentStatus === 'partially_paid'
+    ).length;
+    const refunded = payments
+      .filter((p) => p.status === 'refunded' || p.status === 'partially_refunded')
+      .reduce((s, p) => s + (p.refundAmount ?? 0), 0);
+    const avgBill = todaySales > 0 && todayPaid.length > 0 ? todaySales / todayPaid.length : 0;
+    return {
+      todaySales,
+      todayOrdersCount: todayOrders.length,
+      paidBills,
+      pendingPayments,
+      refunded,
+      avgBill,
+    };
+  }, [orders, payments]);
+
+  const recentOrders = useMemo(
+    () => [...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 8),
+    [orders]
+  );
+
+  const pendingPaymentsList = orders.filter(
+    (o) => o.paymentStatus === 'unpaid' || o.paymentStatus === 'pending' || o.paymentStatus === 'partially_paid'
+  );
+
+  const openBill = (orderId: string) => {
+    useCashierStore.getState().setSelectedOrder(orderId);
+    navigate(ROUTES.CASHIER.BILLING);
+  };
+
   return (
     <div>
-      <PageHeader title="Cashier Dashboard" description="Overview of today transactions" />
+      <PageHeader
+        title="Cashier Dashboard"
+        description="Overview of today's transactions"
+        actions={
+          <Button onClick={() => navigate(ROUTES.CASHIER.BILLING)}>
+            New Bill
+          </Button>
+        }
+      />
 
-      <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          { label: 'Today Revenue', value: '$2,450', change: '+15%', color: 'text-green-500' },
-          { label: 'Orders Today', value: '42', change: '+8%', color: 'text-blue-500' },
-          { label: 'Pending Payments', value: '3', change: '-2', color: 'text-yellow-500' },
-          { label: 'Avg Order Value', value: '$58.33', change: '+5%', color: 'text-primary-500' },
-        ].map((stat) => (
-          <Card key={stat.label}>
-            <p className="text-sm text-neutral-500">{stat.label}</p>
-            <div className="mt-1 flex items-end justify-between">
-              <p className="text-2xl font-bold text-neutral-900 dark:text-white">{stat.value}</p>
-              <span className={`text-sm font-medium ${stat.color}`}>{stat.change}</span>
-            </div>
-          </Card>
-        ))}
+      {/* Stats */}
+      <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <CashierStatsCard
+          label="Today's Sales"
+          value={formatINR(stats.todaySales)}
+          icon={<FiDollarSign className="h-5 w-5" />}
+          accent="success"
+        />
+        <CashierStatsCard
+          label="Today's Orders"
+          value={stats.todayOrdersCount}
+          icon={<FiShoppingBag className="h-5 w-5" />}
+          accent="primary"
+        />
+        <CashierStatsCard
+          label="Paid Bills"
+          value={stats.paidBills}
+          icon={<FiCheckCircle className="h-5 w-5" />}
+          accent="info"
+        />
+        <CashierStatsCard
+          label="Pending Payments"
+          value={stats.pendingPayments}
+          icon={<FiClock className="h-5 w-5" />}
+          accent="warning"
+        />
+        <CashierStatsCard
+          label="Refunded Amount"
+          value={formatINR(stats.refunded)}
+          icon={<FiRefreshCcw className="h-5 w-5" />}
+          accent="error"
+        />
+        <CashierStatsCard
+          label="Avg Bill Value"
+          value={formatINR(stats.avgBill)}
+          icon={<FiTrendingUp className="h-5 w-5" />}
+          accent="neutral"
+        />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <h3 className="mb-4 text-lg font-semibold text-neutral-900 dark:text-white">Recent Transactions</h3>
-          <div className="divide-y divide-neutral-200 dark:divide-neutral-700">
-            {[
-              { order: 'ORD-001', amount: 38.85, method: 'Cash', status: 'paid' },
-              { order: 'ORD-002', amount: 41.41, method: 'Card', status: 'paid' },
-              { order: 'ORD-003', amount: 25.89, method: 'UPI', status: 'pending' },
-            ].map((tx, i) => (
-              <div key={i} className="flex items-center justify-between py-3">
-                <div>
-                  <p className="font-medium text-neutral-900 dark:text-white">{tx.order}</p>
-                  <p className="text-sm text-neutral-500">{tx.method}</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-semibold text-neutral-900 dark:text-white">${tx.amount.toFixed(2)}</p>
-                  <p className={`text-sm ${tx.status === 'paid' ? 'text-green-500' : 'text-yellow-500'}`}>
-                    {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
-                  </p>
-                </div>
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Recent Orders */}
+        <div className="lg:col-span-2">
+          <h3 className="mb-4 text-lg font-semibold text-neutral-900 dark:text-white">Recent Orders</h3>
+          {recentOrders.length === 0 ? (
+            <EmptyState title="No orders yet" description="Orders will appear here once placed." />
+          ) : (
+            <div className="overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-neutral-200 dark:divide-neutral-700">
+                  <thead className="bg-neutral-50 dark:bg-neutral-800">
+                    <tr>
+                      {['Order', 'Table', 'Customer', 'Type', 'Amount', 'Payment', 'Status', 'Time', ''].map((h) => (
+                        <th
+                          key={h}
+                          className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400"
+                        >
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-neutral-200 bg-white dark:divide-neutral-700 dark:bg-neutral-900">
+                    {recentOrders.map((o) => (
+                      <tr key={o.id} className="text-sm">
+                        <td className="px-4 py-3 font-medium text-neutral-900 dark:text-white">{o.orderNumber}</td>
+                        <td className="px-4 py-3 text-neutral-700 dark:text-neutral-300">{o.tableNumber ?? '—'}</td>
+                        <td className="px-4 py-3 text-neutral-700 dark:text-neutral-300">{o.customer.name}</td>
+                        <td className="px-4 py-3 text-neutral-700 dark:text-neutral-300">{ORDER_TYPE_LABELS[o.orderType]}</td>
+                        <td className="px-4 py-3 font-semibold text-neutral-900 dark:text-white">{formatINR(o.total)}</td>
+                        <td className="px-4 py-3">
+                          <PaymentStatusBadge status={o.paymentStatus} />
+                        </td>
+                        <td className="px-4 py-3 capitalize text-neutral-700 dark:text-neutral-300">{o.status}</td>
+                        <td className="px-4 py-3 text-neutral-500">{getRelativeTime(o.createdAt)}</td>
+                        <td className="px-4 py-3">
+                          <Button size="sm" variant="outline" onClick={() => openBill(o.id)}>
+                            View Bill
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            ))}
-          </div>
-        </Card>
+            </div>
+          )}
+        </div>
 
-        <Card>
-          <h3 className="mb-4 text-lg font-semibold text-neutral-900 dark:text-white">Payment Methods</h3>
-          <div className="space-y-3">
-            {[
-              { method: 'Cash', count: 18, total: 1042.50 },
-              { method: 'Card', count: 15, total: 895.75 },
-              { method: 'UPI', count: 7, total: 345.25 },
-              { method: 'Online', count: 2, total: 166.50 },
-            ].map((pm, i) => (
-              <div key={i} className="flex items-center justify-between">
-                <span className="text-sm text-neutral-600 dark:text-neutral-400">{pm.method}</span>
-                <div className="text-right">
-                  <span className="text-sm font-medium text-neutral-900 dark:text-white">{pm.count} transactions</span>
-                  <span className="ml-3 text-sm text-neutral-500">${pm.total.toFixed(2)}</span>
-                </div>
+        {/* Pending Payments */}
+        <div>
+          <h3 className="mb-4 text-lg font-semibold text-neutral-900 dark:text-white">Pending Payments</h3>
+          {pendingPaymentsList.length === 0 ? (
+            <EmptyState
+              icon={<FiAlertCircle className="h-10 w-10" />}
+              title="No pending payments"
+              description="All payments are settled. Great job!"
+            />
+          ) : (
+            <div className="space-y-3">
+              {pendingPaymentsList.map((o) => (
+                <Card key={o.id} padding="md">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <p className="font-semibold text-neutral-900 dark:text-white">{o.orderNumber}</p>
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                        {o.customer.name}
+                        {o.tableNumber ? ` · Table ${o.tableNumber}` : ''} · {ORDER_TYPE_LABELS[o.orderType]}
+                      </p>
+                    </div>
+                    <PaymentStatusBadge status={o.paymentStatus} />
+                  </div>
+                  <div className="mt-3 flex items-center justify-between">
+                    <span className="text-lg font-bold text-neutral-900 dark:text-white">{formatINR(o.total)}</span>
+                    <Button size="sm" onClick={() => openBill(o.id)}>
+                      Open Bill
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+              <div className="rounded-xl bg-neutral-100 p-3 text-xs text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
+                {PAYMENT_METHOD_LABELS.cash} · {PAYMENT_METHOD_LABELS.upi} · {PAYMENT_METHOD_LABELS.card} · {PAYMENT_METHOD_LABELS.wallet} · {PAYMENT_METHOD_LABELS.online}
               </div>
-            ))}
-          </div>
-        </Card>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 }
-

@@ -2,8 +2,7 @@ import apiClient from './axios';
 import type {
   ApiResponse,
   PaginatedResponse,
-  PaginationParams,
-  User,
+PaginationParams,
   MenuItem,
   Category,
   Order,

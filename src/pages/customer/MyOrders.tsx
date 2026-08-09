@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Button, Card } from '@/components/ui';
+import { Link, useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui';
 import { OrderCard } from '@/components/customer';
 import { ROUTES } from '@/constants';
 import type { Order } from '@/types';
@@ -9,8 +9,17 @@ import ordersData from '@/data/orders.json';
 const orders = ordersData as Order[];
 
 export default function MyOrders() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
+  const [trackNumber, setTrackNumber] = useState('');
   const [filter, setFilter] = useState<'all' | 'current' | 'previous'>('all');
+
+  const handleTrack = (e: React.FormEvent) => {
+    e.preventDefault();
+    const value = trackNumber.trim();
+    if (!value) return;
+    navigate(ROUTES.CUSTOMER.ORDER_TRACKING.replace(':orderId', value));
+  };
 
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
@@ -51,6 +60,31 @@ export default function MyOrders() {
   return (
     <div className="space-y-6 pb-8">
       <h1 className="text-xl font-bold text-neutral-900 dark:text-white">My Orders</h1>
+
+      {/* Track by Order Number */}
+      <form
+        onSubmit={handleTrack}
+        className="flex flex-col gap-2 rounded-xl border border-primary-200 bg-primary-50/60 p-3 dark:border-primary-800 dark:bg-primary-900/10 sm:flex-row sm:items-center"
+      >
+        <div className="relative flex-1">
+          <svg className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            value={trackNumber}
+            onChange={(e) => setTrackNumber(e.target.value)}
+            placeholder="Enter order number e.g. ORD-NWBB78"
+            className="w-full rounded-lg border border-primary-200 bg-white py-2.5 pl-10 pr-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-primary-700 dark:bg-neutral-800"
+          />
+        </div>
+        <Button type="submit" size="md" variant="primary">
+          <svg className="mr-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          Track
+        </Button>
+      </form>
 
       {/* Search */}
       <div className="relative">

@@ -1,0 +1,14 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { Card, Button, Badge } from '@/components/ui';
+import { PageHeader } from '@/components/common';
+const reports = [
+    { title: 'Monthly Financial Report', desc: 'Profit & loss, revenue breakdown', date: 'Mar 1, 2025' },
+    { title: 'Sales Performance Report', desc: 'Item-wise sales analysis', date: 'Mar 1, 2025' },
+    { title: 'Staff Performance Report', desc: 'Employee productivity metrics', date: 'Feb 28, 2025' },
+    { title: 'Customer Analytics Report', desc: 'Customer behavior and trends', date: 'Feb 25, 2025' },
+    { title: 'Inventory Report', desc: 'Stock levels and wastage', date: 'Feb 20, 2025' },
+    { title: 'Tax Report', desc: 'Monthly tax summary', date: 'Feb 15, 2025' },
+];
+export default function OwnerReports() {
+    return (_jsxs("div", { className: "space-y-6", children: [_jsx(PageHeader, { title: "Reports", description: "Generate comprehensive business reports", actions: _jsx(Button, { children: "Generate New Report" }) }), _jsxs("div", { className: "grid gap-4 sm:grid-cols-2 xl:grid-cols-3", children: [_jsx(Card, { children: _jsxs("div", { className: "flex items-center justify-between gap-4", children: [_jsxs("div", { children: [_jsx("p", { className: "text-sm uppercase tracking-[0.18em] text-neutral-500", children: "Total reports" }), _jsx("p", { className: "mt-3 text-3xl font-semibold text-neutral-900 dark:text-white", children: reports.length })] }), _jsx(Badge, { variant: "primary", size: "sm", children: "Updated" })] }) }), _jsxs(Card, { children: [_jsx("p", { className: "text-sm uppercase tracking-[0.18em] text-neutral-500", children: "Recent creation" }), _jsx("p", { className: "mt-3 text-3xl font-semibold text-neutral-900 dark:text-white", children: "Mar 1, 2025" })] }), _jsxs(Card, { children: [_jsx("p", { className: "text-sm uppercase tracking-[0.18em] text-neutral-500", children: "Visibility" }), _jsx("p", { className: "mt-3 text-3xl font-semibold text-neutral-900 dark:text-white", children: "Public" })] })] }), _jsx("div", { className: "grid gap-6", children: reports.map((report) => (_jsx(Card, { className: "rounded-[1.75rem]", children: _jsxs("div", { className: "flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between", children: [_jsxs("div", { children: [_jsx("p", { className: "text-lg font-semibold text-neutral-900 dark:text-white", children: report.title }), _jsx("p", { className: "mt-2 text-sm text-neutral-500 dark:text-neutral-400", children: report.desc }), _jsxs("p", { className: "mt-2 text-xs uppercase tracking-[0.16em] text-neutral-400", children: ["Generated: ", report.date] })] }), _jsxs("div", { className: "flex items-center gap-2", children: [_jsx(Badge, { variant: "secondary", size: "sm", children: "Ready" }), _jsx(Button, { variant: "outline", size: "sm", children: "View" })] })] }) }, report.title))) })] }));
+}

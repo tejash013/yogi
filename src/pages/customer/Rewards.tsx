@@ -1,4 +1,4 @@
-import { Card, Badge, Button } from '@/components/ui';
+import { Card } from '@/components/ui';
 import { RewardCard } from '@/components/customer';
 
 const currentPoints = 1250;

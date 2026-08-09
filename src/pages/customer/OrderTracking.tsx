@@ -1,70 +1,202 @@
 import { useParams, Link } from 'react-router-dom';
-import { Button, Card } from '@/components/ui';
+import { Button, Card, Badge } from '@/components/ui';
 import { Timeline } from '@/components/customer';
-import { ROUTES } from '@/constants';
+import { ROUTES, ORDER_STATUS_LABELS } from '@/constants';
+import { formatCurrency, formatTime } from '@/utils';
+import type { Order, OrderItem, OrderStatus } from '@/types';
+import ordersData from '@/data/orders.json';
+
+const orders = ordersData as Order[];
+
+// Map an order status to its timeline progress steps.
+const ORDER_FLOW: OrderStatus[] = ['pending', 'confirmed', 'preparing', 'ready', 'completed'];
+
+function buildTimelineSteps(status: OrderStatus) {
+  const currentIndex = ORDER_FLOW.indexOf(status);
+  return ORDER_FLOW.map((step, index) => ({
+    label: ORDER_STATUS_LABELS[step],
+    completed: index < currentIndex,
+    isCurrent: index === currentIndex,
+  }));
+}
 
 export default function OrderTracking() {
   const { orderId } = useParams();
 
-  const steps = [
-    { label: 'Order Received', time: '7:30 PM', completed: true },
-    { label: 'Order Confirmed', time: '7:32 PM', completed: true },
-    { label: 'Preparing', time: '7:35 PM', completed: true, isCurrent: true },
-    { label: 'Ready for Serving', time: '~7:50 PM', completed: false },
-    { label: 'Served / Picked Up', time: '~7:55 PM', completed: false },
-  ];
+  const order = orders.find(
+    (o) =>
+      o.id.toLowerCase() === orderId?.toLowerCase() ||
+      o.orderNumber.toLowerCase() === orderId?.toLowerCase()
+  );
+
+  // Back button shared by both states.
+  const backButton = (
+    <Link
+      to={ROUTES.CUSTOMER.MY_ORDERS}
+      className="inline-flex items-center gap-1.5 text-sm font-medium text-neutral-500 transition-colors hover:text-primary-500"
+    >
+      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+      </svg>
+      Back to Orders
+    </Link>
+  );
+
+  // Order not found -> empty state.
+  if (!order) {
+    return (
+      <div className="space-y-6 pb-8">
+        {backButton}
+        <div className="flex min-h-[55vh] flex-col items-center justify-center rounded-2xl border border-neutral-200 bg-white p-8 text-center dark:border-neutral-700 dark:bg-neutral-800">
+          <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-neutral-100 text-4xl dark:bg-neutral-700">
+            🔍
+          </div>
+          <h1 className="mb-2 text-xl font-bold text-neutral-900 dark:text-white">
+            Order Not Found
+          </h1>
+          <p className="mb-6 max-w-sm text-sm text-neutral-500">
+            We couldn't find an order matching{' '}
+            <span className="font-semibold text-neutral-700 dark:text-neutral-300">#{orderId}</span>.
+            Please check the order number and try again.
+          </p>
+          <Link to={ROUTES.CUSTOMER.MY_ORDERS}>
+            <Button variant="outline">View My Orders</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const isCancelled = order.status === 'cancelled';
 
   return (
     <div className="space-y-6 pb-8">
       {/* Back button */}
-      <Link
-        to={ROUTES.CUSTOMER.MY_ORDERS}
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-neutral-500 transition-colors hover:text-primary-500"
-      >
-        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
-        Back to Orders
-      </Link>
+      {backButton}
 
       {/* Order Info */}
       <Card className="overflow-hidden border-0 bg-gradient-to-br from-primary-500 to-primary-600 text-white">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-white/70">Order #{orderId}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-white/70">Order</p>
+              <Badge
+                variant="neutral"
+                size="sm"
+                className="!bg-white/90 !text-primary-600"
+              >
+                {order.orderNumber}
+              </Badge>
+            </div>
             <h1 className="mt-1 text-2xl font-bold">Tracking Your Order</h1>
-            <p className="mt-1 text-sm text-white/70">Estimated: 15-20 minutes</p>
+            <p className="mt-1 text-sm text-white/70">
+              Updated {formatTime(order.updatedAt)}
+            </p>
           </div>
           <div className="rounded-xl bg-white/20 p-3 text-center backdrop-blur-sm">
-            <p className="text-2xl font-bold">~15</p>
+            <p className="text-2xl font-bold">
+              {order.status === 'preparing'
+                ? '~15'
+                : order.status === 'ready'
+                ? '~5'
+                : isCancelled
+                ? '0'
+                : '~10'}
+            </p>
             <p className="text-xs text-white/70">mins</p>
           </div>
         </div>
       </Card>
 
-      {/* Timeline */}
+      {/* Order Progress */}
       <Card>
-        <h3 className="mb-6 font-semibold text-neutral-900 dark:text-white">Order Progress</h3>
-        <Timeline steps={steps} />
+        <div className="mb-6 flex items-center justify-between">
+          <h3 className="font-semibold text-neutral-900 dark:text-white">Order Progress</h3>
+          <Badge
+            variant={
+              order.status === 'completed'
+                ? 'success'
+                : order.status === 'cancelled'
+                ? 'neutral'
+                : 'primary'
+            }
+          >
+            {isCancelled ? 'Cancelled' : ORDER_STATUS_LABELS[order.status]}
+          </Badge>
+        </div>
+
+        {isCancelled ? (
+          <div className="flex flex-col items-center justify-center py-10 text-center">
+            <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-neutral-100 text-2xl dark:bg-neutral-700">
+              ✖️
+            </div>
+            <p className="font-semibold text-neutral-900 dark:text-white">
+              This order was cancelled
+            </p>
+            <p className="mt-1 text-sm text-neutral-500">
+              Please contact the restaurant or place a new order.
+            </p>
+          </div>
+        ) : order.status === 'completed' ? (
+          <div className="flex flex-col items-center justify-center py-10 text-center">
+            <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-2xl dark:bg-green-900/30">
+              ✅
+            </div>
+            <p className="font-semibold text-neutral-900 dark:text-white">
+              Your order has been completed
+            </p>
+            <p className="mt-1 text-sm text-neutral-500">
+              Thank you for dining with us!
+            </p>
+          </div>
+        ) : (
+          <Timeline steps={buildTimelineSteps(order.status)} />
+        )}
       </Card>
 
       {/* Order Details */}
       <Card>
         <h3 className="mb-3 font-semibold text-neutral-900 dark:text-white">Order Items</h3>
         <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-neutral-600 dark:text-neutral-400">Margherita Pizza x2</span>
-            <span className="font-medium">$25.98</span>
+          {order.items.map((item: OrderItem) => (
+            <div key={item.id} className="flex justify-between">
+              <span className="text-neutral-600 dark:text-neutral-400">
+                {item.name} x{item.quantity}
+                {item.specialInstructions && (
+                  <span className="block text-xs text-neutral-400">
+                    Note: {item.specialInstructions}
+                  </span>
+                )}
+              </span>
+              <span className="font-medium">{formatCurrency(item.totalPrice)}</span>
+            </div>
+          ))}
+          <hr className="border-neutral-100 dark:border-neutral-700" />
+          <div className="flex justify-between text-neutral-500">
+            <span>Subtotal</span>
+            <span>{formatCurrency(order.subtotal)}</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-neutral-600 dark:text-neutral-400">Caesar Salad x1</span>
-            <span className="font-medium">$9.99</span>
+          <div className="flex justify-between text-neutral-500">
+            <span>Tax</span>
+            <span>{formatCurrency(order.tax)}</span>
           </div>
+          {order.discount > 0 && (
+            <div className="flex justify-between text-green-600">
+              <span>Discount</span>
+              <span>-{formatCurrency(order.discount)}</span>
+            </div>
+          )}
           <hr className="border-neutral-100 dark:border-neutral-700" />
           <div className="flex justify-between font-semibold">
             <span>Total</span>
-            <span className="text-primary-500">$38.85</span>
+            <span className="text-primary-500">{formatCurrency(order.total)}</span>
           </div>
+          {order.paymentStatus && (
+            <div className="flex justify-between pt-1 text-xs text-neutral-400">
+              <span>Payment</span>
+              <span className="capitalize">{order.paymentStatus.replace('_', ' ')}</span>
+            </div>
+          )}
         </div>
       </Card>
 

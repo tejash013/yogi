@@ -9,7 +9,7 @@ const TAX_RATE = 0.08;
 const DELIVERY_FEE = 2.99;
 
 export default function Cart() {
-  const { items, subtotal, tax, total, removeItem, updateQuantity, clearCart } = useCartStore();
+const { items, subtotal, removeItem, updateQuantity, clearCart } = useCartStore();
   const [couponCode, setCouponCode] = useState('');
   const [couponApplied, setCouponApplied] = useState(false);
   const [couponDiscount, setCouponDiscount] = useState(0);

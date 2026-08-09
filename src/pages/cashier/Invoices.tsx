@@ -1,59 +1,121 @@
-import { Card, Table, Badge, Search, Button } from '@/components/ui';
+import { useMemo, useState } from 'react';
+import { Card, EmptyState, Search } from '@/components/ui';
 import { PageHeader } from '@/components/common';
-import type { Column } from '@/components/ui';
-
-interface InvoiceRow {
-  invoice: string;
-  order: string;
-  customer: string;
-  amount: number;
-  status: string;
-  date: string;
-}
-
-const data: InvoiceRow[] = [
-  { invoice: 'INV-001', order: 'ORD-001', customer: 'John Doe', amount: 38.85, status: 'paid', date: '2025-03-20' },
-  { invoice: 'INV-002', order: 'ORD-002', customer: 'Jane Smith', amount: 41.41, status: 'paid', date: '2025-03-20' },
-  { invoice: 'INV-003', order: 'ORD-003', customer: 'Mike Johnson', amount: 25.89, status: 'pending', date: '2025-03-19' },
-  { invoice: 'INV-004', order: 'ORD-004', customer: 'Sarah Wilson', amount: 52.30, status: 'overdue', date: '2025-03-15' },
-];
-
-const columns: Column<InvoiceRow>[] = [
-  { key: 'invoice', header: 'Invoice' },
-  { key: 'order', header: 'Order' },
-  { key: 'customer', header: 'Customer' },
-  { key: 'amount', header: 'Amount', render: (item) => `$${item.amount.toFixed(2)}` },
-  {
-    key: 'status',
-    header: 'Status',
-    render: (item) => {
-      const variant = item.status === 'paid' ? 'success' : item.status === 'pending' ? 'warning' : 'error';
-      return (
-        <Badge variant={variant} size="sm">
-          {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
-        </Badge>
-      );
-    },
-  },
-  { key: 'date', header: 'Date' },
-];
+import { InvoiceTable, InvoiceView, ReceiptView } from '@/components/cashier';
+import { formatINR, useCashierStore } from '@/store';
+import type { Invoice } from '@/types/cashier';
+import { PAYMENT_METHOD_LABELS } from '@/types/cashier';
+import { restaurantInfo } from '@/data/cashierData';
 
 export default function Invoices() {
+  const invoices = useCashierStore((s) => s.invoices);
+  const [search, setSearch] = useState('');
+  const [viewInvoice, setViewInvoice] = useState<Invoice | null>(null);
+  const [printInvoice, setPrintInvoice] = useState<Invoice | null>(null);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return invoices;
+    return invoices.filter((i) => {
+      const haystack = [i.invoiceNumber, i.orderNumber, i.customer.name]
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [invoices, search]);
+
+  const handleDownload = (inv: Invoice) => {
+    const lines = [
+      restaurantInfo.name,
+      restaurantInfo.address,
+      restaurantInfo.phone,
+      restaurantInfo.email,
+      `GST: ${restaurantInfo.gstNumber}`,
+      '------------------------------------',
+      `Invoice: ${inv.invoiceNumber}`,
+      `Order: ${inv.orderNumber}`,
+      `Customer: ${inv.customer.name}`,
+      `Phone: ${inv.customer.phone}`,
+      `Date: ${new Date(inv.issuedAt).toLocaleString('en-IN')}`,
+      '------------------------------------',
+      ...inv.items.flatMap((item) => [
+        `${item.name} (${item.quantity} x ${formatINR(item.unitPrice)})`,
+        `Total: ${formatINR(item.totalPrice)}`,
+      ]),
+      '------------------------------------',
+      `Subtotal: ${formatINR(inv.subtotal)}`,
+      `Discount: -${formatINR(inv.discount)}`,
+      `Tax: ${formatINR(inv.tax)}`,
+      ...(inv.additionalCharges > 0 ? [`Additional Charges: ${formatINR(inv.additionalCharges)}`] : []),
+      `Grand Total: ${formatINR(inv.grandTotal)}`,
+      `Paid: ${formatINR(inv.paidAmount)}`,
+      `Method: ${PAYMENT_METHOD_LABELS[inv.paymentMethod]}`,
+      '------------------------------------',
+      'Thank you for visiting ' + restaurantInfo.name + '!',
+    ];
+    const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${inv.invoiceNumber}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handlePrint = (inv: Invoice) => {
+    setPrintInvoice(inv);
+    setTimeout(() => window.print(), 200);
+  };
+
   return (
     <div>
       <PageHeader
         title="Invoices"
-        description="View and manage invoices"
+        description="View, print and download invoices"
         actions={
-          <div className="flex items-center gap-3">
-            <Search placeholder="Search invoices..." />
-            <Button variant="outline">Export</Button>
-          </div>
+          <Search
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onClear={() => setSearch('')}
+            placeholder="Search invoices..."
+          />
         }
       />
+
       <Card padding="none">
-        <Table columns={columns} data={data} />
+        {filtered.length === 0 ? (
+          <div className="p-6">
+            <EmptyState title="No invoices found" description="Try a different search term." />
+          </div>
+        ) : (
+<InvoiceTable
+            invoices={filtered}
+            onView={(inv) => setViewInvoice(inv)}
+            onPrint={handlePrint}
+            onDownload={handleDownload}
+          />
+        )}
       </Card>
+
+      {/* View invoice modal */}
+      <InvoiceView
+        invoice={viewInvoice}
+        onClose={() => setViewInvoice(null)}
+        onPrint={(inv) => {
+          setViewInvoice(null);
+          setPrintInvoice(inv);
+          setTimeout(() => window.print(), 200);
+        }}
+      />
+
+      {/* Print area */}
+      {printInvoice && (
+        <div className="hidden print:block">
+          <ReceiptView invoice={printInvoice} />
+        </div>
+      )}
     </div>
   );
 }

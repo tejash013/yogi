@@ -1,0 +1,5 @@
+import { jsxs as _jsxs, jsx as _jsx } from "react/jsx-runtime";
+import { APP_CONFIG } from '@/constants';
+export default function Footer() {
+    return (_jsx("footer", { className: "border-t border-neutral-200 bg-white py-6 dark:border-neutral-700 dark:bg-neutral-900", children: _jsx("div", { className: "mx-auto max-w-7xl px-4 sm:px-6 lg:px-8", children: _jsxs("div", { className: "flex flex-col items-center justify-between gap-4 sm:flex-row", children: [_jsxs("p", { className: "text-sm text-neutral-500", children: ["\u00A9 ", new Date().getFullYear(), " ", APP_CONFIG.COMPANY_NAME, ". All rights reserved."] }), _jsxs("div", { className: "flex items-center gap-6", children: [_jsx("a", { href: "#", className: "text-sm text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300", children: "Privacy Policy" }), _jsx("a", { href: "#", className: "text-sm text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300", children: "Terms of Service" }), _jsx("a", { href: "#", className: "text-sm text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300", children: "Support" })] })] }) }) }));
+}

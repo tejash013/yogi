@@ -46,6 +46,11 @@ export default function OrderCard({
               <span className="font-semibold text-neutral-900 dark:text-white">
                 {orderNumber}
               </span>
+              {isCurrent && (
+                <Badge variant="info" size="sm">
+                  Current
+                </Badge>
+              )}
               <Badge variant={config.variant} size="sm">
                 {config.label}
               </Badge>

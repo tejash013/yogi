@@ -1,0 +1,5 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { cn } from '@/utils';
+export default function Radio({ name, options, value, onChange, label, error, direction = 'vertical', }) {
+    return (_jsxs("div", { className: "w-full", children: [label && (_jsx("p", { className: "mb-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300", children: label })), _jsx("div", { className: cn('flex gap-4', direction === 'vertical' ? 'flex-col' : 'flex-row flex-wrap'), children: options.map((option) => (_jsxs("label", { className: "flex cursor-pointer items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300", children: [_jsx("input", { type: "radio", name: name, value: option.value, checked: value === option.value, onChange: (e) => onChange?.(e.target.value), className: "h-4 w-4 border-neutral-300 text-primary-500 focus:ring-primary-500 dark:border-neutral-600 dark:bg-neutral-800" }), option.label] }, option.value))) }), error && _jsx("p", { className: "mt-1 text-sm text-error", children: error })] }));
+}

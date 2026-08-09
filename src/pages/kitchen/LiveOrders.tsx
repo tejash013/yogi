@@ -1,38 +1,87 @@
-import { Card, Badge, Button } from '@/components/ui';
+import { useMemo } from 'react';
 import { PageHeader } from '@/components/common';
+import { OrderBoard, OrderDetails, KitchenFilters } from '@/components/kitchen';
+import { useKitchenStore, isDelayed } from '@/store';
 
+/**
+ * Live Orders board: multi-column view of NEW / CONFIRMED / PREPARING / READY
+ * orders with working status-transition actions.
+ */
 export default function LiveOrders() {
-  return (
-    <div>
-      <PageHeader title="Live Orders" description="Real-time incoming orders" />
+  const orders = useKitchenStore((s) => s.orders);
+  const statusFilter = useKitchenStore((s) => s.statusFilter);
+  const searchQuery = useKitchenStore((s) => s.searchQuery);
+  const tableFilter = useKitchenStore((s) => s.tableFilter);
+  const orderTypeFilter = useKitchenStore((s) => s.orderTypeFilter);
+  const activeOrderId = useKitchenStore((s) => s.activeOrderId);
+  const setActiveOrder = useKitchenStore((s) => s.setActiveOrder);
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {[
-          { order: 'ORD-008', table: 4, items: ['Margherita Pizza x2', 'Caesar Salad x1'], time: '2 min ago', status: 'pending' },
-          { order: 'ORD-009', table: 7, items: ['Grilled Salmon x1', 'Mango Smoothie x2'], time: '5 min ago', status: 'pending' },
-          { order: 'ORD-010', table: 2, items: ['BBQ Wings x1', 'Chocolate Cake x3'], time: '8 min ago', status: 'pending' },
-        ].map((order, i) => (
-          <Card key={i}>
-            <div className="mb-3 flex items-center justify-between">
-              <div>
-                <span className="font-bold text-neutral-900 dark:text-white">{order.order}</span>
-                <span className="ml-2 text-sm text-neutral-500">Table {order.table}</span>
-              </div>
-              <Badge variant="warning" size="sm">New</Badge>
-            </div>
-            <ul className="mb-3 space-y-1">
-              {order.items.map((item, j) => (
-                <li key={j} className="text-sm text-neutral-600 dark:text-neutral-400">{item}</li>
-              ))}
-            </ul>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-neutral-500">{order.time}</span>
-              <Button size="sm">Accept & Start</Button>
-            </div>
-          </Card>
-        ))}
-      </div>
-    </div>
+  const filtered = useMemo(() => {
+    return orders.filter((o) => {
+      // Only show active statuses on the board
+      if (!['new', 'confirmed', 'preparing', 'ready'].includes(o.status)) return false;
+
+      // Status filter
+      if (statusFilter === 'delayed' && !(o.status === 'preparing' && isDelayed(o))) return false;
+      if (statusFilter === 'high-priority' && o.priority === 'normal') return false;
+      if (['new', 'confirmed', 'preparing', 'ready'].includes(statusFilter) && o.status !== statusFilter) return false;
+
+      // Search
+      if (searchQuery && !o.orderNumber.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+
+      // Table filter
+      if (tableFilter !== 'all' && String(o.tableNumber) !== tableFilter) return false;
+
+      // Order type filter
+      if (orderTypeFilter !== 'all' && o.orderType !== orderTypeFilter) return false;
+
+      return true;
+    });
+  }, [orders, statusFilter, searchQuery, tableFilter, orderTypeFilter]);
+
+  const columns = [
+    {
+      key: 'new',
+      label: 'New',
+      accent: 'bg-yellow-500',
+      orders: filtered.filter((o) => o.status === 'new'),
+    },
+    {
+      key: 'confirmed',
+      label: 'Confirmed',
+      accent: 'bg-blue-500',
+      orders: filtered.filter((o) => o.status === 'confirmed'),
+    },
+    {
+      key: 'preparing',
+      label: 'Preparing',
+      accent: 'bg-primary-500',
+      orders: filtered.filter((o) => o.status === 'preparing'),
+    },
+    {
+      key: 'ready',
+      label: 'Ready',
+      accent: 'bg-green-500',
+      orders: filtered.filter((o) => o.status === 'ready'),
+    },
+  ];
+
+  const activeOrder = activeOrderId
+    ? orders.find((o) => o.id === activeOrderId) ?? null
+    : null;
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title="Live Orders"
+        description="Real-time order board — accept, prepare and complete orders"
+      />
+
+      <KitchenFilters />
+
+      <OrderBoard columns={columns} onOpenOrder={setActiveOrder} />
+
+      <OrderDetails order={activeOrder} onClose={() => setActiveOrder(null)} />
+</div>
   );
 }
-
