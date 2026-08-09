@@ -1,18 +1,6 @@
 import { create } from 'zustand';
+import { authApi } from '@/api/endpoints';
 import type { User, LoginCredentials, RegisterData } from '@/types';
-
-// Demo user for simulation
-const demoUser: User = {
-  id: 'usr-001',
-  email: 'john.doe@example.com',
-  firstName: 'John',
-  lastName: 'Doe',
-  phone: '+1-555-0101',
-  role: 'customer',
-  avatar: '',
-  createdAt: '2025-01-10T08:00:00Z',
-  updatedAt: '2025-03-15T12:00:00Z',
-};
 
 interface AuthState {
   user: User | null;
@@ -40,20 +28,20 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: async (credentials: LoginCredentials) => {
     set({ isLoading: true, error: null });
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1200));
-
-      // Simple validation
       if (!credentials.email || !credentials.password) {
         throw new Error('Please enter email and password');
       }
 
-      // Simulate successful login with demo user
-      const mockToken = 'demo-token-' + Date.now();
+      const response = await authApi.login(credentials);
+      const { user, token, refreshToken } = response.data;
+
+      localStorage.setItem('restaurantos-token', token);
+      localStorage.setItem('restaurantos-refresh-token', refreshToken);
+
       set({
-        user: demoUser,
-        token: mockToken,
-        refreshToken: mockToken + '-refresh',
+        user,
+        token,
+        refreshToken,
         isAuthenticated: true,
         isLoading: false,
         error: null,
@@ -69,10 +57,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   register: async (data: RegisterData) => {
     set({ isLoading: true, error: null });
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      if (!data.firstName || !data.email || !data.password) {
+      if (!data.firstName || !data.lastName || !data.email || !data.password || !data.confirmPassword) {
         throw new Error('Please fill in all required fields');
       }
       if (data.password !== data.confirmPassword) {
@@ -82,17 +67,31 @@ export const useAuthStore = create<AuthState>((set) => ({
         throw new Error('Password must be at least 6 characters');
       }
 
-      // Registration success (navigates to OTP verification afterward)
-      set({ isLoading: false, error: null });
+      const response = await authApi.register(data);
+      const { user, token, refreshToken } = response.data;
+
+      localStorage.setItem('restaurantos-token', token);
+      localStorage.setItem('restaurantos-refresh-token', refreshToken);
+
+      set({
+        user,
+        token,
+        refreshToken,
+        isAuthenticated: true,
+        isLoading: false,
+        error: null,
+      });
     } catch (error) {
       set({
         isLoading: false,
-        error: error instanceof Error ? error.message : 'Registration failed',
+        error: error instanceof Error ? error.message : 'Registration failed. Please try again.',
       });
     }
   },
 
   logout: () => {
+    localStorage.removeItem('restaurantos-token');
+    localStorage.removeItem('restaurantos-refresh-token');
     set({
       user: null,
       token: null,

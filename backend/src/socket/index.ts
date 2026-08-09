@@ -1,7 +1,15 @@
-import type { Server as SocketIOServer, Socket } from 'socket.io';
+import { Server as SocketIOServer } from 'socket.io';
+import type { Server as HttpServer } from 'http';
 
-export function attachSocketHandlers(io: SocketIOServer) {
-  io.on('connection', (socket: Socket) => {
+export function attachSocketHandlers(server: HttpServer) {
+  const io = new SocketIOServer(server, {
+    cors: {
+      origin: true,
+      methods: ['GET', 'POST'],
+    },
+  });
+
+  io.on('connection', (socket) => {
     socket.emit('connected', { ok: true });
 
     socket.on('disconnect', () => {
