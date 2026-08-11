@@ -13,7 +13,7 @@ import SplashScreen from '@/pages/SplashScreen';
 import WelcomeScreen from '@/pages/WelcomeScreen';
 
 // Auth Pages
-import { Login, Register, ForgotPassword, OTPVerification } from '@/pages/auth';
+import { Login, Register, ForgotPassword } from '@/pages/auth';
 
 // Customer Pages
 import {
@@ -96,7 +96,6 @@ const router = createBrowserRouter([
       { path: 'login', element: <Login /> },
       { path: 'register', element: <Register /> },
       { path: 'forgot-password', element: <ForgotPassword /> },
-      { path: 'otp-verification', element: <OTPVerification /> },
     ],
   },
 

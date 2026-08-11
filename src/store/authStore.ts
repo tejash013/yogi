@@ -47,9 +47,15 @@ export const useAuthStore = create<AuthState>((set) => ({
         error: null,
       });
     } catch (error) {
+      const apiMessage =
+        typeof error === 'object' && error !== null && 'response' in error
+          ? (error as any).response?.data?.message
+          : undefined;
+      const message = apiMessage || (error instanceof Error ? error.message : 'Login failed. Please try again.');
+
       set({
         isLoading: false,
-        error: error instanceof Error ? error.message : 'Login failed. Please try again.',
+        error: message,
       });
     }
   },
@@ -82,10 +88,13 @@ export const useAuthStore = create<AuthState>((set) => ({
         error: null,
       });
     } catch (error) {
-      set({
-        isLoading: false,
-        error: error instanceof Error ? error.message : 'Registration failed. Please try again.',
-      });
+      const apiMessage =
+        typeof error === 'object' && error !== null && 'response' in error
+          ? (error as any).response?.data?.message
+          : undefined;
+      const message = apiMessage || (error instanceof Error ? error.message : 'Registration failed. Please try again.');
+
+      set({ isLoading: false, error: message });
     }
   },
 

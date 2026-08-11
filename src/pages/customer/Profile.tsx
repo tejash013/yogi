@@ -1,23 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Card } from '@/components/ui';
 import { ROUTES } from '@/constants';
+import { useAuthStore } from '@/store';
 
-interface ProfileData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  birthday: string;
-  membership: string;
-  rewardPoints: number;
-  walletBalance: number;
-  totalOrders: number;
-  favoriteCount: number;
-  savedCoupons: number;
-}
-
-const profileData: ProfileData = {
+const defaultProfile = {
   firstName: 'John',
   lastName: 'Doe',
   email: 'john.doe@example.com',
@@ -25,7 +12,7 @@ const profileData: ProfileData = {
   birthday: '1990-06-15',
   membership: 'Gold',
   rewardPoints: 1250,
-  walletBalance: 25.50,
+  walletBalance: 25.5,
   totalOrders: 47,
   favoriteCount: 12,
   savedCoupons: 5,
@@ -33,6 +20,31 @@ const profileData: ProfileData = {
 
 export default function CustomerProfile() {
   const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
+
+  useEffect(() => {
+    if (!user) {
+      navigate(ROUTES.AUTH.LOGIN);
+    }
+  }, [user, navigate]);
+
+  const profileData = user
+    ? {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        phone: user.phone,
+        birthday: user.createdAt ? user.createdAt.slice(0, 10) : 'N/A',
+        membership: 'Gold',
+        rewardPoints: 1250,
+        walletBalance: 25.5,
+        totalOrders: 47,
+        favoriteCount: 12,
+        savedCoupons: 5,
+      }
+    : defaultProfile;
+
   const [isEditing, setIsEditing] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState(true);
@@ -45,7 +57,18 @@ export default function CustomerProfile() {
     birthday: profileData.birthday,
   });
 
+  useEffect(() => {
+    setForm({
+      firstName: profileData.firstName,
+      lastName: profileData.lastName,
+      email: profileData.email,
+      phone: profileData.phone,
+      birthday: profileData.birthday,
+    });
+  }, [profileData.firstName, profileData.lastName, profileData.email, profileData.phone, profileData.birthday]);
+
   const handleLogout = () => {
+    logout();
     navigate(ROUTES.AUTH.LOGIN);
   };
 

@@ -11,7 +11,7 @@ import OwnerLayout from '@/layouts/OwnerLayout';
 import SplashScreen from '@/pages/SplashScreen';
 import WelcomeScreen from '@/pages/WelcomeScreen';
 // Auth Pages
-import { Login, Register, ForgotPassword, OTPVerification } from '@/pages/auth';
+import { Login, Register, ForgotPassword } from '@/pages/auth';
 // Customer Pages
 import { CustomerHome, Menu, FoodDetails, Cart, Checkout, OrderSuccess, OrderTracking, MyOrders, CustomerProfile, Favorites, Rewards, Coupons, Feedback, } from '@/pages/customer';
 // Admin Pages
@@ -43,7 +43,6 @@ const router = createBrowserRouter([
             { path: 'login', element: _jsx(Login, {}) },
             { path: 'register', element: _jsx(Register, {}) },
             { path: 'forgot-password', element: _jsx(ForgotPassword, {}) },
-            { path: 'otp-verification', element: _jsx(OTPVerification, {}) },
         ],
     },
     // Customer routes

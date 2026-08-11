@@ -14,14 +14,15 @@ const port = Number(process.env.PORT ?? 3000);
 async function startServer() {
   try {
     if (!process.env.MONGODB_URI) {
-      console.warn('⚠️ MONGODB_URI is not defined. Database checks will fail until this is set.');
-    } else {
-      console.log('🔄 Connecting to MongoDB Atlas...');
-      await connectDatabase();
-      console.log('✅ Successfully connected to MongoDB Atlas');
+      throw new Error('MONGODB_URI is not defined. Database checks will fail until this is set.');
     }
+
+    console.log('🔄 Connecting to MongoDB Atlas...');
+    await connectDatabase();
+    console.log('✅ Successfully connected to MongoDB Atlas');
   } catch (error) {
     console.error('❌ MongoDB connection error:', error);
+    process.exit(1);
   }
 
   const server = http.createServer(app);

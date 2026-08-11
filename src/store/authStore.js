@@ -1,16 +1,6 @@
 import { create } from 'zustand';
-// Demo user for simulation
-const demoUser = {
-    id: 'usr-001',
-    email: 'john.doe@example.com',
-    firstName: 'John',
-    lastName: 'Doe',
-    phone: '+1-555-0101',
-    role: 'customer',
-    avatar: '',
-    createdAt: '2025-01-10T08:00:00Z',
-    updatedAt: '2025-03-15T12:00:00Z',
-};
+import { authApi } from '@/api/endpoints';
+
 export const useAuthStore = create((set) => ({
     user: null,
     token: null,
@@ -18,39 +8,47 @@ export const useAuthStore = create((set) => ({
     isAuthenticated: false,
     isLoading: false,
     error: null,
+
     login: async (credentials) => {
         set({ isLoading: true, error: null });
         try {
-            // Simulate API call delay
-            await new Promise((resolve) => setTimeout(resolve, 1200));
-            // Simple validation
             if (!credentials.email || !credentials.password) {
                 throw new Error('Please enter email and password');
             }
-            // Simulate successful login with demo user
-            const mockToken = 'demo-token-' + Date.now();
+
+            const response = await authApi.login(credentials);
+            const { user, token, refreshToken } = response.data.data;
+
+            localStorage.setItem('restaurantos-token', token);
+            localStorage.setItem('restaurantos-refresh-token', refreshToken);
+
             set({
-                user: demoUser,
-                token: mockToken,
-                refreshToken: mockToken + '-refresh',
+                user,
+                token,
+                refreshToken,
                 isAuthenticated: true,
                 isLoading: false,
                 error: null,
             });
         }
         catch (error) {
+            const apiMessage =
+                error && typeof error === 'object' && 'response' in error
+                    ? error.response?.data?.message
+                    : undefined;
+            const message = apiMessage || (error instanceof Error ? error.message : 'Login failed. Please try again.');
+
             set({
                 isLoading: false,
-                error: error instanceof Error ? error.message : 'Login failed. Please try again.',
+                error: message,
             });
         }
     },
+
     register: async (data) => {
         set({ isLoading: true, error: null });
         try {
-            // Simulate API call delay
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            if (!data.firstName || !data.email || !data.password) {
+            if (!data.firstName || !data.lastName || !data.email || !data.password || !data.confirmPassword) {
                 throw new Error('Please fill in all required fields');
             }
             if (data.password !== data.confirmPassword) {
@@ -59,17 +57,36 @@ export const useAuthStore = create((set) => ({
             if (data.password.length < 6) {
                 throw new Error('Password must be at least 6 characters');
             }
-            // Registration success (navigates to OTP verification afterward)
-            set({ isLoading: false, error: null });
-        }
-        catch (error) {
+
+            const response = await authApi.register(data);
+            const { user, token, refreshToken } = response.data.data;
+
+            localStorage.setItem('restaurantos-token', token);
+            localStorage.setItem('restaurantos-refresh-token', refreshToken);
+
             set({
+                user,
+                token,
+                refreshToken,
+                isAuthenticated: true,
                 isLoading: false,
-                error: error instanceof Error ? error.message : 'Registration failed',
+                error: null,
             });
         }
+        catch (error) {
+            const apiMessage =
+                error && typeof error === 'object' && 'response' in error
+                    ? error.response?.data?.message
+                    : undefined;
+            const message = apiMessage || (error instanceof Error ? error.message : 'Registration failed');
+
+            set({ isLoading: false, error: message });
+        }
     },
+
     logout: () => {
+        localStorage.removeItem('restaurantos-token');
+        localStorage.removeItem('restaurantos-refresh-token');
         set({
             user: null,
             token: null,
@@ -78,9 +95,11 @@ export const useAuthStore = create((set) => ({
             error: null,
         });
     },
+
     setUser: (user) => {
         set({ user, isAuthenticated: true });
     },
+
     clearError: () => {
         set({ error: null });
     },

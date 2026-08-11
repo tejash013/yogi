@@ -64,10 +64,12 @@ export default function Register() {
     if (!validate()) return;
 
     await register(formData);
-    const { error: currentError } = useAuthStore.getState();
+    const { isAuthenticated, error: currentError } = useAuthStore.getState();
 
-    if (!currentError) {
-      navigate(ROUTES.AUTH.OTP_VERIFICATION);
+    if (isAuthenticated && !currentError) {
+      navigate(ROUTES.CUSTOMER.HOME);
+    } else if (!currentError) {
+      navigate(ROUTES.AUTH.LOGIN);
     }
   };
 
