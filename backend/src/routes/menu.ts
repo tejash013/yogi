@@ -1,52 +1,123 @@
 import { Router } from 'express';
-import { menuItems } from '../data/mockData.js';
+import Category from '../models/Category.js';
+import MenuItem from '../models/MenuItem.js';
 import { paginated, success, failure } from '../utils/response.js';
 
 const router = Router();
 
 function paginate(items: any[], page: number, limit: number) {
   const start = (page - 1) * limit;
-  const data = items.slice(start, start + limit);
-  return paginated(data, items.length, page, limit);
+  return paginated(items.slice(start, start + limit), items.length, page, limit);
 }
 
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   const page = Number(req.query.page ?? 1);
   const limit = Number(req.query.limit ?? 10);
-  const q = String(req.query.q ?? '').toLowerCase();
+  const q = String(req.query.q ?? '').trim();
+  const categoryId = String(req.query.category ?? '').trim();
 
-  const filtered = q
-    ? menuItems.filter((item) => item.title.toLowerCase().includes(q) || item.description.toLowerCase().includes(q))
-    : menuItems;
+  const filter: any = { isActive: true };
+  if (q) {
+    filter.$or = [
+      { title: { $regex: q, $options: 'i' } },
+      { description: { $regex: q, $options: 'i' } },
+    ];
+  }
+  if (categoryId) {
+    filter.category = categoryId;
+  }
 
-  return res.json(paginate(filtered, page, limit));
+  const total = await MenuItem.countDocuments(filter).exec();
+  const items = await MenuItem.find(filter)
+    .populate('category', 'name')
+    .skip((page - 1) * limit)
+    .limit(limit)
+    .exec();
+
+  return res.json(paginated(items, total, page, limit));
 });
 
-router.get('/popular', (_req, res) => {
-  return res.json(success(menuItems.filter((item) => item.isPopular), 'Popular menu items loaded'));
+router.get('/popular', async (_req, res) => {
+  const items = await MenuItem.find({ isPopular: true, isActive: true }).populate('category', 'name').exec();
+  return res.json(success(items, 'Popular menu items loaded'));
 });
 
-router.get('/recommended', (_req, res) => {
-  return res.json(success(menuItems.filter((item) => item.isRecommended), 'Recommended items loaded'));
+router.get('/recommended', async (_req, res) => {
+  const items = await MenuItem.find({ isRecommended: true, isActive: true }).populate('category', 'name').exec();
+  return res.json(success(items, 'Recommended items loaded'));
 });
 
-router.get('/search', (req, res) => {
-  const q = String(req.query.q ?? '').toLowerCase();
+router.get('/search', async (req, res) => {
+  const q = String(req.query.q ?? '').trim();
   if (!q) {
     return res.status(400).json(failure('Search query is required'));
   }
 
-  const results = menuItems.filter((item) => item.title.toLowerCase().includes(q) || item.description.toLowerCase().includes(q));
-  return res.json(paginated(results, results.length, 1, results.length));
+  const items = await MenuItem.find({
+    isActive: true,
+    $or: [
+      { title: { $regex: q, $options: 'i' } },
+      { description: { $regex: q, $options: 'i' } },
+    ],
+  })
+    .populate('category', 'name')
+    .exec();
+
+  return res.json(paginated(items, items.length, 1, items.length));
 });
 
-router.get('/:id', (req, res) => {
-  const item = menuItems.find((menu) => menu.id === req.params.id);
+router.get('/:id', async (req, res) => {
+  const item = await MenuItem.findById(req.params.id).populate('category', 'name').exec();
   if (!item) {
     return res.status(404).json(failure('Menu item not found'));
   }
 
   return res.json(success(item, 'Menu item loaded'));
+});
+
+router.post('/', async (req, res) => {
+  const { title, description, category, price, image, isPopular, isRecommended, availableQty, tags } = req.body;
+  if (!title || !category || !price) {
+    return res.status(400).json(failure('Title, category, and price are required'));
+  }
+
+  const categoryExists = await Category.findById(category).exec();
+  if (!categoryExists) {
+    return res.status(404).json(failure('Category not found'));
+  }
+
+  const menuItem = new MenuItem({
+    title,
+    description,
+    category,
+    price,
+    image,
+    isPopular: Boolean(isPopular),
+    isRecommended: Boolean(isRecommended),
+    availableQty: Number(availableQty) || 0,
+    tags: Array.isArray(tags) ? tags : [],
+  });
+  await menuItem.save();
+
+  return res.status(201).json(success(menuItem, 'Menu item created successfully'));
+});
+
+router.patch('/:id', async (req, res) => {
+  const item = await MenuItem.findByIdAndUpdate(req.params.id, req.body, { new: true }).populate('category', 'name').exec();
+  if (!item) {
+    return res.status(404).json(failure('Menu item not found'));
+  }
+
+  return res.json(success(item, 'Menu item updated successfully'));
+});
+
+router.delete('/:id', async (req, res) => {
+  const item = await MenuItem.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true }).exec();
+  if (!item) {
+    return res.status(404).json(failure('Menu item not found'));
+  }
+
+  return res.json(success(item, 'Menu item deactivated successfully'));
 });
 
 export default router;

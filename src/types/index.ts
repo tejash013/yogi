@@ -273,5 +273,7 @@ export interface PaginationParams {
   limit?: number;
   sort?: string;
   order?: 'asc' | 'desc';
+  q?: string;
+  [key: string]: unknown;
 }
 

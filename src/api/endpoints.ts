@@ -109,6 +109,15 @@ export const employeesApi = {
 
   getById: (id: string) =>
     apiClient.get<ApiResponse<Employee>>(`/api/employees/${id}`),
+
+  create: (employee: Partial<Employee>) =>
+    apiClient.post<ApiResponse<Employee>>('/api/employees', employee),
+
+  update: (id: string, payload: Partial<Employee>) =>
+    apiClient.patch<ApiResponse<Employee>>(`/api/employees/${id}`, payload),
+
+  deactivate: (id: string) =>
+    apiClient.delete<ApiResponse<Employee>>(`/api/employees/${id}`),
 };
 
 // Inventory API
@@ -118,6 +127,15 @@ export const inventoryApi = {
 
   getById: (id: string) =>
     apiClient.get<ApiResponse<InventoryItem>>(`/api/inventory/${id}`),
+
+  create: (item: Partial<InventoryItem>) =>
+    apiClient.post<ApiResponse<InventoryItem>>('/api/inventory', item),
+
+  update: (id: string, payload: Partial<InventoryItem>) =>
+    apiClient.patch<ApiResponse<InventoryItem>>(`/api/inventory/${id}`, payload),
+
+  deactivate: (id: string) =>
+    apiClient.delete<ApiResponse<InventoryItem>>(`/api/inventory/${id}`),
 };
 
 // Invoices API

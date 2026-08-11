@@ -1,15 +1,34 @@
 import { Router } from 'express';
-import { tables } from '../data/mockData.js';
-import { success, failure } from '../utils/response.js';
+import Table from '../models/Table.js';
+import { paginated, success, failure } from '../utils/response.js';
 
 const router = Router();
 
-router.get('/', (_req, res) => {
-  return res.json(success(tables, 'Tables loaded'));
+function paginate(items: any[], page: number, limit: number) {
+  const start = (page - 1) * limit;
+  return paginated(items.slice(start, start + limit), items.length, page, limit);
+}
+
+router.get('/', async (req, res) => {
+  const page = Number(req.query.page ?? 1);
+  const limit = Number(req.query.limit ?? 20);
+  const status = String(req.query.status ?? '').trim();
+
+  const filter: any = {};
+  if (status) filter.status = status;
+
+  const total = await Table.countDocuments(filter).exec();
+  const tables = await Table.find(filter)
+    .sort({ label: 1 })
+    .skip((page - 1) * limit)
+    .limit(limit)
+    .exec();
+
+  return res.json(paginate(tables, page, limit));
 });
 
-router.get('/:id', (req, res) => {
-  const table = tables.find((item) => item.id === req.params.id);
+router.get('/:id', async (req, res) => {
+  const table = await Table.findById(req.params.id).exec();
   if (!table) {
     return res.status(404).json(failure('Table not found'));
   }
@@ -17,14 +36,54 @@ router.get('/:id', (req, res) => {
   return res.json(success(table, 'Table loaded'));
 });
 
-router.patch('/:id/status', (req, res) => {
-  const table = tables.find((item) => item.id === req.params.id);
+router.post('/', async (req, res) => {
+  const { label, status, capacity, location, notes } = req.body;
+  if (!label || !capacity) {
+    return res.status(400).json(failure('Label and capacity are required'));
+  }
+
+  const table = new Table({
+    label,
+    status: status || 'available',
+    capacity,
+    location,
+    notes,
+  });
+  await table.save();
+
+  return res.status(201).json(success(table, 'Table created successfully'));
+});
+
+router.patch('/:id', async (req, res) => {
+  const table = await Table.findByIdAndUpdate(req.params.id, req.body, { new: true }).exec();
   if (!table) {
     return res.status(404).json(failure('Table not found'));
   }
 
-  table.status = req.body.status ?? table.status;
-  return res.json(success(table, 'Table status updated'));
+  return res.json(success(table, 'Table updated successfully'));
+});
+
+router.patch('/:id/status', async (req, res) => {
+  const { status } = req.body;
+  if (!status) {
+    return res.status(400).json(failure('Status is required'));
+  }
+
+  const table = await Table.findByIdAndUpdate(req.params.id, { status }, { new: true }).exec();
+  if (!table) {
+    return res.status(404).json(failure('Table not found'));
+  }
+
+  return res.json(success(table, 'Table status updated successfully'));
+});
+
+router.delete('/:id', async (req, res) => {
+  const table = await Table.findByIdAndDelete(req.params.id).exec();
+  if (!table) {
+    return res.status(404).json(failure('Table not found'));
+  }
+
+  return res.json(success(table, 'Table deleted successfully'));
 });
 
 export default router;

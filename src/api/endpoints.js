@@ -43,11 +43,17 @@ export const tablesApi = {
 export const employeesApi = {
     getAll: (params) => apiClient.get('/api/employees', { params }),
     getById: (id) => apiClient.get(`/api/employees/${id}`),
+    create: (employee) => apiClient.post('/api/employees', employee),
+    update: (id, payload) => apiClient.patch(`/api/employees/${id}`, payload),
+    deactivate: (id) => apiClient.delete(`/api/employees/${id}`),
 };
 // Inventory API
 export const inventoryApi = {
     getAll: (params) => apiClient.get('/api/inventory', { params }),
     getById: (id) => apiClient.get(`/api/inventory/${id}`),
+    create: (item) => apiClient.post('/api/inventory', item),
+    update: (id, payload) => apiClient.patch(`/api/inventory/${id}`, payload),
+    deactivate: (id) => apiClient.delete(`/api/inventory/${id}`),
 };
 // Invoices API
 export const invoicesApi = {

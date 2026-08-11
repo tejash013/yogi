@@ -33,7 +33,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
 
       const response = await authApi.login(credentials);
-      const { user, token, refreshToken } = response.data;
+      const { user, token, refreshToken } = response.data.data;
 
       localStorage.setItem('restaurantos-token', token);
       localStorage.setItem('restaurantos-refresh-token', refreshToken);
@@ -68,7 +68,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
 
       const response = await authApi.register(data);
-      const { user, token, refreshToken } = response.data;
+      const { user, token, refreshToken } = response.data.data;
 
       localStorage.setItem('restaurantos-token', token);
       localStorage.setItem('restaurantos-refresh-token', refreshToken);
