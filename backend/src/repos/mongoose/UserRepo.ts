@@ -1,0 +1,25 @@
+import User from '../../models/User.js';
+import type { IUserRepo } from '../interfaces.js';
+
+class UserRepo implements IUserRepo {
+  async findByEmail(email: string) {
+    console.log('UserRepo.findByEmail', email);
+    return User.findOne({ email }).exec();
+  }
+
+  async create(data: any) {
+    const u = new User(data);
+    await u.save();
+    return u;
+  }
+
+  async findById(id: string) {
+    return User.findById(id).exec();
+  }
+
+  async update(id: string, update: any) {
+    return User.findByIdAndUpdate(id, update, { new: true }).exec();
+  }
+}
+
+export default new UserRepo();

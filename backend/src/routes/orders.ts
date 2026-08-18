@@ -1,9 +1,10 @@
 import { Router } from 'express';
 import Order from '../models/Order.js';
-import User from '../models/User.js';
+import { userRepo, orderRepo } from '../repos/index.js';
 import Table from '../models/Table.js';
 import MenuItem from '../models/MenuItem.js';
 import { paginated, success, failure } from '../utils/response.js';
+import { getIO } from '../socket/socketServer.js';
 
 const router = Router();
 
@@ -22,17 +23,8 @@ router.get('/', async (req, res) => {
   if (status) filter.status = status;
   if (userId) filter.user = userId;
 
-  const total = await Order.countDocuments(filter).exec();
-  const orders = await Order.find(filter)
-    .populate('user', 'firstName lastName email')
-    .populate('table', 'label status')
-    .populate('items.menuItem', 'title price image')
-    .sort({ createdAt: -1 })
-    .skip((page - 1) * limit)
-    .limit(limit)
-    .exec();
-
-  return res.json(paginate(orders, page, limit));
+  const { items, total } = await orderRepo.findPaginated(filter, page, limit, { createdAt: -1 });
+  return res.json(paginated(items, total, page, limit));
 });
 
 router.get('/my-orders', async (req, res) => {
@@ -41,20 +33,12 @@ router.get('/my-orders', async (req, res) => {
     return res.status(400).json(failure('userId query parameter is required'));
   }
 
-  const orders = await Order.find({ user: userId })
-    .populate('table', 'label status')
-    .populate('items.menuItem', 'title price image')
-    .exec();
-
+  const orders = await orderRepo.findByUser(userId);
   return res.json(success(orders, 'User orders loaded'));
 });
 
 router.get('/:id', async (req, res) => {
-  const order = await Order.findById(req.params.id)
-    .populate('user', 'firstName lastName email')
-    .populate('table', 'label status')
-    .populate('items.menuItem', 'title price image')
-    .exec();
+  const order = await orderRepo.findById(req.params.id);
 
   if (!order) {
     return res.status(404).json(failure('Order not found'));
@@ -69,16 +53,23 @@ router.patch('/:id/status', async (req, res) => {
     return res.status(400).json(failure('Status is required'));
   }
 
-  const order = await Order.findByIdAndUpdate(req.params.id, { status }, { new: true }).exec();
+  const order = await orderRepo.updateById(req.params.id, { status });
   if (!order) {
     return res.status(404).json(failure('Order not found'));
+  }
+
+  try {
+    const io = getIO();
+    io.emit('order:status:update', { id: order.id, status: order.status });
+  } catch (err) {
+    // socket not available — continue
   }
 
   return res.json(success(order, 'Order status updated'));
 });
 
 router.get('/:id/track', async (req, res) => {
-  const order = await Order.findById(req.params.id).exec();
+  const order = await orderRepo.findById(req.params.id);
   if (!order) {
     return res.status(404).json(failure('Order not found'));
   }
@@ -101,7 +92,7 @@ router.post('/', async (req, res) => {
     return res.status(400).json(failure('userId and items are required'));
   }
 
-  const user = await User.findById(userId).exec();
+  const user = await userRepo.findById(userId);
   if (!user) {
     return res.status(404).json(failure('User not found'));
   }
@@ -131,7 +122,7 @@ router.post('/', async (req, res) => {
   const taxes = Number((subtotal * 0.08).toFixed(2));
   const total = Number((subtotal + taxes).toFixed(2));
 
-  const order = new Order({
+  const order = await orderRepo.create({
     user: userId,
     table: tableId,
     items,
@@ -142,8 +133,13 @@ router.post('/', async (req, res) => {
     total,
     notes,
   });
+  try {
+    const io = getIO();
+    io.emit('order:created', { id: order.id, user: order.user, total: order.total });
+  } catch (err) {
+    // socket not available — continue
+  }
 
-  await order.save();
   return res.status(201).json(success(order, 'Order created successfully'));
 });
 

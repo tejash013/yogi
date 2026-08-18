@@ -14,12 +14,29 @@ import {
   tablesRouter,
 } from './routes/index.js';
 import { checkDbConnection } from './db.js';
+import { errorHandler } from './middleware/errorHandler.js';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import { createRequire } from 'module';
+
+// pino-http is a CommonJS module; use createRequire to import it in ESM runtime
+const require = createRequire(import.meta.url);
+const pinoHttp = require('pino-http') as any;
+const logger = pinoHttp();
 
 export const app = express();
-
+// Security and parsing middleware
+app.use(logger);
+app.use(helmet());
 app.use(cors({ origin: true }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+  })
+);
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
@@ -53,3 +70,6 @@ app.use('/api/schema', schemaRouter);
 app.use((_req, res) => {
   res.status(404).json({ success: false, data: null, message: 'Endpoint not found' });
 });
+
+// Central error handler
+app.use(errorHandler);

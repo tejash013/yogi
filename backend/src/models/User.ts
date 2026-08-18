@@ -15,6 +15,8 @@ const userSchema = new Schema(
     status: { type: String, enum: ['active', 'inactive', 'suspended'], default: 'active' },
     branch: { type: String, trim: true },
     avatar: { type: String },
+    resetToken: { type: String },
+    resetTokenExpires: { type: Date },
     lastLoginAt: { type: Date },
   },
   { timestamps: true }

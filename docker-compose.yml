@@ -1,0 +1,29 @@
+version: '3.8'
+services:
+  mongo:
+    image: mongo:6.0
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_DATABASE: restaurantos
+    volumes:
+      - mongo-data:/data/db
+    ports:
+      - '27017:27017'
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      - MONGODB_URI=mongodb://mongo:27017
+      - MONGODB_DATABASE=restaurantos
+      - ACCESS_TOKEN_SECRET=change_me_access
+      - REFRESH_TOKEN_SECRET=change_me_refresh
+    ports:
+      - '3000:3000'
+    depends_on:
+      - mongo
+
+volumes:
+  mongo-data:

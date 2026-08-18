@@ -2,15 +2,22 @@ import { Router } from 'express';
 import Category from '../models/Category.js';
 import MenuItem from '../models/MenuItem.js';
 import { paginated, success, failure } from '../utils/response.js';
+import { z } from 'zod';
+import { validateBody, validateParams, validateQuery } from '../middleware/validate.js';
 
 const router = Router();
+
+const idParamSchema = z.object({ id: z.string().regex(/^[a-fA-F0-9]{24}$/, 'Invalid id') });
+const listQuerySchema = z.object({ page: z.preprocess((v) => Number(v), z.number().int().positive().default(1)), limit: z.preprocess((v) => Number(v), z.number().int().positive().default(10)), q: z.string().optional(), category: z.string().optional() });
+const menuCreateSchema = z.object({ title: z.string().min(1), description: z.string().optional(), category: z.string().regex(/^[a-fA-F0-9]{24}$/, 'Invalid category id'), price: z.number().nonnegative(), image: z.string().optional(), isPopular: z.boolean().optional(), isRecommended: z.boolean().optional(), availableQty: z.preprocess((v) => Number(v), z.number().int().nonnegative().optional()), tags: z.array(z.string()).optional() });
+const menuUpdateSchema = z.object({ title: z.string().min(1).optional(), description: z.string().optional(), category: z.string().regex(/^[a-fA-F0-9]{24}$/, 'Invalid category id').optional(), price: z.number().nonnegative().optional(), image: z.string().optional(), isPopular: z.boolean().optional(), isRecommended: z.boolean().optional(), availableQty: z.preprocess((v) => Number(v), z.number().int().nonnegative().optional()), tags: z.array(z.string()).optional() });
 
 function paginate(items: any[], page: number, limit: number) {
   const start = (page - 1) * limit;
   return paginated(items.slice(start, start + limit), items.length, page, limit);
 }
 
-router.get('/', async (req, res) => {
+router.get('/', validateQuery(listQuerySchema), async (req, res) => {
   const page = Number(req.query.page ?? 1);
   const limit = Number(req.query.limit ?? 10);
   const q = String(req.query.q ?? '').trim();
@@ -47,12 +54,8 @@ router.get('/recommended', async (_req, res) => {
   return res.json(success(items, 'Recommended items loaded'));
 });
 
-router.get('/search', async (req, res) => {
+router.get('/search', validateQuery(z.object({ q: z.string().min(1) })), async (req, res) => {
   const q = String(req.query.q ?? '').trim();
-  if (!q) {
-    return res.status(400).json(failure('Search query is required'));
-  }
-
   const items = await MenuItem.find({
     isActive: true,
     $or: [
@@ -66,7 +69,7 @@ router.get('/search', async (req, res) => {
   return res.json(paginated(items, items.length, 1, items.length));
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', validateParams(idParamSchema), async (req, res) => {
   const item = await MenuItem.findById(req.params.id).populate('category', 'name').exec();
   if (!item) {
     return res.status(404).json(failure('Menu item not found'));
@@ -75,11 +78,8 @@ router.get('/:id', async (req, res) => {
   return res.json(success(item, 'Menu item loaded'));
 });
 
-router.post('/', async (req, res) => {
+router.post('/', validateBody(menuCreateSchema), async (req, res) => {
   const { title, description, category, price, image, isPopular, isRecommended, availableQty, tags } = req.body;
-  if (!title || !category || !price) {
-    return res.status(400).json(failure('Title, category, and price are required'));
-  }
 
   const categoryExists = await Category.findById(category).exec();
   if (!categoryExists) {
@@ -102,7 +102,7 @@ router.post('/', async (req, res) => {
   return res.status(201).json(success(menuItem, 'Menu item created successfully'));
 });
 
-router.patch('/:id', async (req, res) => {
+router.patch('/:id', validateParams(idParamSchema), validateBody(menuUpdateSchema), async (req, res) => {
   const item = await MenuItem.findByIdAndUpdate(req.params.id, req.body, { new: true }).populate('category', 'name').exec();
   if (!item) {
     return res.status(404).json(failure('Menu item not found'));
@@ -111,7 +111,7 @@ router.patch('/:id', async (req, res) => {
   return res.json(success(item, 'Menu item updated successfully'));
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', validateParams(idParamSchema), async (req, res) => {
   const item = await MenuItem.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true }).exec();
   if (!item) {
     return res.status(404).json(failure('Menu item not found'));

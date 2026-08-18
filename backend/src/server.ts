@@ -3,6 +3,7 @@ import http from 'http';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
 
+// Load .env from backend folder if present, otherwise fallback to process env
 dotenv.config({ path: resolve(dirname(fileURLToPath(import.meta.url)), '../atlas-credentials.env') });
 
 import { app } from './app.js';

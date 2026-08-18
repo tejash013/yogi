@@ -1,5 +1,6 @@
 import { Server as SocketIOServer } from 'socket.io';
 import type { Server as HttpServer } from 'http';
+import { setIO } from './socketServer.js';
 
 export function attachSocketHandlers(server: HttpServer) {
   const io = new SocketIOServer(server, {
@@ -9,11 +10,21 @@ export function attachSocketHandlers(server: HttpServer) {
     },
   });
 
+  setIO(io);
+
   io.on('connection', (socket) => {
     socket.emit('connected', { ok: true });
 
+    socket.on('join', (room) => {
+      if (room) socket.join(room);
+    });
+
+    socket.on('leave', (room) => {
+      if (room) socket.leave(room);
+    });
+
     socket.on('disconnect', () => {
-      // Socket disconnect handling can be added here later.
+      // handle cleanup if needed
     });
   });
 }

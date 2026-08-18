@@ -8,6 +8,7 @@
     "dev:backend": "cross-env PORT=3000 npm --prefix backend run dev",
     "dev:all": "concurrently -n FRONTEND,BACKEND -c cyan,green \"npm run dev\" \"npm run dev:backend\"",
     "build": "tsc -b && vite build",
+    "docker:up": "docker-compose up --build",
     "lint": "oxlint",
     "preview": "vite preview"
   },
