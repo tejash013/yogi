@@ -6,7 +6,10 @@ import { useAuthStore } from '@/store';
 
 export default function Login() {
   const navigate = useNavigate();
-  const { isLoading, error, login, clearError } = useAuthStore();
+  const isLoading = useAuthStore((state) => state.isLoading);
+  const error = useAuthStore((state) => state.error);
+  const login = useAuthStore((state) => state.login);
+  const clearError = useAuthStore((state) => state.clearError);
 
   const [loginMethod, setLoginMethod] = useState<'email' | 'mobile'>('email');
   const [email, setEmail] = useState('');
@@ -61,7 +64,20 @@ export default function Login() {
 
     const { isAuthenticated } = useAuthStore.getState();
     if (isAuthenticated) {
-      navigate(ROUTES.CUSTOMER.HOME);
+      const role = useAuthStore.getState().user?.role;
+      if (role === 'owner') {
+        navigate(ROUTES.OWNER.DASHBOARD);
+      } else if (role === 'admin') {
+        navigate(ROUTES.ADMIN.DASHBOARD);
+      } else if (role === 'manager') {
+        navigate(ROUTES.ADMIN.DASHBOARD);
+      } else if (role === 'chef') {
+        navigate(ROUTES.KITCHEN.DASHBOARD);
+      } else if (role === 'cashier') {
+        navigate(ROUTES.CASHIER.DASHBOARD);
+      } else {
+        navigate(ROUTES.CUSTOMER.HOME);
+      }
     }
   };
 

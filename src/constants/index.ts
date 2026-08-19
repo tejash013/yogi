@@ -37,6 +37,7 @@ export const ROUTES = {
     ORDERS: '/admin/orders',
     CUSTOMERS: '/admin/customers',
     EMPLOYEES: '/admin/employees',
+    USERS: '/admin/users',
     TABLES: '/admin/tables',
     INVENTORY: '/admin/inventory',
     REPORTS: '/admin/reports',
@@ -195,10 +196,20 @@ export const ORDER_STATUS_COLORS: Record<string, string> = {
 // User Role Labels
 export const USER_ROLE_LABELS: Record<string, string> = {
   customer: 'Customer',
-  admin: 'Administrator',
-  kitchen: 'Kitchen Staff',
+  admin: 'Super Admin',
+  chef: 'Kitchen Staff',
+  manager: 'Manager',
   cashier: 'Cashier',
-  owner: 'Owner',
+  owner: 'Restaurant Owner',
+};
+
+export const ROLE_PERMISSIONS: Record<string, string[]> = {
+  customer: ['menu:read', 'orders:create', 'orders:read:own', 'offers:read'],
+  cashier: ['menu:read', 'orders:read', 'orders:create', 'invoices:read', 'invoices:create', 'invoices:update'],
+  chef: ['menu:read', 'orders:read', 'kitchen:read', 'kitchen:update_status'],
+  manager: ['menu:manage', 'orders:manage', 'kitchen:read', 'inventory:manage', 'employees:manage', 'tables:manage', 'offers:manage', 'reports:read'],
+  owner: ['business:manage', 'users:manage', 'roles:manage', 'reports:read'],
+  admin: ['platform:manage', 'users:manage', 'roles:manage', 'business:manage'],
 };
 
 // Shift Labels

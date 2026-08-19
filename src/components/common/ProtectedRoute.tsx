@@ -13,14 +13,15 @@ export default function ProtectedRoute({
   roles,
   redirectTo = '/auth/login',
 }: ProtectedRouteProps) {
-  const { isAuthenticated, user } = useAuthStore();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const userRole = useAuthStore((state) => state.user?.role);
   const location = useLocation();
 
   if (!isAuthenticated) {
     return <Navigate to={redirectTo} state={{ from: location }} replace />;
   }
 
-  if (roles && user && !roles.includes(user.role)) {
+  if (roles && userRole && !roles.includes(userRole)) {
     return <Navigate to="/error/403" replace />;
   }
 

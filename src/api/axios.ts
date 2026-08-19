@@ -14,11 +14,15 @@ const apiClient: AxiosInstance = axios.create({
   },
 });
 
+function isPublicAuthRequest(url?: string) {
+  return Boolean(url && /^\/api\/auth\/(login|register|refresh|forgot-password|reset-password|verify-otp)$/.test(url));
+}
+
 // Request interceptor
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('restaurantos-token');
-    if (token) {
+    if (token && !isPublicAuthRequest(config.url)) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -36,7 +40,7 @@ apiClient.interceptors.response.use(
       _retry?: boolean;
     };
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isPublicAuthRequest(originalRequest.url)) {
       originalRequest._retry = true;
 
       try {

@@ -20,14 +20,16 @@ const typeColor = {
  * Supports marking individual notifications as read and clearing all.
  */
 export default function NotificationPanel() {
-  const store = useKitchenStore();
+  const notifications = useKitchenStore((state) => state.notifications);
+  const markAllNotificationsRead = useKitchenStore((state) => state.markAllNotificationsRead);
+  const markNotificationRead = useKitchenStore((state) => state.markNotificationRead);
 
   return (
     <div className="absolute right-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-dropdown dark:border-neutral-700 dark:bg-neutral-800">
       <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-3 dark:border-neutral-700">
         <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Notifications</h3>
         <button
-          onClick={store.markAllNotificationsRead}
+          onClick={markAllNotificationsRead}
           className="text-xs font-medium text-primary-500 hover:underline"
         >
           Mark all read
@@ -35,12 +37,12 @@ export default function NotificationPanel() {
       </div>
 
       <div className="max-h-80 overflow-y-auto">
-        {store.notifications.length === 0 ? (
+        {notifications.length === 0 ? (
           <div className="px-4 py-8 text-center text-sm text-neutral-500 dark:text-neutral-400">
             No notifications
           </div>
         ) : (
-          store.notifications.map((n) => (
+          notifications.map((n) => (
             <div
               key={n.id}
               className={`flex gap-3 border-b border-neutral-100 px-4 py-3 dark:border-neutral-700 ${
@@ -61,7 +63,7 @@ export default function NotificationPanel() {
               </div>
               {!n.isRead && (
                 <button
-                  onClick={() => store.markNotificationRead(n.id)}
+                  onClick={() => markNotificationRead(n.id)}
                   className="self-start rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] font-medium text-neutral-500 hover:bg-neutral-200 dark:bg-neutral-700 dark:text-neutral-300"
                 >
                   Read

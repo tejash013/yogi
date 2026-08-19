@@ -6,8 +6,12 @@ import path from 'path';
 export default defineConfig({
     plugins: [react(), tailwindcss()],
     resolve: {
+        extensions: ['.tsx', '.ts', '.jsx', '.js'],
         alias: {
             '@': path.resolve(__dirname, './src'),
         },
+    },
+    build: {
+        chunkSizeWarningLimit: 700,
     },
 });

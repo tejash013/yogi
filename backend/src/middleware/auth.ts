@@ -1,11 +1,17 @@
 import { RequestHandler } from 'express';
 import { verifyAccessToken } from '../utils/jwt.js';
+import { userRepo } from '../repos/index.js';
+import { hasPermission, Permission } from '../auth/permissions.js';
 
 export interface AuthRequest extends Express.Request {
   user?: any;
 }
 
 export const authMiddleware: RequestHandler = (req: any, _res, next) => {
+  return authenticate(req, _res, next);
+};
+
+export const authenticate: RequestHandler = async (req: any, _res, next) => {
   try {
     const auth = req.headers.authorization as string | undefined;
     if (!auth || !auth.startsWith('Bearer ')) {
@@ -13,7 +19,11 @@ export const authMiddleware: RequestHandler = (req: any, _res, next) => {
     }
     const token = auth.split(' ')[1];
     const payload = verifyAccessToken(token);
-    req.user = payload;
+    const user = await userRepo.findById(String(payload.id));
+    if (!user || user.status !== 'active') {
+      return next(Object.assign(new Error('Account is inactive or suspended'), { status: 401 }));
+    }
+    req.user = { id: String(user._id), role: user.role, email: user.email };
     return next();
   } catch (err) {
     return resStatusUnauthorized(next);
@@ -26,11 +36,22 @@ function resStatusUnauthorized(next: any) {
   return next(err);
 }
 
-export function requireRole(role: string) {
+export function requireRole(roles: string | string[]) {
+  const allowedRoles = Array.isArray(roles) ? roles : [roles];
   return (req: any, _res: any, next: any) => {
     if (!req.user) return next(Object.assign(new Error('Unauthorized'), { status: 401 }));
-    if (req.user.role !== role && req.user.role !== 'admin') {
+    if (!allowedRoles.includes(req.user.role)) {
       return next(Object.assign(new Error('Forbidden'), { status: 403 }));
+    }
+    return next();
+  };
+}
+
+export function requirePermission(permission: Permission) {
+  return (req: any, _res: any, next: any) => {
+    if (!req.user) return next(Object.assign(new Error('Unauthorized'), { status: 401 }));
+    if (!hasPermission(req.user.role, permission)) {
+      return next(Object.assign(new Error('You do not have permission to perform this action'), { status: 403 }));
     }
     return next();
   };

@@ -17,7 +17,10 @@ type ValidationErrors = Partial<Record<keyof RegisterForm, string>>;
 
 export default function Register() {
   const navigate = useNavigate();
-  const { register, isLoading, error, clearError } = useAuthStore();
+  const register = useAuthStore((state) => state.register);
+  const isLoading = useAuthStore((state) => state.isLoading);
+  const error = useAuthStore((state) => state.error);
+  const clearError = useAuthStore((state) => state.clearError);
 
   const [formData, setFormData] = useState<RegisterForm>({
     firstName: '',

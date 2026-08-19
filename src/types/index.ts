@@ -6,12 +6,14 @@ export interface User {
   lastName: string;
   phone: string;
   role: UserRole;
+  status?: 'active' | 'inactive' | 'suspended';
+  branch?: string;
   avatar?: string;
   createdAt: string;
   updatedAt: string;
 }
 
-export type UserRole = 'customer' | 'admin' | 'kitchen' | 'cashier' | 'owner';
+export type UserRole = 'customer' | 'cashier' | 'chef' | 'manager' | 'owner' | 'admin';
 
 // Menu Types
 export interface MenuItem {

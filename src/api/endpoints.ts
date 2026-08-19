@@ -15,6 +15,7 @@ PaginationParams,
   LoginCredentials,
   RegisterData,
   AuthResponse,
+  User,
 } from '@/types';
 
 // Auth API
@@ -118,6 +119,15 @@ export const employeesApi = {
 
   deactivate: (id: string) =>
     apiClient.delete<ApiResponse<Employee>>(`/api/employees/${id}`),
+};
+
+// User access API
+export const usersApi = {
+  getAll: (params?: PaginationParams) =>
+    apiClient.get<PaginatedResponse<User>>('/api/users', { params }),
+
+  updateAccess: (id: string, payload: { role?: User['role']; status?: User['status']; branch?: string }) =>
+    apiClient.patch<ApiResponse<User>>(`/api/users/${id}/access`, payload),
 };
 
 // Inventory API

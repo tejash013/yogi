@@ -69,7 +69,7 @@ const router = createBrowserRouter([
     // Admin routes
     {
         path: '/admin',
-        element: (_jsx(ProtectedRoute, { roles: ['admin'], children: _jsx(AdminLayout, {}) })),
+        element: (_jsx(ProtectedRoute, { roles: ['admin', 'owner', 'manager'], children: _jsx(AdminLayout, {}) })),
         children: [
             { index: true, element: _jsx(Navigate, { to: ROUTES.ADMIN.DASHBOARD, replace: true }) },
             { path: 'dashboard', element: _jsx(AdminDashboard, {}) },
@@ -87,7 +87,7 @@ const router = createBrowserRouter([
     // Kitchen routes
     {
         path: '/kitchen',
-        element: (_jsx(ProtectedRoute, { roles: ['kitchen', 'admin'], children: _jsx(KitchenLayout, {}) })),
+        element: (_jsx(ProtectedRoute, { roles: ['chef', 'admin'], children: _jsx(KitchenLayout, {}) })),
         children: [
             { index: true, element: _jsx(Navigate, { to: ROUTES.KITCHEN.DASHBOARD, replace: true }) },
             { path: 'dashboard', element: _jsx(KitchenDashboard, {}) },

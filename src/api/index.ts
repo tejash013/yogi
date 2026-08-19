@@ -6,6 +6,7 @@ export {
   ordersApi,
   tablesApi,
   employeesApi,
+  usersApi,
   inventoryApi,
   invoicesApi,
   offersApi,

@@ -8,4 +8,5 @@ export { default as AdminTables } from './Tables';
 export { default as AdminInventory } from './Inventory';
 export { default as AdminReports } from './Reports';
 export { default as AdminSettings } from './Settings';
+export { default as AdminUsers } from './Users';
 

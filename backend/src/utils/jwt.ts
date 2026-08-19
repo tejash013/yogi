@@ -2,8 +2,16 @@ import jwt from 'jsonwebtoken';
 
 const ACCESS_EXPIRES = process.env.ACCESS_TOKEN_EXPIRES ?? '15m';
 const REFRESH_EXPIRES = process.env.REFRESH_TOKEN_EXPIRES ?? '7d';
-const ACCESS_SECRET = process.env.ACCESS_TOKEN_SECRET ?? 'dev_access_secret';
-const REFRESH_SECRET = process.env.REFRESH_TOKEN_SECRET ?? 'dev_refresh_secret';
+function getSecret(name: string, developmentFallback: string) {
+  const value = process.env[name];
+  if (process.env.NODE_ENV === 'production' && !value) {
+    throw new Error(`${name} must be configured in production`);
+  }
+  return value ?? developmentFallback;
+}
+
+const ACCESS_SECRET = getSecret('ACCESS_TOKEN_SECRET', 'dev_access_secret');
+const REFRESH_SECRET = getSecret('REFRESH_TOKEN_SECRET', 'dev_refresh_secret');
 
 export function signAccessToken(payload: object) {
   return jwt.sign(payload, ACCESS_SECRET, { expiresIn: ACCESS_EXPIRES });

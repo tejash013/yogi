@@ -23,13 +23,18 @@ const orderTypeLabel: Record<string, string> = {
  * context-aware action buttons depending on the current order status.
  */
 export default function OrderCard({ order, onOpen }: Props) {
-  const store = useKitchenStore();
+  const setActiveOrder = useKitchenStore((state) => state.setActiveOrder);
+  const acceptOrder = useKitchenStore((state) => state.acceptOrder);
+  const rejectOrder = useKitchenStore((state) => state.rejectOrder);
+  const startPreparing = useKitchenStore((state) => state.startPreparing);
+  const markReady = useKitchenStore((state) => state.markReady);
+  const completeOrder = useKitchenStore((state) => state.completeOrder);
   const delayed = isDelayed(order);
   const elapsed = getElapsedMinutes(order);
 
   const openDetails = () => {
     if (onOpen) onOpen(order.id);
-    else store.setActiveOrder(order.id);
+    else setActiveOrder(order.id);
   };
 
   const renderActions = () => {
@@ -41,7 +46,7 @@ export default function OrderCard({ order, onOpen }: Props) {
               size="sm"
               variant="primary"
               className="w-full"
-              onClick={() => store.acceptOrder(order.id)}
+              onClick={() => acceptOrder(order.id)}
             >
               Accept Order
             </Button>
@@ -49,7 +54,7 @@ export default function OrderCard({ order, onOpen }: Props) {
               size="sm"
               variant="danger"
               className="w-full"
-              onClick={() => store.rejectOrder(order.id)}
+              onClick={() => rejectOrder(order.id)}
             >
               Reject
             </Button>
@@ -58,7 +63,7 @@ export default function OrderCard({ order, onOpen }: Props) {
       case 'confirmed':
         return (
           <div className="mt-3">
-            <Button size="sm" variant="secondary" className="w-full" onClick={() => store.startPreparing(order.id)}>
+            <Button size="sm" variant="secondary" className="w-full" onClick={() => startPreparing(order.id)}>
               Start Preparing
             </Button>
           </div>
@@ -66,7 +71,7 @@ export default function OrderCard({ order, onOpen }: Props) {
       case 'preparing':
         return (
           <div className="mt-3">
-            <Button size="sm" variant="primary" className="w-full" onClick={() => store.markReady(order.id)}>
+            <Button size="sm" variant="primary" className="w-full" onClick={() => markReady(order.id)}>
               Mark Ready
             </Button>
           </div>
@@ -74,7 +79,7 @@ export default function OrderCard({ order, onOpen }: Props) {
       case 'ready':
         return (
           <div className="mt-3">
-<Button size="sm" variant="primary" className="w-full" onClick={() => store.completeOrder(order.id)}>
+<Button size="sm" variant="primary" className="w-full" onClick={() => completeOrder(order.id)}>
               Complete
             </Button>
           </div>

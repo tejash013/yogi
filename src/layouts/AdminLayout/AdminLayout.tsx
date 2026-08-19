@@ -4,6 +4,7 @@ import Navbar from '@/components/common/Navbar';
 import Sidebar, { type SidebarItem } from '@/components/common/Sidebar';
 import Logo from '@/components/common/Logo';
 import { ROUTES } from '@/constants';
+import { useAuthStore } from '@/store';
 
 const sidebarItems: SidebarItem[] = [
   {
@@ -62,6 +63,15 @@ const sidebarItems: SidebarItem[] = [
     href: ROUTES.ADMIN.EMPLOYEES,
   },
   {
+    label: 'User Access',
+    icon: (
+      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2m6-6a4 4 0 100-8 4 4 0 000 8zm8-3v6m3-3h-6" />
+      </svg>
+    ),
+    href: ROUTES.ADMIN.USERS,
+  },
+  {
     label: 'Tables',
     icon: (
       <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -102,6 +112,11 @@ const sidebarItems: SidebarItem[] = [
 
 export default function AdminLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const role = useAuthStore((state) => state.user?.role);
+  const visibleSidebarItems = sidebarItems.filter((item) => {
+    if (role === 'manager' && (item.label === 'User Access' || item.label === 'Settings')) return false;
+    return true;
+  });
 
   return (
     <div className="flex min-h-screen flex-col bg-neutral-50 dark:bg-neutral-900">
@@ -120,7 +135,7 @@ export default function AdminLayout() {
       />
       <div className="flex flex-1">
         <Sidebar
-          items={sidebarItems}
+          items={visibleSidebarItems}
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
         />

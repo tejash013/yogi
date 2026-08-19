@@ -3,7 +3,6 @@ import type { IUserRepo } from '../interfaces.js';
 
 class UserRepo implements IUserRepo {
   async findByEmail(email: string) {
-    console.log('UserRepo.findByEmail', email);
     return User.findOne({ email }).exec();
   }
 

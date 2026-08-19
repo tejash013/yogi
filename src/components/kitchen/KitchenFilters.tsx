@@ -40,11 +40,19 @@ export default function KitchenFilters({
   showOrderType = true,
   className,
 }: Props) {
-  const store = useKitchenStore();
+  const orders = useKitchenStore((state) => state.orders);
+  const statusFilter = useKitchenStore((state) => state.statusFilter);
+  const searchQuery = useKitchenStore((state) => state.searchQuery);
+  const tableFilter = useKitchenStore((state) => state.tableFilter);
+  const orderTypeFilter = useKitchenStore((state) => state.orderTypeFilter);
+  const setStatusFilter = useKitchenStore((state) => state.setStatusFilter);
+  const setSearchQuery = useKitchenStore((state) => state.setSearchQuery);
+  const setTableFilter = useKitchenStore((state) => state.setTableFilter);
+  const setOrderTypeFilter = useKitchenStore((state) => state.setOrderTypeFilter);
 
   // Unique table numbers present in the orders.
   const tables = Array.from(
-    new Set(store.orders.map((o) => o.tableNumber).filter((t): t is number => !!t))
+    new Set(orders.map((o) => o.tableNumber).filter((t): t is number => !!t))
   ).sort((a, b) => a - b);
 
   const tableOptions = [
@@ -59,10 +67,10 @@ export default function KitchenFilters({
           {statusOptions.map((opt) => (
             <button
               key={opt.value}
-              onClick={() => store.setStatusFilter(opt.value)}
+              onClick={() => setStatusFilter(opt.value)}
               className={cn(
                 'rounded-full px-3 py-1.5 text-sm font-medium transition-colors',
-                store.statusFilter === opt.value
+                statusFilter === opt.value
                   ? 'bg-primary-500 text-white'
                   : 'bg-white text-neutral-600 hover:bg-neutral-100 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700'
               )}
@@ -76,9 +84,9 @@ export default function KitchenFilters({
       {showSearch && (
         <Search
           placeholder="Search order number..."
-          value={store.searchQuery}
-          onChange={(e) => store.setSearchQuery(e.target.value)}
-          onClear={() => store.setSearchQuery('')}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onClear={() => setSearchQuery('')}
           className="lg:max-w-[220px]"
         />
       )}
@@ -86,8 +94,8 @@ export default function KitchenFilters({
       {showTable && (
         <Select
           options={tableOptions}
-          value={store.tableFilter}
-          onChange={(e) => store.setTableFilter(e.target.value)}
+          value={tableFilter}
+          onChange={(e) => setTableFilter(e.target.value)}
           className="lg:w-40"
         />
       )}
@@ -95,8 +103,8 @@ export default function KitchenFilters({
       {showOrderType && (
         <Select
           options={orderTypeOptions}
-          value={store.orderTypeFilter}
-          onChange={(e) => store.setOrderTypeFilter(e.target.value as OrderTypeFilter)}
+          value={orderTypeFilter}
+          onChange={(e) => setOrderTypeFilter(e.target.value as OrderTypeFilter)}
           className="lg:w-40"
         />
       )}

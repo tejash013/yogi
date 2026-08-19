@@ -19,7 +19,17 @@ const userSchema = new Schema(
     resetTokenExpires: { type: Date },
     lastLoginAt: { type: Date },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      transform: (_doc, ret) => {
+        delete ret.password;
+        delete ret.resetToken;
+        delete ret.resetTokenExpires;
+        return ret;
+      },
+    },
+  }
 );
 
 export default model('User', userSchema);

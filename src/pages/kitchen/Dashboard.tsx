@@ -9,7 +9,6 @@ import {
 } from '@/components/kitchen';
 import {
   useKitchenStore,
-  selectCounts,
   isDelayed,
   getTotalPrepMinutes,
 } from '@/store';
@@ -19,11 +18,16 @@ import { getRelativeTime } from '@/utils';
  * Kitchen dashboard: summary cards, live activity and performance metrics.
  */
 export default function KitchenDashboard() {
-const orders = useKitchenStore((s) => s.orders);
+  const orders = useKitchenStore((s) => s.orders);
   const activeOrderId = useKitchenStore((s) => s.activeOrderId);
   const setActiveOrder = useKitchenStore((s) => s.setActiveOrder);
 
-  const counts = useKitchenStore(selectCounts);
+  const counts = useMemo(() => ({
+    new: orders.filter((o) => o.status === 'new').length,
+    confirmed: orders.filter((o) => o.status === 'confirmed').length,
+    preparing: orders.filter((o) => o.status === 'preparing').length,
+    ready: orders.filter((o) => o.status === 'ready').length,
+  }), [orders]);
 
   const activeOrders = useMemo(
     () =>

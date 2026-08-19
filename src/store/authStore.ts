@@ -17,17 +17,32 @@ interface AuthState {
   clearError: () => void;
 }
 
+function readTokenPayload(token: string): Partial<User> | null {
+  try {
+    const payload = token.split('.')[1];
+    if (!payload) return null;
+    return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+  } catch {
+    return null;
+  }
+}
+
+const storedToken = localStorage.getItem('restaurantos-token');
+const storedPayload = storedToken ? readTokenPayload(storedToken) : null;
+
 export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  token: null,
-  refreshToken: null,
-  isAuthenticated: false,
+  user: storedPayload?.id ? storedPayload as User : null,
+  token: storedToken,
+  refreshToken: localStorage.getItem('restaurantos-refresh-token'),
+  isAuthenticated: Boolean(storedToken && storedPayload?.id),
   isLoading: false,
   error: null,
 
   login: async (credentials: LoginCredentials) => {
     set({ isLoading: true, error: null });
     try {
+      localStorage.removeItem('restaurantos-token');
+      localStorage.removeItem('restaurantos-refresh-token');
       if (!credentials.email || !credentials.password) {
         throw new Error('Please enter email and password');
       }
@@ -63,6 +78,8 @@ export const useAuthStore = create<AuthState>((set) => ({
   register: async (data: RegisterData) => {
     set({ isLoading: true, error: null });
     try {
+      localStorage.removeItem('restaurantos-token');
+      localStorage.removeItem('restaurantos-refresh-token');
       if (!data.firstName || !data.lastName || !data.email || !data.password || !data.confirmPassword) {
         throw new Error('Please fill in all required fields');
       }

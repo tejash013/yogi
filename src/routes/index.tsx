@@ -44,6 +44,7 @@ import {
   AdminInventory,
   AdminReports,
   AdminSettings,
+  AdminUsers,
 } from '@/pages/admin';
 
 // Kitchen Pages
@@ -125,7 +126,7 @@ const router = createBrowserRouter([
   {
     path: '/admin',
     element: (
-      <ProtectedRoute roles={['admin']}>
+      <ProtectedRoute roles={['admin', 'owner', 'manager']}>
         <AdminLayout />
       </ProtectedRoute>
     ),
@@ -137,10 +138,25 @@ const router = createBrowserRouter([
       { path: 'orders', element: <AdminOrders /> },
       { path: 'customers', element: <AdminCustomers /> },
       { path: 'employees', element: <AdminEmployees /> },
+      {
+        path: 'users',
+        element: (
+          <ProtectedRoute roles={['admin', 'owner']}>
+            <AdminUsers />
+          </ProtectedRoute>
+        ),
+      },
       { path: 'tables', element: <AdminTables /> },
       { path: 'inventory', element: <AdminInventory /> },
       { path: 'reports', element: <AdminReports /> },
-      { path: 'settings', element: <AdminSettings /> },
+      {
+        path: 'settings',
+        element: (
+          <ProtectedRoute roles={['admin', 'owner']}>
+            <AdminSettings />
+          </ProtectedRoute>
+        ),
+      },
     ],
   },
 
@@ -148,7 +164,7 @@ const router = createBrowserRouter([
   {
     path: '/kitchen',
     element: (
-      <ProtectedRoute roles={['kitchen', 'admin']}>
+      <ProtectedRoute roles={['chef', 'admin']}>
         <KitchenLayout />
       </ProtectedRoute>
     ),

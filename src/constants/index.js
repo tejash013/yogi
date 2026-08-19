@@ -182,10 +182,11 @@ export const ORDER_STATUS_COLORS = {
 // User Role Labels
 export const USER_ROLE_LABELS = {
     customer: 'Customer',
-    admin: 'Administrator',
-    kitchen: 'Kitchen Staff',
+    admin: 'Super Admin',
+    chef: 'Kitchen Staff',
+    manager: 'Manager',
     cashier: 'Cashier',
-    owner: 'Owner',
+    owner: 'Restaurant Owner',
 };
 // Shift Labels
 export const SHIFT_LABELS = {

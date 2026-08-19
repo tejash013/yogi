@@ -9,6 +9,7 @@ import ordersRouter from './orders.js';
 import reportsRouter from './reports.js';
 import schemaRouter from './schemaRoutes.js';
 import tablesRouter from './tables.js';
+import usersRouter from './users.js';
 
 export {
   authRouter,
@@ -22,4 +23,5 @@ export {
   reportsRouter,
   schemaRouter,
   tablesRouter,
+  usersRouter,
 };

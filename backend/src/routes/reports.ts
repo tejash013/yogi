@@ -3,6 +3,10 @@ import Order from '../models/Order.js';
 import Invoice from '../models/Invoice.js';
 import Inventory from '../models/Inventory.js';
 import { success, failure } from '../utils/response.js';
+import { validateQuery } from '../middleware/validate.js';
+import { reportQuerySchema } from '../validation/schemas.js';
+import { authenticate, requirePermission } from '../middleware/auth.js';
+import { permissions } from '../auth/permissions.js';
 
 const router = Router();
 
@@ -12,7 +16,7 @@ function parseDate(value: unknown, fallback: Date) {
   return Number.isNaN(date.getTime()) ? fallback : date;
 }
 
-router.get('/sales', async (req, res) => {
+router.get('/sales', authenticate, requirePermission(permissions.reportsRead), validateQuery(reportQuerySchema), async (req, res) => {
   const startDate = parseDate(req.query.startDate, new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
   const endDate = parseDate(req.query.endDate, new Date());
 
@@ -62,7 +66,7 @@ router.get('/sales', async (req, res) => {
   );
 });
 
-router.get('/revenue', async (req, res) => {
+router.get('/revenue', authenticate, requirePermission(permissions.reportsRead), validateQuery(reportQuerySchema), async (req, res) => {
   const startDate = parseDate(req.query.startDate, new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
   const endDate = parseDate(req.query.endDate, new Date());
 
@@ -102,7 +106,7 @@ router.get('/revenue', async (req, res) => {
   );
 });
 
-router.get('/expenses', async (req, res) => {
+router.get('/expenses', authenticate, requirePermission(permissions.reportsRead), validateQuery(reportQuerySchema), async (req, res) => {
   const startDate = parseDate(req.query.startDate, new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
   const endDate = parseDate(req.query.endDate, new Date());
 
