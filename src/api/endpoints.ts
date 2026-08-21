@@ -16,6 +16,8 @@ PaginationParams,
   RegisterData,
   AuthResponse,
   User,
+  Restaurant,
+  Branch,
 } from '@/types';
 
 // Auth API
@@ -39,6 +41,13 @@ export const authApi = {
 
   verifyOtp: (email: string, otp: string) =>
     apiClient.post<ApiResponse<null>>('/api/auth/verify-otp', { email, otp }),
+};
+
+export const tenantsApi = {
+  getRestaurants: () => apiClient.get<ApiResponse<Restaurant[]>>('/api/tenants/restaurants'),
+  getBranches: (restaurantId: string) => apiClient.get<ApiResponse<Branch[]>>(`/api/tenants/restaurants/${restaurantId}/branches`),
+  createRestaurant: (payload: { name: string; slug: string }) => apiClient.post<ApiResponse<Restaurant>>('/api/tenants/restaurants', payload),
+  createBranch: (restaurantId: string, payload: { name: string; slug: string; address?: string }) => apiClient.post<ApiResponse<Branch>>(`/api/tenants/restaurants/${restaurantId}/branches`, payload),
 };
 
 // Menu API

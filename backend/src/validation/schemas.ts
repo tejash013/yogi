@@ -46,14 +46,12 @@ export const couponValidationSchema = z.object({ code: z.string().trim().min(1) 
 
 export const invoiceCreateSchema = z.object({
   orderId: objectId,
-  amount: nonNegativeNumber.optional(),
   paymentMethod: z.string().trim().optional(),
-  status: z.enum(['pending', 'paid', 'cancelled']).optional(),
-  issuedAt: z.coerce.date().optional(),
 }).strict();
-export const invoiceUpdateSchema = invoiceCreateSchema.omit({ orderId: true }).partial();
+export const invoiceUpdateSchema = z.object({ paymentMethod: z.string().trim().optional() }).strict();
 export const invoiceStatusSchema = z.object({
   status: z.enum(['pending', 'paid', 'cancelled']),
+  transactionId: z.string().trim().min(1).optional(),
 }).strict();
 
 export const tableCreateSchema = z.object({
@@ -134,7 +132,9 @@ export const reportQuerySchema = z.object({
 
 export const userQuerySchema = paginationQuerySchema;
 export const userAccessUpdateSchema = z.object({
-  role: z.enum(['customer', 'cashier', 'chef', 'manager', 'owner', 'admin']).optional(),
+  role: z.enum(['customer', 'cashier', 'chef', 'manager', 'owner', 'admin', 'platformAdmin']).optional(),
   status: z.enum(['active', 'inactive', 'suspended']).optional(),
+  restaurantId: objectId.optional(),
+  branchId: objectId.optional(),
   branch: z.string().trim().optional(),
 }).strict().refine((value) => Object.keys(value).length > 0, { message: 'At least one access field is required' });

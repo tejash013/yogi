@@ -5,16 +5,17 @@ import { validateBody, validateParams } from '../middleware/validate.js';
 import { couponValidationSchema, idParamSchema, offerCreateSchema, offerUpdateSchema } from '../validation/schemas.js';
 import { authenticate, requirePermission } from '../middleware/auth.js';
 import { permissions } from '../auth/permissions.js';
+import { tenantFilter } from '../utils/tenant.js';
 
 const router = Router();
 
-router.get('/', async (_req, res) => {
-  const offers = await Offer.find({ offerType: 'offer', isActive: true }).sort({ validUntil: 1 }).exec();
+router.get('/', async (req, res) => {
+  const offers = await Offer.find({ ...tenantFilter(req), offerType: 'offer', isActive: true }).sort({ validUntil: 1 }).exec();
   return res.json(success(offers, 'Offers loaded'));
 });
 
-router.get('/coupons', async (_req, res) => {
-  const coupons = await Offer.find({ offerType: 'coupon', isActive: true }).sort({ validUntil: 1 }).exec();
+router.get('/coupons', async (req, res) => {
+  const coupons = await Offer.find({ ...tenantFilter(req), offerType: 'coupon', isActive: true }).sort({ validUntil: 1 }).exec();
   return res.json(success(coupons, 'Coupons loaded'));
 });
 
@@ -25,6 +26,7 @@ router.post('/validate-coupon', validateBody(couponValidationSchema), async (req
   }
 
   const coupon = await Offer.findOne({
+    ...tenantFilter(req),
     offerType: 'coupon',
     code,
     isActive: true,
@@ -45,6 +47,7 @@ router.post('/', authenticate, requirePermission(permissions.offersManage), vali
   }
 
   const offer = new Offer({
+    ...tenantFilter(req),
     title,
     description,
     discountType,
@@ -60,7 +63,7 @@ router.post('/', authenticate, requirePermission(permissions.offersManage), vali
 });
 
 router.patch('/:id', authenticate, requirePermission(permissions.offersManage), validateParams(idParamSchema), validateBody(offerUpdateSchema), async (req, res) => {
-  const offer = await Offer.findByIdAndUpdate(req.params.id, req.body, { new: true }).exec();
+  const offer = await Offer.findOneAndUpdate({ _id: req.params.id, ...tenantFilter(req) }, req.body, { new: true }).exec();
   if (!offer) {
     return res.status(404).json(failure('Offer not found'));
   }
@@ -69,7 +72,7 @@ router.patch('/:id', authenticate, requirePermission(permissions.offersManage), 
 });
 
 router.delete('/:id', authenticate, requirePermission(permissions.offersManage), validateParams(idParamSchema), async (req, res) => {
-  const offer = await Offer.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true }).exec();
+  const offer = await Offer.findOneAndUpdate({ _id: req.params.id, ...tenantFilter(req) }, { isActive: false }, { new: true }).exec();
   if (!offer) {
     return res.status(404).json(failure('Offer not found'));
   }

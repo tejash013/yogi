@@ -6,6 +6,8 @@ export interface User {
   lastName: string;
   phone: string;
   role: UserRole;
+  restaurantId?: string;
+  branchId?: string;
   status?: 'active' | 'inactive' | 'suspended';
   branch?: string;
   avatar?: string;
@@ -13,7 +15,23 @@ export interface User {
   updatedAt: string;
 }
 
-export type UserRole = 'customer' | 'cashier' | 'chef' | 'manager' | 'owner' | 'admin';
+export type UserRole = 'customer' | 'cashier' | 'chef' | 'manager' | 'owner' | 'admin' | 'platformAdmin';
+
+export interface Restaurant {
+  _id: string;
+  name: string;
+  slug: string;
+  isActive: boolean;
+}
+
+export interface Branch {
+  _id: string;
+  restaurantId: string;
+  name: string;
+  slug: string;
+  address?: string;
+  isActive: boolean;
+}
 
 // Menu Types
 export interface MenuItem {

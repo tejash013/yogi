@@ -20,8 +20,8 @@ class OrderRepo implements IOrderRepo {
     return { items, total };
   }
 
-  async findById(id: string) {
-    return Order.findById(id)
+  async findById(id: string, filter: any = {}) {
+    return Order.findOne({ _id: id, ...filter })
       .populate('user', 'firstName lastName email')
       .populate('table', 'label status')
       .populate('items.menuItem', 'title price image')
@@ -34,12 +34,12 @@ class OrderRepo implements IOrderRepo {
     return o;
   }
 
-  async updateById(id: string, update: any) {
-    return Order.findByIdAndUpdate(id, update, { new: true }).exec();
+  async updateById(id: string, update: any, filter: any = {}) {
+    return Order.findOneAndUpdate({ _id: id, ...filter }, update, { new: true }).exec();
   }
 
-  async findByUser(userId: string) {
-    return Order.find({ user: userId })
+  async findByUser(userId: string, filter: any = {}) {
+    return Order.find({ user: userId, ...filter })
       .populate('table', 'label status')
       .populate('items.menuItem', 'title price image')
       .exec();

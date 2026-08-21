@@ -14,7 +14,7 @@ describe('User access management', () => {
       password: 'hashed-password',
       role,
     });
-    return { user, token: signAccessToken({ id: user._id, role, email: user.email }) };
+    return { user, token: signAccessToken({ id: user._id, role, email: user.email, tokenVersion: user.tokenVersion, restaurantId: user.restaurantId, branchId: user.branchId }) };
   }
 
   it('denies customers access to user administration', async () => {
@@ -59,5 +59,14 @@ describe('User access management', () => {
       .send({ status: 'suspended' });
     assert.equal(res.status, 403);
     assert.equal(res.body.message, 'Owners cannot modify admin accounts');
+  });
+
+  it('rejects access tokens immediately after suspension', async () => {
+    const owner = await createUser('owner', 'suspend');
+    const target = await createUser('cashier', 'suspend-target');
+    await User.findByIdAndUpdate(target.user._id, { status: 'suspended', tokenVersion: target.user.tokenVersion + 1 });
+    const res = await request(app).get('/api/orders').set('Authorization', `Bearer ${target.token}`);
+    assert.equal(res.status, 401);
+    void owner;
   });
 });

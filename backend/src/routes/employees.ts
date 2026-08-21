@@ -5,6 +5,7 @@ import { validateBody, validateParams, validateQuery } from '../middleware/valid
 import { employeeCreateSchema, employeeQuerySchema, employeeUpdateSchema, idParamSchema } from '../validation/schemas.js';
 import { authenticate, requirePermission } from '../middleware/auth.js';
 import { permissions } from '../auth/permissions.js';
+import { tenantFilter } from '../utils/tenant.js';
 
 const router = Router();
 
@@ -17,7 +18,7 @@ router.get('/', authenticate, requirePermission(permissions.employeesRead), vali
   const page = Number(req.query.page ?? 1);
   const limit = Number(req.query.limit ?? 10);
   const q = String(req.query.q ?? '').trim();
-  const filter: any = { isActive: true };
+  const filter: any = { ...tenantFilter(req), isActive: true };
 
   if (q) {
     filter.$or = [
@@ -38,7 +39,7 @@ router.get('/', authenticate, requirePermission(permissions.employeesRead), vali
 });
 
 router.get('/:id', authenticate, requirePermission(permissions.employeesRead), validateParams(idParamSchema), async (req, res) => {
-  const employee = await Employee.findById(req.params.id).exec();
+  const employee = await Employee.findOne({ _id: req.params.id, ...tenantFilter(req) }).exec();
   if (!employee) {
     return res.status(404).json(failure('Employee not found'));
   }
@@ -53,6 +54,7 @@ router.post('/', authenticate, requirePermission(permissions.employeesManage), v
   }
 
   const employee = new Employee({
+    ...tenantFilter(req),
     name,
     email,
     phone,
@@ -67,7 +69,7 @@ router.post('/', authenticate, requirePermission(permissions.employeesManage), v
 });
 
 router.patch('/:id', authenticate, requirePermission(permissions.employeesManage), validateParams(idParamSchema), validateBody(employeeUpdateSchema), async (req, res) => {
-  const employee = await Employee.findByIdAndUpdate(req.params.id, req.body, { new: true }).exec();
+  const employee = await Employee.findOneAndUpdate({ _id: req.params.id, ...tenantFilter(req) }, req.body, { new: true }).exec();
   if (!employee) {
     return res.status(404).json(failure('Employee not found'));
   }
@@ -76,7 +78,7 @@ router.patch('/:id', authenticate, requirePermission(permissions.employeesManage
 });
 
 router.delete('/:id', authenticate, requirePermission(permissions.employeesManage), validateParams(idParamSchema), async (req, res) => {
-  const employee = await Employee.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true }).exec();
+  const employee = await Employee.findOneAndUpdate({ _id: req.params.id, ...tenantFilter(req) }, { isActive: false }, { new: true }).exec();
   if (!employee) {
     return res.status(404).json(failure('Employee not found'));
   }

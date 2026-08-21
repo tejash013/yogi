@@ -43,6 +43,18 @@ describe('Auth routes', () => {
     assert.ok(res.body.data.refreshToken);
   });
 
+  it('rotates a refresh token atomically under concurrent use', async () => {
+    const login = await request(app).post('/api/auth/login').send({ email, password });
+    const refreshToken = login.body.data.refreshToken;
+    const results = await Promise.all([
+      request(app).post('/api/auth/refresh').send({ refreshToken }),
+      request(app).post('/api/auth/refresh').send({ refreshToken }),
+    ]);
+
+    assert.equal(results.filter((result) => result.status === 200).length, 1);
+    assert.equal(results.filter((result) => result.status === 401).length, 1);
+  });
+
   it('should return readable validation messages', async () => {
     const res = await request(app).post('/api/auth/login').send({ email: 'invalid', password: '' });
     assert.equal(res.status, 400);

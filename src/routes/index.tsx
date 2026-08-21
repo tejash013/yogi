@@ -76,17 +76,28 @@ import {
 // Error Pages
 import Error403 from '@/pages/errors/Error403';
 import ProtectedRoute from '@/components/common/ProtectedRoute';
+import { Workspace } from '@/pages/saas';
+import { useAuthStore } from '@/store';
 
 const router = createBrowserRouter([
   // Root redirect
   {
     path: ROUTES.ROOT,
-    element: <Navigate to={ROUTES.DEFAULT} replace />,
+    element: <RootRedirect />,
   },
 
   // Splash & Welcome
   { path: ROUTES.SPLASH, element: <SplashScreen /> },
   { path: ROUTES.WELCOME, element: <WelcomeScreen /> },
+
+  {
+    path: ROUTES.WORKSPACE,
+    element: (
+      <ProtectedRoute roles={['platformAdmin', 'owner', 'admin']}>
+        <Workspace />
+      </ProtectedRoute>
+    ),
+  },
 
   // Auth routes
   {
@@ -250,6 +261,12 @@ function NotFoundPage() {
       </div>
     </div>
   );
+}
+
+function RootRedirect() {
+  const role = useAuthStore((state) => state.user?.role);
+  if (role === 'platformAdmin') return <Navigate to={ROUTES.WORKSPACE} replace />;
+  return <Navigate to={role === 'owner' ? ROUTES.OWNER.DASHBOARD : ROUTES.DEFAULT} replace />;
 }
 
 export default router;

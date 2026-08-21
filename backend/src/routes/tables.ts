@@ -5,6 +5,7 @@ import { validateBody, validateParams, validateQuery } from '../middleware/valid
 import { idParamSchema, tableCreateSchema, tableQuerySchema, tableStatusSchema, tableUpdateSchema } from '../validation/schemas.js';
 import { authenticate, requirePermission } from '../middleware/auth.js';
 import { permissions } from '../auth/permissions.js';
+import { tenantFilter } from '../utils/tenant.js';
 
 const router = Router();
 
@@ -18,7 +19,7 @@ router.get('/', authenticate, requirePermission(permissions.tablesRead), validat
   const limit = Number(req.query.limit ?? 20);
   const status = String(req.query.status ?? '').trim();
 
-  const filter: any = {};
+  const filter: any = { ...tenantFilter(req) };
   if (status) filter.status = status;
 
   const total = await Table.countDocuments(filter).exec();
@@ -32,7 +33,7 @@ router.get('/', authenticate, requirePermission(permissions.tablesRead), validat
 });
 
 router.get('/:id', authenticate, requirePermission(permissions.tablesRead), validateParams(idParamSchema), async (req, res) => {
-  const table = await Table.findById(req.params.id).exec();
+  const table = await Table.findOne({ _id: req.params.id, ...tenantFilter(req) }).exec();
   if (!table) {
     return res.status(404).json(failure('Table not found'));
   }
@@ -47,6 +48,7 @@ router.post('/', authenticate, requirePermission(permissions.tablesManage), vali
   }
 
   const table = new Table({
+    ...tenantFilter(req),
     label,
     status: status || 'available',
     capacity,
@@ -59,7 +61,7 @@ router.post('/', authenticate, requirePermission(permissions.tablesManage), vali
 });
 
 router.patch('/:id', authenticate, requirePermission(permissions.tablesManage), validateParams(idParamSchema), validateBody(tableUpdateSchema), async (req, res) => {
-  const table = await Table.findByIdAndUpdate(req.params.id, req.body, { new: true }).exec();
+  const table = await Table.findOneAndUpdate({ _id: req.params.id, ...tenantFilter(req) }, req.body, { new: true }).exec();
   if (!table) {
     return res.status(404).json(failure('Table not found'));
   }
@@ -73,7 +75,7 @@ router.patch('/:id/status', authenticate, requirePermission(permissions.tablesMa
     return res.status(400).json(failure('Status is required'));
   }
 
-  const table = await Table.findByIdAndUpdate(req.params.id, { status }, { new: true }).exec();
+  const table = await Table.findOneAndUpdate({ _id: req.params.id, ...tenantFilter(req) }, { status }, { new: true }).exec();
   if (!table) {
     return res.status(404).json(failure('Table not found'));
   }
@@ -82,7 +84,7 @@ router.patch('/:id/status', authenticate, requirePermission(permissions.tablesMa
 });
 
 router.delete('/:id', authenticate, requirePermission(permissions.tablesManage), validateParams(idParamSchema), async (req, res) => {
-  const table = await Table.findByIdAndDelete(req.params.id).exec();
+  const table = await Table.findOneAndDelete({ _id: req.params.id, ...tenantFilter(req) }).exec();
   if (!table) {
     return res.status(404).json(failure('Table not found'));
   }

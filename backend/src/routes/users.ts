@@ -4,6 +4,10 @@ import { authenticate, requireRole } from '../middleware/auth.js';
 import { validateBody, validateParams, validateQuery } from '../middleware/validate.js';
 import { failure, paginated, success } from '../utils/response.js';
 import { idParamSchema, userAccessUpdateSchema, userQuerySchema } from '../validation/schemas.js';
+import { recordAudit } from '../utils/audit.js';
+import { tenantFilter } from '../utils/tenant.js';
+import Branch from '../models/Branch.js';
+import Restaurant from '../models/Restaurant.js';
 
 const router = Router();
 
@@ -15,13 +19,13 @@ function publicUser(user: any) {
   return value;
 }
 
-router.use(authenticate, requireRole(['owner', 'admin']));
+router.use(authenticate, requireRole(['owner', 'admin', 'platformAdmin']));
 
 router.get('/', validateQuery(userQuerySchema), async (req, res) => {
   const page = Number(req.query.page ?? 1);
   const limit = Number(req.query.limit ?? 20);
   const q = String(req.query.q ?? '').trim();
-  const filter: any = {};
+  const filter: any = { ...tenantFilter(req) };
 
   if (q) {
     filter.$or = [
@@ -41,26 +45,47 @@ router.get('/', validateQuery(userQuerySchema), async (req, res) => {
 });
 
 router.patch('/:id/access', validateParams(idParamSchema), validateBody(userAccessUpdateSchema), async (req: any, res) => {
-  const target = await User.findById(req.params.id).exec();
+  const target = await User.findOne({ _id: req.params.id, ...tenantFilter(req) }).exec();
   if (!target) return res.status(404).json(failure('User not found'));
 
   if (String(target._id) === req.user.id) {
     return res.status(403).json(failure('You cannot change your own access level'));
   }
 
-  if (req.user.role === 'owner' && target.role === 'admin') {
+  if (req.user.role === 'owner' && ['admin', 'platformAdmin'].includes(target.role)) {
     return res.status(403).json(failure('Owners cannot modify admin accounts'));
   }
 
-  const { role, status, branch } = req.body;
-  if ((role === 'admin' || target.role === 'admin') && req.user.role !== 'admin') {
+  const { role, status, branch, restaurantId, branchId } = req.body;
+  if ((role === 'admin' || role === 'platformAdmin' || ['admin', 'platformAdmin'].includes(target.role)) && req.user.role !== 'platformAdmin') {
     return res.status(403).json(failure('Only an admin can manage admin accounts'));
   }
 
+  if ((restaurantId || branchId) && req.user.role !== 'platformAdmin') return res.status(403).json(failure('Only a platform admin can move users between tenants'));
+  if (restaurantId || branchId) {
+    const branchRecord = await Branch.findOne({ _id: branchId ?? target.branchId, restaurantId: restaurantId ?? target.restaurantId, isActive: true }).exec();
+    const restaurantRecord = await Restaurant.findOne({ _id: restaurantId ?? target.restaurantId, isActive: true }).exec();
+    if (!branchRecord || !restaurantRecord) return res.status(400).json(failure('Invalid restaurant or branch'));
+    if (restaurantId) target.restaurantId = restaurantId;
+    if (branchId) target.branchId = branchId;
+  }
+
   if (role) target.role = role;
-  if (status) target.status = status;
+  if (status) {
+    target.status = status;
+    target.tokenVersion = (target.tokenVersion ?? 0) + 1;
+  }
   if (branch !== undefined) target.branch = branch;
   await target.save();
+  await recordAudit({
+    actor: req.user.id,
+    action: 'user.access_updated',
+    resourceType: 'User',
+    resourceId: String(target._id),
+    metadata: { role, status, branchChanged: branch !== undefined },
+    ip: req.ip,
+    userAgent: req.get('user-agent'),
+  });
 
   return res.json(success(publicUser(target), 'User access updated successfully'));
 });

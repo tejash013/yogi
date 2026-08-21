@@ -1,4 +1,5 @@
 import { Schema, model } from 'mongoose';
+import { DEFAULT_RESTAURANT_ID, DEFAULT_BRANCH_ID } from '../utils/tenant.js';
 
 const orderItemSchema = new Schema(
   {
@@ -11,6 +12,8 @@ const orderItemSchema = new Schema(
 
 const orderSchema = new Schema(
   {
+    restaurantId: { type: Schema.Types.ObjectId, ref: 'Restaurant', required: true, default: DEFAULT_RESTAURANT_ID, index: true },
+    branchId: { type: Schema.Types.ObjectId, ref: 'Branch', required: true, default: DEFAULT_BRANCH_ID, index: true },
     user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     table: { type: Schema.Types.ObjectId, ref: 'Table' },
     items: { type: [orderItemSchema], default: [] },

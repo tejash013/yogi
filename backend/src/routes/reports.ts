@@ -7,6 +7,7 @@ import { validateQuery } from '../middleware/validate.js';
 import { reportQuerySchema } from '../validation/schemas.js';
 import { authenticate, requirePermission } from '../middleware/auth.js';
 import { permissions } from '../auth/permissions.js';
+import { tenantFilter } from '../utils/tenant.js';
 
 const router = Router();
 
@@ -25,6 +26,7 @@ router.get('/sales', authenticate, requirePermission(permissions.reportsRead), v
   }
 
   const orders = await Order.find({
+    ...tenantFilter(req),
     createdAt: { $gte: startDate, $lte: endDate },
     paymentStatus: 'paid',
   })
@@ -75,15 +77,16 @@ router.get('/revenue', authenticate, requirePermission(permissions.reportsRead),
   }
 
   const invoices = await Invoice.find({
+    ...tenantFilter(req),
     issuedAt: { $gte: startDate, $lte: endDate },
     status: 'paid',
   }).exec();
 
   const totalRevenue = invoices.reduce((sum, invoice) => sum + invoice.amount, 0);
-  const inventoryItems = await Inventory.find({ isActive: true }).exec();
+  const inventoryItems = await Inventory.find({ ...tenantFilter(req), isActive: true }).exec();
   const inventoryValue = inventoryItems.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
   const orderTaxes = await Order.aggregate([
-    { $match: { createdAt: { $gte: startDate, $lte: endDate } } },
+    { $match: { ...tenantFilter(req), createdAt: { $gte: startDate, $lte: endDate } } },
     { $group: { _id: null, totalTaxes: { $sum: '$taxes' } } },
   ]).exec();
   const totalTaxes = orderTaxes?.[0]?.totalTaxes ?? 0;
@@ -114,10 +117,10 @@ router.get('/expenses', authenticate, requirePermission(permissions.reportsRead)
     return res.status(400).json(failure('startDate must be before endDate'));
   }
 
-  const inventoryItems = await Inventory.find({ isActive: true }).exec();
+  const inventoryItems = await Inventory.find({ ...tenantFilter(req), isActive: true }).exec();
   const inventoryValue = inventoryItems.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
   const orderTaxes = await Order.aggregate([
-    { $match: { createdAt: { $gte: startDate, $lte: endDate } } },
+    { $match: { ...tenantFilter(req), createdAt: { $gte: startDate, $lte: endDate } } },
     { $group: { _id: null, totalTaxes: { $sum: '$taxes' } } },
   ]).exec();
   const totalTaxes = orderTaxes?.[0]?.totalTaxes ?? 0;

@@ -26,15 +26,16 @@ export const permissions = {
 
 export type Permission = (typeof permissions)[keyof typeof permissions];
 
-type Role = 'customer' | 'cashier' | 'chef' | 'manager' | 'owner' | 'admin';
+type Role = 'customer' | 'cashier' | 'chef' | 'manager' | 'owner' | 'admin' | 'platformAdmin';
 
 const rolePermissions: Record<Role, readonly Permission[]> = {
-  customer: [permissions.menuRead, permissions.orderRead, permissions.orderCreate, permissions.offersRead],
+  customer: [permissions.menuRead, permissions.orderRead, permissions.orderCreate, permissions.invoicesRead, permissions.offersRead],
   cashier: [permissions.menuRead, permissions.orderRead, permissions.orderCreate, permissions.invoicesRead, permissions.invoicesCreate, permissions.invoicesUpdate, permissions.offersRead],
   chef: [permissions.menuRead, permissions.orderRead, permissions.kitchenRead, permissions.kitchenStatus],
   manager: Object.values(permissions) as Permission[],
   owner: Object.values(permissions) as Permission[],
   admin: Object.values(permissions) as Permission[],
+  platformAdmin: Object.values(permissions) as Permission[],
 };
 
 export function hasPermission(role: string, permission: Permission) {

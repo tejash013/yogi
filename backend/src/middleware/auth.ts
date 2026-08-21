@@ -2,6 +2,7 @@ import { RequestHandler } from 'express';
 import { verifyAccessToken } from '../utils/jwt.js';
 import { userRepo } from '../repos/index.js';
 import { hasPermission, Permission } from '../auth/permissions.js';
+import { tenantIdsFromRequest } from '../utils/tenant.js';
 
 export interface AuthRequest extends Express.Request {
   user?: any;
@@ -20,10 +21,18 @@ export const authenticate: RequestHandler = async (req: any, _res, next) => {
     const token = auth.split(' ')[1];
     const payload = verifyAccessToken(token);
     const user = await userRepo.findById(String(payload.id));
-    if (!user || user.status !== 'active') {
+    if (!user || user.status !== 'active' || payload.tokenVersion !== user.tokenVersion ||
+      String(payload.restaurantId) !== String(user.restaurantId) || String(payload.branchId) !== String(user.branchId)) {
       return next(Object.assign(new Error('Account is inactive or suspended'), { status: 401 }));
     }
-    req.user = { id: String(user._id), role: user.role, email: user.email };
+    req.user = {
+      id: String(user._id),
+      role: user.role,
+      email: user.email,
+      tokenVersion: user.tokenVersion,
+      restaurantId: String(user.restaurantId),
+      branchId: String(user.branchId),
+    };
     return next();
   } catch (err) {
     return resStatusUnauthorized(next);

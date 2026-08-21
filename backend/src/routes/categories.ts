@@ -5,6 +5,7 @@ import { validateBody, validateParams, validateQuery } from '../middleware/valid
 import { categoryCreateSchema, categoryQuerySchema, categoryUpdateSchema, idParamSchema } from '../validation/schemas.js';
 import { authenticate, requirePermission } from '../middleware/auth.js';
 import { permissions } from '../auth/permissions.js';
+import { tenantFilter } from '../utils/tenant.js';
 
 const router = Router();
 
@@ -17,7 +18,7 @@ router.get('/', validateQuery(categoryQuerySchema), async (req, res) => {
   const page = Number(req.query.page ?? 1);
   const limit = Number(req.query.limit ?? 20);
   const q = String(req.query.q ?? '').trim();
-  const filter: any = { isActive: true };
+  const filter: any = { ...tenantFilter(req), isActive: true };
 
   if (q) {
     filter.name = { $regex: q, $options: 'i' };
@@ -28,7 +29,7 @@ router.get('/', validateQuery(categoryQuerySchema), async (req, res) => {
 });
 
 router.get('/:id', validateParams(idParamSchema), async (req, res) => {
-  const category = await Category.findById(req.params.id).exec();
+  const category = await Category.findOne({ _id: req.params.id, ...tenantFilter(req) }).exec();
   if (!category) {
     return res.status(404).json(failure('Category not found'));
   }
@@ -42,13 +43,15 @@ router.post('/', authenticate, requirePermission(permissions.menuCreate), valida
     return res.status(400).json(failure('Category name is required'));
   }
 
-  const category = new Category({ name, description, parentId });
+  const tenant = tenantFilter(req);
+  if (parentId && !(await Category.exists({ _id: parentId, ...tenant }))) return res.status(400).json(failure('Parent category belongs to another branch'));
+  const category = new Category({ name, description, parentId, ...tenant });
   await category.save();
   return res.status(201).json(success(category, 'Category created successfully'));
 });
 
 router.patch('/:id', authenticate, requirePermission(permissions.menuUpdate), validateParams(idParamSchema), validateBody(categoryUpdateSchema), async (req, res) => {
-  const category = await Category.findByIdAndUpdate(req.params.id, req.body, { new: true }).exec();
+  const category = await Category.findOneAndUpdate({ _id: req.params.id, ...tenantFilter(req) }, req.body, { new: true }).exec();
   if (!category) {
     return res.status(404).json(failure('Category not found'));
   }
@@ -57,7 +60,7 @@ router.patch('/:id', authenticate, requirePermission(permissions.menuUpdate), va
 });
 
 router.delete('/:id', authenticate, requirePermission(permissions.menuDelete), validateParams(idParamSchema), async (req, res) => {
-  const category = await Category.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true }).exec();
+  const category = await Category.findOneAndUpdate({ _id: req.params.id, ...tenantFilter(req) }, { isActive: false }, { new: true }).exec();
   if (!category) {
     return res.status(404).json(failure('Category not found'));
   }

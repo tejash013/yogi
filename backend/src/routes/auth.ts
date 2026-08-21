@@ -4,9 +4,12 @@ import { z } from 'zod';
 import { validateBody } from '../middleware/validate.js';
 import { userRepo } from '../repos/index.js';
 import RefreshToken from '../models/RefreshToken.js';
+import User from '../models/User.js';
 import { failure, success } from '../utils/response.js';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/jwt.js';
 import { sendEmail } from '../utils/email.js';
+import { recordAudit } from '../utils/audit.js';
+import { tenantIdsFromRequest } from '../utils/tenant.js';
 
 const router = Router();
 
@@ -24,6 +27,10 @@ function verifyPassword(password: string, stored: string) {
 }
 
 function hashRefreshToken(token: string) {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
+
+function hashResetToken(token: string) {
   return crypto.createHash('sha256').update(token).digest('hex');
 }
 
@@ -77,10 +84,11 @@ router.post('/login', validateBody(loginSchema), async (req, res) => {
     return res.status(401).json(failure('Invalid credentials'));
   }
 
-  const payload = { id: user._id, role: user.role, email: user.email };
+  const payload = { id: user._id, role: user.role, email: user.email, tokenVersion: user.tokenVersion, restaurantId: user.restaurantId, branchId: user.branchId };
   const accessToken = signAccessToken(payload);
   const refreshToken = signRefreshToken({ id: user._id, jti: crypto.randomUUID() });
   await persistRefreshToken(user._id, refreshToken);
+  await recordAudit({ actor: String(user._id), action: 'auth.login', resourceType: 'User', resourceId: String(user._id), ip: req.ip, userAgent: req.get('user-agent') });
 
   return res.json(
     success(
@@ -106,6 +114,7 @@ router.post('/register', validateBody(registerSchema), async (req, res) => {
   }
 
   const hashedPassword = hashPassword(password);
+  const tenant = tenantIdsFromRequest(req);
   const newUser = await userRepo.create({
     firstName,
     lastName,
@@ -113,12 +122,15 @@ router.post('/register', validateBody(registerSchema), async (req, res) => {
     phone,
     password: hashedPassword,
     role: 'customer',
+    restaurantId: tenant.restaurantId,
+    branchId: tenant.branchId,
   });
 
-  const payload = { id: newUser._id, role: newUser.role, email: newUser.email };
+  const payload = { id: newUser._id, role: newUser.role, email: newUser.email, tokenVersion: newUser.tokenVersion, restaurantId: newUser.restaurantId, branchId: newUser.branchId };
   const accessToken = signAccessToken(payload);
   const refreshToken = signRefreshToken({ id: newUser._id, jti: crypto.randomUUID() });
   await persistRefreshToken(newUser._id, refreshToken);
+  await recordAudit({ actor: String(newUser._id), action: 'auth.register', resourceType: 'User', resourceId: String(newUser._id), ip: req.ip, userAgent: req.get('user-agent') });
 
   return res.status(201).json(
     success(
@@ -137,6 +149,7 @@ router.post('/logout', validateBody(z.object({ refreshToken: z.string().min(1).o
   if (refreshToken) {
     await RefreshToken.findOneAndUpdate({ token: hashRefreshToken(refreshToken) }, { revoked: true }).exec();
   }
+  await recordAudit({ action: 'auth.logout', resourceType: 'Session', ip: req.ip, userAgent: req.get('user-agent') });
   return res.json(success(null, 'Logged out successfully'));
 });
 
@@ -148,19 +161,23 @@ router.post('/refresh', validateBody(z.object({ refreshToken: z.string().min(1) 
 
   try {
     const payload = verifyRefreshToken(refreshToken);
-    const stored = await RefreshToken.findOne({ token: hashRefreshToken(refreshToken), revoked: false }).exec();
-    if (!stored) return res.status(401).json(failure('Invalid refresh token'));
-
-    // rotate
-    stored.revoked = true;
-    await stored.save();
+    const stored = await RefreshToken.findOneAndUpdate(
+      { token: hashRefreshToken(refreshToken), revoked: false, expiresAt: { $gt: new Date() } },
+      { $set: { revoked: true, revokedAt: new Date() } },
+      { new: true }
+    ).exec();
+    if (!stored) {
+      await RefreshToken.updateMany({ user: String(payload.id), revoked: false }, { $set: { revoked: true, revokedAt: new Date() } }).exec();
+      return res.status(401).json(failure('Invalid refresh token'));
+    }
 
     const user = await userRepo.findById(String(payload.id));
     if (!user || user.status !== 'active') return res.status(401).json(failure('Invalid refresh token'));
 
     const newRefreshToken = signRefreshToken({ id: user._id, jti: crypto.randomUUID() });
     await persistRefreshToken(user._id, newRefreshToken);
-    const accessToken = signAccessToken({ id: user._id, role: user.role, email: user.email });
+    const accessToken = signAccessToken({ id: user._id, role: user.role, email: user.email, tokenVersion: user.tokenVersion, restaurantId: user.restaurantId, branchId: user.branchId });
+    await recordAudit({ actor: String(user._id), action: 'auth.refresh', resourceType: 'Session', resourceId: String(stored._id), ip: req.ip, userAgent: req.get('user-agent') });
 
     return res.json(success({ token: accessToken, refreshToken: newRefreshToken }, 'Token refreshed'));
   } catch (err) {
@@ -178,7 +195,7 @@ router.post('/forgot-password', validateBody(forgotSchema), async (req, res) => 
   if (!user) return res.json(success(null, 'If the account exists, reset instructions will be sent'));
 
   const token = crypto.randomBytes(20).toString('hex');
-  await userRepo.update(String(user._id), { resetToken: token, resetTokenExpires: new Date(Date.now() + 60 * 60 * 1000) });
+  await userRepo.update(String(user._id), { resetToken: hashResetToken(token), resetTokenExpires: new Date(Date.now() + 60 * 60 * 1000) });
 
   try {
     const resetLink = `${process.env.FRONTEND_URL ?? 'http://localhost:3000'}/reset-password?token=${token}&email=${encodeURIComponent(
@@ -204,11 +221,18 @@ router.post('/reset-password', validateBody(resetSchema), async (req, res) => {
     return res.status(400).json(failure('Invalid or expired reset token'));
   }
 
-  if (!user.resetToken || user.resetToken !== token || !user.resetTokenExpires || user.resetTokenExpires < new Date()) {
+  if (!user.resetToken || user.resetToken !== hashResetToken(token) || !user.resetTokenExpires || user.resetTokenExpires < new Date()) {
     return res.status(400).json(failure('Invalid or expired reset token'));
   }
 
-  await userRepo.update(String(user._id), { password: hashPassword(password), resetToken: undefined, resetTokenExpires: undefined });
+  const updated = await User.findOneAndUpdate(
+    { _id: user._id, resetToken: hashResetToken(token), resetTokenExpires: { $gt: new Date() } },
+    { password: hashPassword(password), $inc: { tokenVersion: 1 }, $unset: { resetToken: 1, resetTokenExpires: 1 } },
+    { new: true }
+  ).exec();
+  if (!updated) return res.status(400).json(failure('Invalid or expired reset token'));
+  await RefreshToken.updateMany({ user: user._id, revoked: false }, { revoked: true }).exec();
+  await recordAudit({ actor: String(user._id), action: 'auth.password_reset', resourceType: 'User', resourceId: String(user._id), ip: req.ip, userAgent: req.get('user-agent') });
 
   return res.json(success(null, 'Password updated successfully'));
 });
@@ -224,7 +248,7 @@ router.post('/verify-otp', validateBody(verifyOtpSchema), async (req, res) => {
     return res.status(400).json(failure('Invalid or expired OTP'));
   }
 
-  if (user.resetToken !== otp || !user.resetTokenExpires || user.resetTokenExpires < new Date()) {
+  if (user.resetToken !== hashResetToken(otp) || !user.resetTokenExpires || user.resetTokenExpires < new Date()) {
     return res.status(400).json(failure('Invalid or expired OTP'));
   }
 

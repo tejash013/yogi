@@ -70,6 +70,8 @@ export const ROUTES = {
     REPORTS: '/owner/reports',
   },
 
+  WORKSPACE: '/workspace',
+
   // Error routes
   ERROR: {
     FORBIDDEN: '/error/403',
@@ -154,6 +156,10 @@ export const API_ENDPOINTS = {
     MARK_READ: (id: string) => `/api/notifications/${id}/read`,
     MARK_ALL_READ: '/api/notifications/mark-all-read',
   },
+  TENANTS: {
+    RESTAURANTS: '/api/tenants/restaurants',
+    BRANCHES: (restaurantId: string) => `/api/tenants/restaurants/${restaurantId}/branches`,
+  },
 } as const;
 
 // App Constants
@@ -201,6 +207,7 @@ export const USER_ROLE_LABELS: Record<string, string> = {
   manager: 'Manager',
   cashier: 'Cashier',
   owner: 'Restaurant Owner',
+  platformAdmin: 'Platform Admin',
 };
 
 export const ROLE_PERMISSIONS: Record<string, string[]> = {

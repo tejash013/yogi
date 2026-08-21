@@ -6,6 +6,7 @@ import { validateBody, validateParams, validateQuery } from '../middleware/valid
 import { idParamSchema, menuCreateSchema, menuQuerySchema, menuUpdateSchema } from '../validation/schemas.js';
 import { authenticate, requirePermission } from '../middleware/auth.js';
 import { permissions } from '../auth/permissions.js';
+import { tenantFilter } from '../utils/tenant.js';
 
 const router = Router();
 
@@ -20,7 +21,7 @@ router.get('/', validateQuery(menuQuerySchema), async (req, res) => {
   const q = String(req.query.q ?? '').trim();
   const categoryId = String(req.query.category ?? '').trim();
 
-  const filter: any = { isActive: true };
+  const filter: any = { ...tenantFilter(req), isActive: true };
   if (q) {
     filter.$or = [
       { title: { $regex: q, $options: 'i' } },
@@ -41,19 +42,20 @@ router.get('/', validateQuery(menuQuerySchema), async (req, res) => {
   return res.json(paginated(items, total, page, limit));
 });
 
-router.get('/popular', async (_req, res) => {
-  const items = await MenuItem.find({ isPopular: true, isActive: true }).populate('category', 'name').exec();
+router.get('/popular', async (req, res) => {
+  const items = await MenuItem.find({ ...tenantFilter(req), isPopular: true, isActive: true }).populate('category', 'name').exec();
   return res.json(success(items, 'Popular menu items loaded'));
 });
 
-router.get('/recommended', async (_req, res) => {
-  const items = await MenuItem.find({ isRecommended: true, isActive: true }).populate('category', 'name').exec();
+router.get('/recommended', async (req, res) => {
+  const items = await MenuItem.find({ ...tenantFilter(req), isRecommended: true, isActive: true }).populate('category', 'name').exec();
   return res.json(success(items, 'Recommended items loaded'));
 });
 
 router.get('/search', validateQuery(menuQuerySchema.pick({ q: true })), async (req, res) => {
   const q = String(req.query.q ?? '').trim();
   const items = await MenuItem.find({
+    ...tenantFilter(req),
     isActive: true,
     $or: [
       { title: { $regex: q, $options: 'i' } },
@@ -67,7 +69,7 @@ router.get('/search', validateQuery(menuQuerySchema.pick({ q: true })), async (r
 });
 
 router.get('/:id', validateParams(idParamSchema), async (req, res) => {
-  const item = await MenuItem.findById(req.params.id).populate('category', 'name').exec();
+  const item = await MenuItem.findOne({ _id: req.params.id, ...tenantFilter(req) }).populate('category', 'name').exec();
   if (!item) {
     return res.status(404).json(failure('Menu item not found'));
   }
@@ -78,12 +80,14 @@ router.get('/:id', validateParams(idParamSchema), async (req, res) => {
 router.post('/', authenticate, requirePermission(permissions.menuCreate), validateBody(menuCreateSchema), async (req, res) => {
   const { title, description, category, price, image, isPopular, isRecommended, availableQty, tags } = req.body;
 
-  const categoryExists = await Category.findById(category).exec();
+  const tenant = tenantFilter(req);
+  const categoryExists = await Category.findOne({ _id: category, ...tenant }).exec();
   if (!categoryExists) {
     return res.status(404).json(failure('Category not found'));
   }
 
   const menuItem = new MenuItem({
+    ...tenant,
     title,
     description,
     category,
@@ -100,7 +104,10 @@ router.post('/', authenticate, requirePermission(permissions.menuCreate), valida
 });
 
 router.patch('/:id', authenticate, requirePermission(permissions.menuUpdate), validateParams(idParamSchema), validateBody(menuUpdateSchema), async (req, res) => {
-  const item = await MenuItem.findByIdAndUpdate(req.params.id, req.body, { new: true }).populate('category', 'name').exec();
+  if (req.body.category && !(await Category.exists({ _id: req.body.category, ...tenantFilter(req) }))) {
+    return res.status(400).json(failure('Category belongs to another branch'));
+  }
+  const item = await MenuItem.findOneAndUpdate({ _id: req.params.id, ...tenantFilter(req) }, req.body, { new: true }).populate('category', 'name').exec();
   if (!item) {
     return res.status(404).json(failure('Menu item not found'));
   }
@@ -109,7 +116,7 @@ router.patch('/:id', authenticate, requirePermission(permissions.menuUpdate), va
 });
 
 router.delete('/:id', authenticate, requirePermission(permissions.menuDelete), validateParams(idParamSchema), async (req, res) => {
-  const item = await MenuItem.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true }).exec();
+  const item = await MenuItem.findOneAndUpdate({ _id: req.params.id, ...tenantFilter(req) }, { isActive: false }, { new: true }).exec();
   if (!item) {
     return res.status(404).json(failure('Menu item not found'));
   }

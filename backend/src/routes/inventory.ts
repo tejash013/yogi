@@ -5,6 +5,7 @@ import { validateBody, validateParams, validateQuery } from '../middleware/valid
 import { idParamSchema, inventoryCreateSchema, inventoryUpdateSchema, paginationQuerySchema } from '../validation/schemas.js';
 import { authenticate, requirePermission } from '../middleware/auth.js';
 import { permissions } from '../auth/permissions.js';
+import { tenantFilter } from '../utils/tenant.js';
 
 const router = Router();
 
@@ -17,7 +18,7 @@ router.get('/', authenticate, requirePermission(permissions.inventoryRead), vali
   const page = Number(req.query.page ?? 1);
   const limit = Number(req.query.limit ?? 10);
   const q = String(req.query.q ?? '').trim();
-  const filter: any = { isActive: true };
+  const filter: any = { ...tenantFilter(req), isActive: true };
 
   if (q) {
     filter.$or = [
@@ -38,7 +39,7 @@ router.get('/', authenticate, requirePermission(permissions.inventoryRead), vali
 });
 
 router.get('/:id', authenticate, requirePermission(permissions.inventoryRead), validateParams(idParamSchema), async (req, res) => {
-  const item = await Inventory.findById(req.params.id).exec();
+  const item = await Inventory.findOne({ _id: req.params.id, ...tenantFilter(req) }).exec();
   if (!item) {
     return res.status(404).json(failure('Inventory item not found'));
   }
@@ -61,6 +62,7 @@ router.post('/', authenticate, requirePermission(permissions.inventoryCreate), v
   } = req.body;
 
   const inventoryItem = new Inventory({
+    ...tenantFilter(req),
     name,
     category,
     quantity,
@@ -78,7 +80,7 @@ router.post('/', authenticate, requirePermission(permissions.inventoryCreate), v
 });
 
 router.patch('/:id', authenticate, requirePermission(permissions.inventoryUpdate), validateParams(idParamSchema), validateBody(inventoryUpdateSchema), async (req, res) => {
-  const item = await Inventory.findByIdAndUpdate(req.params.id, req.body, { new: true }).exec();
+  const item = await Inventory.findOneAndUpdate({ _id: req.params.id, ...tenantFilter(req) }, req.body, { new: true }).exec();
   if (!item) {
     return res.status(404).json(failure('Inventory item not found'));
   }
@@ -87,7 +89,7 @@ router.patch('/:id', authenticate, requirePermission(permissions.inventoryUpdate
 });
 
 router.delete('/:id', authenticate, requirePermission(permissions.inventoryDelete), validateParams(idParamSchema), async (req, res) => {
-  const item = await Inventory.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true }).exec();
+  const item = await Inventory.findOneAndUpdate({ _id: req.params.id, ...tenantFilter(req) }, { isActive: false }, { new: true }).exec();
   if (!item) {
     return res.status(404).json(failure('Inventory item not found'));
   }

@@ -1,3 +1,4 @@
+import 'express-async-errors';
 import express from 'express';
 import cors from 'cors';
 import {
@@ -19,11 +20,21 @@ import { errorHandler } from './middleware/errorHandler.js';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { createRequire } from 'module';
+import { randomUUID } from 'crypto';
+import { logger as appLogger } from './utils/logger.js';
+import paymentWebhookRouter from './routes/paymentWebhook.js';
+import tenantsRouter from './routes/tenants.js';
 
 // pino-http is a CommonJS module; use createRequire to import it in ESM runtime
 const require = createRequire(import.meta.url);
 const pinoHttp = require('pino-http') as any;
 const logger = pinoHttp({
+  logger: appLogger,
+  genReqId: (req: any, res: any) => {
+    const requestId = req.headers['x-request-id'] || randomUUID();
+    res.setHeader('x-request-id', requestId);
+    return requestId;
+  },
   redact: ['req.headers.authorization', 'req.headers.cookie', 'res.headers.set-cookie'],
 });
 
@@ -43,6 +54,7 @@ app.use(cors({
   },
   credentials: true,
 }));
+app.use('/api/payments/webhook', express.raw({ type: 'application/json', limit: '1mb' }), paymentWebhookRouter);
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(
@@ -56,7 +68,7 @@ const authRateLimit = rateLimit({
   max: Number(process.env.AUTH_RATE_LIMIT_MAX ?? 10),
   standardHeaders: true,
   legacyHeaders: false,
-  skipSuccessfulRequests: true,
+  skipSuccessfulRequests: false,
   keyGenerator: (req) => {
     const identifier = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : 'anonymous';
     return `${req.ip}:${identifier}`;
@@ -73,20 +85,22 @@ const authRateLimit = rateLimit({
 });
 
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok' });
+  res.json({ status: 'ok', service: 'restaurantos-backend' });
 });
 
-app.get('/db-health', async (_req, res) => {
+app.get('/ready', async (_req, res) => {
   try {
     await checkDbConnection();
-    res.json({ status: 'ok' });
+    res.json({ status: 'ready', database: 'ok' });
   } catch (error) {
     res.status(503).json({
-      status: 'error',
+      status: 'not_ready',
       message: 'Database health check failed',
     });
   }
 });
+
+app.get('/db-health', (_req, res) => res.redirect(307, '/ready'));
 
 app.use('/api/auth/login', authRateLimit);
 app.use('/api/auth/register', authRateLimit);
@@ -105,6 +119,7 @@ app.use('/api/offers', offersRouter);
 app.use('/api/reports', reportsRouter);
 app.use('/api/schema', schemaRouter);
 app.use('/api/users', usersRouter);
+app.use('/api/tenants', tenantsRouter);
 
 app.use((_req, res) => {
   res.status(404).json({ success: false, data: null, message: 'Endpoint not found' });

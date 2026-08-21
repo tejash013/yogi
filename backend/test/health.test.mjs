@@ -4,8 +4,16 @@ import { strict as assert } from 'assert';
 
 describe('Health endpoints', () => {
   it('GET /health should return ok', async () => {
-    const res = await request(app).get('/health');
+    const res = await request(app).get('/health').set('x-request-id', 'health-test');
     assert.equal(res.status, 200);
     assert.equal(res.body.status, 'ok');
+    assert.equal(res.headers['x-request-id'], 'health-test');
+  });
+
+  it('GET /ready should report database readiness', async () => {
+    const res = await request(app).get('/ready');
+    assert.equal(res.status, 200);
+    assert.equal(res.body.status, 'ready');
+    assert.equal(res.body.database, 'ok');
   });
 });
