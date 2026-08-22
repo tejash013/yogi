@@ -1,6 +1,11 @@
 import dotenv from 'dotenv';
 import http from 'http';
-dotenv.config();
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const backendRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+dotenv.config({ path: resolve(backendRoot, '.env') });
+dotenv.config({ path: resolve(backendRoot, 'atlas-credentials.env') });
 
 import { app } from './app.js';
 import { attachSocketHandlers } from './socket/index.js';
