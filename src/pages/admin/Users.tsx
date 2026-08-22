@@ -7,7 +7,7 @@ import type { User, UserRole } from '@/types';
 
 type UserRow = User & { _id?: string };
 
-const roles: UserRole[] = ['customer', 'cashier', 'chef', 'manager', 'owner', 'admin'];
+const roles: UserRole[] = ['customer', 'cashier', 'chef', 'manager', 'owner', 'platformAdmin'];
 const statuses: NonNullable<User['status']>[] = ['active', 'inactive', 'suspended'];
 
 export default function Users() {

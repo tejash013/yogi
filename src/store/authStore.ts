@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { authApi } from '@/api/endpoints';
-import type { User, LoginCredentials, RegisterData } from '@/types';
+import type { User, UserRole, LoginCredentials, RegisterData } from '@/types';
 
 interface AuthState {
   user: User | null;
@@ -27,14 +27,21 @@ function readTokenPayload(token: string): Partial<User> | null {
   }
 }
 
+const supportedRoles: UserRole[] = ['customer', 'cashier', 'chef', 'manager', 'owner', 'platformAdmin'];
 const storedToken = localStorage.getItem('restaurantos-token');
 const storedPayload = storedToken ? readTokenPayload(storedToken) : null;
+const hasValidStoredSession = Boolean(
+  storedToken &&
+    storedPayload?.id &&
+    typeof storedPayload.role === 'string' &&
+    supportedRoles.includes(storedPayload.role as UserRole)
+);
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: storedPayload?.id ? storedPayload as User : null,
   token: storedToken,
   refreshToken: localStorage.getItem('restaurantos-refresh-token'),
-  isAuthenticated: Boolean(storedToken && storedPayload?.id),
+  isAuthenticated: hasValidStoredSession,
   isLoading: false,
   error: null,
 
@@ -69,6 +76,10 @@ export const useAuthStore = create<AuthState>((set) => ({
       const message = apiMessage || (error instanceof Error ? error.message : 'Login failed. Please try again.');
 
       set({
+        user: null,
+        token: null,
+        refreshToken: null,
+        isAuthenticated: false,
         isLoading: false,
         error: message,
       });

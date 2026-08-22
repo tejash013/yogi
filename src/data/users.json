@@ -37,7 +37,7 @@
     "firstName": "Sarah",
     "lastName": "Williams",
     "phone": "+1-555-1001",
-    "role": "admin",
+    "role": "manager",
     "avatar": "/images/avatars/admin-1.jpg",
     "createdAt": "2024-06-01T08:00:00Z",
     "updatedAt": "2025-03-20T10:00:00Z"

@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button, Card, CardHeader, CardContent, Badge } from '@/components/ui';
 import { PageHeader } from '@/components/common';
+import { ROUTES } from '@/constants';
 
 type DashboardBadgeVariant = 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | 'neutral';
 
@@ -38,27 +40,27 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Admin Dashboard" description="Overview of your restaurant operations" />
+      <PageHeader title="Manager overview" description="A focused view of today's restaurant operations." />
 
       <div className="grid gap-6 xl:grid-cols-[1.8fr_1fr]">
         <Card className="overflow-hidden">
-          <div className="bg-gradient-to-r from-primary-500 via-primary-600 to-primary-700 p-6 text-white sm:p-8">
+          <div className="bg-neutral-950 p-6 text-white sm:p-8 dark:bg-neutral-800">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-sm uppercase tracking-[0.3em] text-primary-100">RestaurantOS</p>
-                <h2 className="mt-2 text-3xl font-semibold">Performance summary</h2>
-                <p className="mt-2 max-w-xl text-sm text-primary-100/90">Monitor the latest revenue, orders, and table status across your restaurant in one place.</p>
+                <p className="text-sm font-medium uppercase tracking-[0.2em] text-lime-300">Friday, 22 August</p>
+                <h2 className="mt-2 text-3xl font-semibold tracking-tight">Service is moving well.</h2>
+                <p className="mt-2 max-w-xl text-sm text-neutral-300">Keep an eye on the rush, clear the kitchen queue, and make the next decision with confidence.</p>
               </div>
               <div className="flex flex-wrap gap-3">
-                <button className="rounded-2xl border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20">New Order</button>
-                <button className="rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-primary-700 transition hover:bg-neutral-100">Export</button>
+                <Link to={ROUTES.ADMIN.ORDERS} className="rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20">Open orders</Link>
+                <Link to={ROUTES.ADMIN.REPORTS} className="rounded-xl bg-lime-300 px-4 py-2 text-sm font-semibold text-neutral-950 transition hover:bg-lime-200">View reports</Link>
               </div>
             </div>
           </div>
 
           <CardContent className="grid gap-4 p-6 sm:grid-cols-2">
             {stats.map((item) => (
-              <div key={item.label} className="rounded-[1.25rem] border border-neutral-200 bg-white p-5 shadow-sm dark:border-neutral-700 dark:bg-neutral-900">
+              <div key={item.label} className="rounded-2xl border border-neutral-200 bg-white p-5 dark:border-neutral-700 dark:bg-neutral-900">
                 <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">{item.label}</p>
                 <div className="mt-3 flex items-end justify-between gap-4">
                   <p className="text-3xl font-semibold text-neutral-900 dark:text-white">{item.value}</p>
@@ -79,13 +81,14 @@ export default function AdminDashboard() {
           <CardContent className="grid gap-4">
             <div className="grid gap-4 sm:grid-cols-2">
               {[
-                { label: 'New menu item', value: 'Create', color: 'bg-primary-500' },
-                { label: 'Pending orders', value: '4', color: 'bg-secondary-500' },
+                { label: 'Menu coverage', value: '94%', href: ROUTES.ADMIN.MENU_MANAGEMENT },
+                { label: 'Pending orders', value: '4', href: ROUTES.ADMIN.ORDERS },
               ].map((item) => (
-                <div key={item.label} className="rounded-3xl bg-neutral-50 p-4 dark:bg-neutral-900">
+                <Link key={item.label} to={item.href} className="rounded-2xl bg-neutral-50 p-4 transition hover:bg-lime-50 dark:bg-neutral-900 dark:hover:bg-neutral-800">
                   <p className="text-sm text-neutral-500">{item.label}</p>
                   <p className="mt-3 text-2xl font-semibold text-neutral-900 dark:text-white">{item.value}</p>
-                </div>
+                  <span className="mt-3 block text-xs font-semibold uppercase tracking-wider text-primary-600">Open view</span>
+                </Link>
               ))}
             </div>
             <div className="rounded-3xl border border-dashed border-neutral-200 bg-neutral-50 p-5 dark:border-neutral-700 dark:bg-neutral-900">
@@ -107,18 +110,6 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {stats.map((item) => (
-          <Card key={item.label} className="border-transparent bg-white/80 shadow-soft">
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">{item.label}</p>
-            <div className="mt-4 flex items-center justify-between gap-4">
-              <p className="text-3xl font-semibold text-neutral-900 dark:text-white">{item.value}</p>
-              <span className="rounded-full bg-neutral-100 px-3 py-1 text-sm font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">{item.badge}</span>
-            </div>
-          </Card>
-        ))}
       </div>
 
       <Card>

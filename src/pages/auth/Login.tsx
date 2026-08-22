@@ -67,8 +67,6 @@ export default function Login() {
       const role = useAuthStore.getState().user?.role;
       if (role === 'owner') {
         navigate(ROUTES.OWNER.DASHBOARD);
-      } else if (role === 'admin') {
-        navigate(ROUTES.ADMIN.DASHBOARD);
       } else if (role === 'manager') {
         navigate(ROUTES.ADMIN.DASHBOARD);
       } else if (role === 'chef') {

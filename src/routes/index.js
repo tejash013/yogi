@@ -69,7 +69,7 @@ const router = createBrowserRouter([
     // Admin routes
     {
         path: '/admin',
-        element: (_jsx(ProtectedRoute, { roles: ['admin', 'owner', 'manager'], children: _jsx(AdminLayout, {}) })),
+        element: (_jsx(ProtectedRoute, { roles: ['owner', 'manager'], children: _jsx(AdminLayout, {}) })),
         children: [
             { index: true, element: _jsx(Navigate, { to: ROUTES.ADMIN.DASHBOARD, replace: true }) },
             { path: 'dashboard', element: _jsx(AdminDashboard, {}) },
@@ -87,7 +87,7 @@ const router = createBrowserRouter([
     // Kitchen routes
     {
         path: '/kitchen',
-        element: (_jsx(ProtectedRoute, { roles: ['chef', 'admin'], children: _jsx(KitchenLayout, {}) })),
+        element: (_jsx(ProtectedRoute, { roles: ['chef', 'manager'], children: _jsx(KitchenLayout, {}) })),
         children: [
             { index: true, element: _jsx(Navigate, { to: ROUTES.KITCHEN.DASHBOARD, replace: true }) },
             { path: 'dashboard', element: _jsx(KitchenDashboard, {}) },
@@ -100,7 +100,7 @@ const router = createBrowserRouter([
     // Cashier routes
     {
         path: '/cashier',
-        element: (_jsx(ProtectedRoute, { roles: ['cashier', 'admin'], children: _jsx(CashierLayout, {}) })),
+        element: (_jsx(ProtectedRoute, { roles: ['cashier', 'manager'], children: _jsx(CashierLayout, {}) })),
         children: [
             { index: true, element: _jsx(Navigate, { to: ROUTES.CASHIER.DASHBOARD, replace: true }) },
             { path: 'dashboard', element: _jsx(CashierDashboard, {}) },

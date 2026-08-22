@@ -15,7 +15,7 @@ export interface User {
   updatedAt: string;
 }
 
-export type UserRole = 'customer' | 'cashier' | 'chef' | 'manager' | 'owner' | 'admin' | 'platformAdmin';
+export type UserRole = 'customer' | 'cashier' | 'chef' | 'manager' | 'owner' | 'platformAdmin';
 
 export interface Restaurant {
   _id: string;

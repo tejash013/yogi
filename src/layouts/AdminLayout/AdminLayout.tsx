@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Link, Outlet } from 'react-router-dom';
 import Navbar from '@/components/common/Navbar';
 import Sidebar, { type SidebarItem } from '@/components/common/Sidebar';
 import Logo from '@/components/common/Logo';
 import { ROUTES } from '@/constants';
-import { useAuthStore } from '@/store';
 
 const sidebarItems: SidebarItem[] = [
   {
@@ -112,11 +111,7 @@ const sidebarItems: SidebarItem[] = [
 
 export default function AdminLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const role = useAuthStore((state) => state.user?.role);
-  const visibleSidebarItems = sidebarItems.filter((item) => {
-    if (role === 'manager' && (item.label === 'User Access' || item.label === 'Settings')) return false;
-    return true;
-  });
+  const visibleSidebarItems = sidebarItems;
 
   return (
     <div className="flex min-h-screen flex-col bg-neutral-50 dark:bg-neutral-900">
@@ -145,14 +140,14 @@ export default function AdminLayout() {
               <div className="flex items-center gap-4">
                 <Logo size="sm" showText={true} />
                 <div>
-                  <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Admin Control Center</p>
-                  <h1 className="text-2xl font-semibold text-neutral-900 dark:text-white">RestaurantOS Admin</h1>
+                  <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Manager Control Center</p>
+                  <h1 className="text-2xl font-semibold text-neutral-900 dark:text-white">RestaurantOS Manager</h1>
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-3">
-                <button className="rounded-2xl border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800">Overview</button>
-                <button className="rounded-2xl bg-primary-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-600">Create Report</button>
-                <button className="rounded-2xl bg-secondary-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-secondary-600">New Item</button>
+                <Link to={ROUTES.ADMIN.DASHBOARD} className="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800">Overview</Link>
+                <Link to={ROUTES.ADMIN.REPORTS} className="rounded-xl bg-primary-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-600">Create Report</Link>
+                <Link to={ROUTES.ADMIN.MENU_MANAGEMENT} className="rounded-xl bg-secondary-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-secondary-600">New Item</Link>
               </div>
             </div>
             <Outlet />

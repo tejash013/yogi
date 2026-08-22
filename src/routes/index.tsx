@@ -93,7 +93,7 @@ const router = createBrowserRouter([
   {
     path: ROUTES.WORKSPACE,
     element: (
-      <ProtectedRoute roles={['platformAdmin', 'owner', 'admin']}>
+      <ProtectedRoute roles={['platformAdmin', 'owner']}>
         <Workspace />
       </ProtectedRoute>
     ),
@@ -137,7 +137,7 @@ const router = createBrowserRouter([
   {
     path: '/admin',
     element: (
-      <ProtectedRoute roles={['admin', 'owner', 'manager']}>
+      <ProtectedRoute roles={['owner', 'manager']}>
         <AdminLayout />
       </ProtectedRoute>
     ),
@@ -152,7 +152,7 @@ const router = createBrowserRouter([
       {
         path: 'users',
         element: (
-          <ProtectedRoute roles={['admin', 'owner']}>
+          <ProtectedRoute roles={['owner', 'manager']}>
             <AdminUsers />
           </ProtectedRoute>
         ),
@@ -163,7 +163,7 @@ const router = createBrowserRouter([
       {
         path: 'settings',
         element: (
-          <ProtectedRoute roles={['admin', 'owner']}>
+          <ProtectedRoute roles={['owner', 'manager']}>
             <AdminSettings />
           </ProtectedRoute>
         ),
@@ -175,7 +175,7 @@ const router = createBrowserRouter([
   {
     path: '/kitchen',
     element: (
-      <ProtectedRoute roles={['chef', 'admin']}>
+      <ProtectedRoute roles={['chef', 'manager']}>
         <KitchenLayout />
       </ProtectedRoute>
     ),
@@ -193,7 +193,7 @@ const router = createBrowserRouter([
   {
     path: '/cashier',
     element: (
-      <ProtectedRoute roles={['cashier', 'admin']}>
+      <ProtectedRoute roles={['cashier', 'manager']}>
         <CashierLayout />
       </ProtectedRoute>
     ),
@@ -264,9 +264,16 @@ function NotFoundPage() {
 }
 
 function RootRedirect() {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const role = useAuthStore((state) => state.user?.role);
+  if (!isAuthenticated) return <Navigate to={ROUTES.AUTH.LOGIN} replace />;
   if (role === 'platformAdmin') return <Navigate to={ROUTES.WORKSPACE} replace />;
-  return <Navigate to={role === 'owner' ? ROUTES.OWNER.DASHBOARD : ROUTES.DEFAULT} replace />;
+  if (role === 'owner') return <Navigate to={ROUTES.OWNER.DASHBOARD} replace />;
+  if (role === 'manager') return <Navigate to={ROUTES.ADMIN.DASHBOARD} replace />;
+  if (role === 'chef') return <Navigate to={ROUTES.KITCHEN.DASHBOARD} replace />;
+  if (role === 'cashier') return <Navigate to={ROUTES.CASHIER.DASHBOARD} replace />;
+  if (role === 'customer') return <Navigate to={ROUTES.DEFAULT} replace />;
+  return <Navigate to={ROUTES.AUTH.LOGIN} replace />;
 }
 
 export default router;

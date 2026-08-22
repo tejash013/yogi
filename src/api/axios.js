@@ -27,8 +27,10 @@ apiClient.interceptors.response.use((response) => response, async (error) => {
             const refreshToken = localStorage.getItem('restaurantos-refresh-token');
             if (refreshToken) {
                 const response = await axios.post(`${config.api.baseUrl}/api/auth/refresh`, { refreshToken });
-                const { token } = response.data;
+                const { token, refreshToken: nextRefreshToken } = response.data.data;
                 localStorage.setItem('restaurantos-token', token);
+                if (nextRefreshToken)
+                    localStorage.setItem('restaurantos-refresh-token', nextRefreshToken);
                 originalRequest.headers.Authorization = `Bearer ${token}`;
                 return apiClient(originalRequest);
             }
@@ -39,6 +41,9 @@ apiClient.interceptors.response.use((response) => response, async (error) => {
             localStorage.removeItem('restaurantos-refresh-token');
             window.location.href = '/auth/login';
         }
+        localStorage.removeItem('restaurantos-token');
+        localStorage.removeItem('restaurantos-refresh-token');
+        window.location.href = '/auth/login';
     }
     return Promise.reject(error);
 });
