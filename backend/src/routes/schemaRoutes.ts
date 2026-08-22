@@ -4,7 +4,7 @@ import { authenticate, requireRole } from '../middleware/auth.js';
 
 const router = Router();
 
-router.get('/schema', authenticate, requireRole('admin'), (_req, res) => {
+router.get('/schema', authenticate, requireRole('manager'), (_req, res) => {
   return res.json(
     success(
       {

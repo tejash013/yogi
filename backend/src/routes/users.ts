@@ -19,7 +19,7 @@ function publicUser(user: any) {
   return value;
 }
 
-router.use(authenticate, requireRole(['owner', 'admin', 'platformAdmin']));
+router.use(authenticate, requireRole(['owner', 'manager', 'platformAdmin']));
 
 router.get('/', validateQuery(userQuerySchema), async (req, res) => {
   const page = Number(req.query.page ?? 1);
@@ -52,13 +52,13 @@ router.patch('/:id/access', validateParams(idParamSchema), validateBody(userAcce
     return res.status(403).json(failure('You cannot change your own access level'));
   }
 
-  if (req.user.role === 'owner' && ['admin', 'platformAdmin'].includes(target.role)) {
-    return res.status(403).json(failure('Owners cannot modify admin accounts'));
+  if (req.user.role === 'owner' && ['manager', 'platformAdmin'].includes(target.role)) {
+    return res.status(403).json(failure('Owners cannot modify administrative accounts'));
   }
 
   const { role, status, branch, restaurantId, branchId } = req.body;
-  if ((role === 'admin' || role === 'platformAdmin' || ['admin', 'platformAdmin'].includes(target.role)) && req.user.role !== 'platformAdmin') {
-    return res.status(403).json(failure('Only an admin can manage admin accounts'));
+  if ((role === 'manager' || role === 'platformAdmin' || ['manager', 'platformAdmin'].includes(target.role)) && req.user.role !== 'platformAdmin') {
+    return res.status(403).json(failure('Only a platform administrator can manage administrative accounts'));
   }
 
   if ((restaurantId || branchId) && req.user.role !== 'platformAdmin') return res.status(403).json(failure('Only a platform admin can move users between tenants'));

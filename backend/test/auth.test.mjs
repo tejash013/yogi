@@ -29,7 +29,7 @@ describe('Auth routes', () => {
       firstName: 'Role',
       lastName: 'Test',
       phone: '1234567890',
-      role: 'admin',
+      role: 'manager',
     });
     assert.equal(res.status, 400);
     assert.match(res.body.message, /Unrecognized key/);

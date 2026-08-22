@@ -24,7 +24,7 @@ export const employeeCreateSchema = z.object({
   name: z.string().trim().min(1),
   email: z.string().email(),
   phone: z.string().trim().min(7),
-  role: z.enum(['cashier', 'chef', 'manager', 'owner', 'admin']).optional(),
+  role: z.enum(['cashier', 'chef', 'manager', 'owner']).optional(),
   shift: z.enum(['morning', 'afternoon', 'evening', 'night']).optional(),
   salary: nonNegativeNumber.optional(),
   joiningDate: z.coerce.date().optional(),
@@ -132,7 +132,7 @@ export const reportQuerySchema = z.object({
 
 export const userQuerySchema = paginationQuerySchema;
 export const userAccessUpdateSchema = z.object({
-  role: z.enum(['customer', 'cashier', 'chef', 'manager', 'owner', 'admin', 'platformAdmin']).optional(),
+  role: z.enum(['customer', 'cashier', 'chef', 'manager', 'owner', 'platformAdmin']).optional(),
   status: z.enum(['active', 'inactive', 'suspended']).optional(),
   restaurantId: objectId.optional(),
   branchId: objectId.optional(),

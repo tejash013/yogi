@@ -26,7 +26,7 @@ export const permissions = {
 
 export type Permission = (typeof permissions)[keyof typeof permissions];
 
-type Role = 'customer' | 'cashier' | 'chef' | 'manager' | 'owner' | 'admin' | 'platformAdmin';
+type Role = 'customer' | 'cashier' | 'chef' | 'manager' | 'owner' | 'platformAdmin';
 
 const rolePermissions: Record<Role, readonly Permission[]> = {
   customer: [permissions.menuRead, permissions.orderRead, permissions.orderCreate, permissions.invoicesRead, permissions.offersRead],
@@ -34,7 +34,6 @@ const rolePermissions: Record<Role, readonly Permission[]> = {
   chef: [permissions.menuRead, permissions.orderRead, permissions.kitchenRead, permissions.kitchenStatus],
   manager: Object.values(permissions) as Permission[],
   owner: Object.values(permissions) as Permission[],
-  admin: Object.values(permissions) as Permission[],
   platformAdmin: Object.values(permissions) as Permission[],
 };
 

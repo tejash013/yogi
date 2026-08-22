@@ -11,7 +11,7 @@ const employeeSchema = new Schema(
     phone: { type: String, required: true, trim: true },
     role: {
       type: String,
-      enum: ['cashier', 'chef', 'manager', 'owner', 'admin'],
+      enum: ['cashier', 'chef', 'manager', 'owner'],
       default: 'cashier',
     },
     shift: {

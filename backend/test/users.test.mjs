@@ -50,15 +50,15 @@ describe('User access management', () => {
     assert.equal(res.body.message, 'You cannot change your own access level');
   });
 
-  it('prevents owners from modifying admin accounts', async () => {
+  it('prevents owners from modifying manager accounts', async () => {
     const owner = await createUser('owner', 'admin-target');
-    const admin = await createUser('admin', 'protected');
+    const manager = await createUser('manager', 'protected');
     const res = await request(app)
-      .patch(`/api/users/${admin.user._id}/access`)
+      .patch(`/api/users/${manager.user._id}/access`)
       .set('Authorization', `Bearer ${owner.token}`)
       .send({ status: 'suspended' });
     assert.equal(res.status, 403);
-    assert.equal(res.body.message, 'Owners cannot modify admin accounts');
+    assert.equal(res.body.message, 'Owners cannot modify administrative accounts');
   });
 
   it('rejects access tokens immediately after suspension', async () => {

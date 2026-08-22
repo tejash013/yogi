@@ -12,7 +12,7 @@ const userSchema = new Schema(
     password: { type: String, required: true },
     role: {
       type: String,
-      enum: ['customer', 'cashier', 'chef', 'manager', 'owner', 'admin', 'platformAdmin'],
+      enum: ['customer', 'cashier', 'chef', 'manager', 'owner', 'platformAdmin'],
       default: 'customer',
     },
     status: { type: String, enum: ['active', 'inactive', 'suspended'], default: 'active' },
