@@ -10,6 +10,7 @@ import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/
 import { sendEmail } from '../utils/email.js';
 import { recordAudit } from '../utils/audit.js';
 import { tenantIdsFromRequest } from '../utils/tenant.js';
+import { isSupportedRole } from '../auth/permissions.js';
 
 const router = Router();
 
@@ -80,7 +81,7 @@ router.post('/login', validateBody(loginSchema), async (req, res) => {
 
   const user = await userRepo.findByEmail(email);
   const passwordValid = user && user.password ? verifyPassword(password, user.password) : false;
-  if (!user || !user.password || !passwordValid) {
+  if (!user || !user.password || !passwordValid || !isSupportedRole(user.role)) {
     return res.status(401).json(failure('Invalid credentials'));
   }
 
@@ -172,7 +173,7 @@ router.post('/refresh', validateBody(z.object({ refreshToken: z.string().min(1) 
     }
 
     const user = await userRepo.findById(String(payload.id));
-    if (!user || user.status !== 'active') return res.status(401).json(failure('Invalid refresh token'));
+    if (!user || !isSupportedRole(user.role) || user.status !== 'active') return res.status(401).json(failure('Invalid refresh token'));
 
     const newRefreshToken = signRefreshToken({ id: user._id, jti: crypto.randomUUID() });
     await persistRefreshToken(user._id, newRefreshToken);
