@@ -8,7 +8,7 @@ type DashboardBadgeVariant = 'primary' | 'secondary' | 'success' | 'warning' | '
 
 const stats: Array<{ label: string; value: string; badge: string; variant: DashboardBadgeVariant }> = [
   { label: 'Total Orders', value: '156', badge: '+12%', variant: 'primary' },
-  { label: 'Revenue', value: '$4,892', badge: '+8%', variant: 'success' },
+  { label: 'Revenue', value: '₹4,892', badge: '+8%', variant: 'success' },
   { label: 'Customers', value: '89', badge: '+5%', variant: 'info' },
   { label: 'Active Tables', value: '12/20', badge: '60%', variant: 'secondary' },
 ];
@@ -137,7 +137,7 @@ export default function AdminDashboard() {
           <div className="rounded-3xl border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-neutral-500 dark:text-neutral-400">Filtered order total</p>
-              <p className="text-lg font-semibold text-neutral-900 dark:text-white">${totalSales.toFixed(2)}</p>
+              <p className="text-lg font-semibold text-neutral-900 dark:text-white">₹{totalSales.toFixed(2)}</p>
             </div>
           </div>
           {filteredOrders.length === 0 ? (
@@ -151,7 +151,7 @@ export default function AdminDashboard() {
                 </div>
                 <div className="flex flex-wrap items-center gap-2 text-sm">
                   <Badge variant={order.status === 'Completed' ? 'success' : order.status === 'Pending' ? 'warning' : 'primary'} size="sm">{order.status}</Badge>
-                  <span className="font-semibold text-neutral-900 dark:text-white">${order.total.toFixed(2)}</span>
+                        <span className="font-semibold text-neutral-900 dark:text-white">₹{order.total.toFixed(2)}</span>
                 </div>
               </div>
             ))

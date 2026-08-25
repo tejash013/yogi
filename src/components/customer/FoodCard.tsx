@@ -120,15 +120,15 @@ export default function FoodCard({ item, onFavoriteToggle, isFavorite }: FoodCar
           {item.discountPrice ? (
             <div className="flex items-center gap-1.5">
               <span className="text-lg font-bold text-primary-500">
-                ${item.discountPrice.toFixed(2)}
+                ₹{item.discountPrice.toFixed(2)}
               </span>
               <span className="text-sm text-neutral-400 line-through">
-                ${item.price.toFixed(2)}
+                ₹{item.price.toFixed(2)}
               </span>
             </div>
           ) : (
             <span className="text-lg font-bold text-primary-500">
-              ${item.price.toFixed(2)}
+              ₹{item.price.toFixed(2)}
             </span>
           )}
         </div>

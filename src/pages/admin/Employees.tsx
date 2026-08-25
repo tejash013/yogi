@@ -11,7 +11,7 @@ const columns: Column<EmployeeRow>[] = [
   { key: 'name', header: 'Name' },
   { key: 'role', header: 'Role' },
   { key: 'shift', header: 'Shift' },
-  { key: 'salary', header: 'Salary', render: (item) => `$${item.salary.toFixed(2)}` },
+  { key: 'salary', header: 'Salary', render: (item) => `₹${item.salary.toFixed(2)}` },
   {
     key: 'isActive',
     header: 'Status',

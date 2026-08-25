@@ -171,13 +171,13 @@ export default function FoodDetails() {
             {item.discountPrice ? (
               <div className="flex items-center gap-2">
                 <span className="text-3xl font-bold text-primary-500">
-                  ${item.discountPrice.toFixed(2)}
+                  ₹{item.discountPrice.toFixed(2)}
                 </span>
-                <span className="text-lg text-neutral-400 line-through">${item.price.toFixed(2)}</span>
+                <span className="text-lg text-neutral-400 line-through">₹{item.price.toFixed(2)}</span>
               </div>
             ) : (
               <span className="text-3xl font-bold text-primary-500">
-                ${item.price.toFixed(2)}
+                ₹{item.price.toFixed(2)}
               </span>
             )}
           </div>
@@ -198,7 +198,7 @@ export default function FoodDetails() {
                 >
                   <p className="text-sm font-semibold">{v.label}</p>
                   <p className="text-xs text-neutral-400">
-                    {v.price === 0 ? 'Standard' : `+$${v.price.toFixed(2)}`}
+                    {v.price === 0 ? 'Standard' : `+₹${v.price.toFixed(2)}`}
                   </p>
                 </button>
               ))}
@@ -222,7 +222,7 @@ export default function FoodDetails() {
                   <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
                     {addon.label}
                   </span>
-                  <span className="text-xs font-semibold text-primary-500">+${addon.price.toFixed(2)}</span>
+                  <span className="text-xs font-semibold text-primary-500">+₹{addon.price.toFixed(2)}</span>
                 </button>
               ))}
             </div>
@@ -264,7 +264,7 @@ export default function FoodDetails() {
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
-                  Add to Cart · ${totalPrice.toFixed(2)}
+                  Add to Cart · ₹{totalPrice.toFixed(2)}
                 </>
               )}
             </Button>

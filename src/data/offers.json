@@ -7,7 +7,7 @@
     "discountType": "percentage",
     "discountValue": 20,
     "validUntil": "2025-12-31T23:59:59Z",
-    "terms": ["Valid only between 4 PM - 7 PM", "Cannot be clubbed with other offers", "Minimum order of $10"],
+    "terms": ["Valid only between 4 PM - 7 PM", "Cannot be clubbed with other offers", "Minimum order of ₹10"],
     "isActive": true
   },
   {
@@ -24,18 +24,18 @@
   {
     "id": "offer-003",
     "title": "First Order Discount",
-    "description": "New customers get $10 off on their first order above $30",
+    "description": "New customers get ₹10 off on their first order above ₹30",
     "image": "/images/offers/first-order.jpg",
     "discountType": "fixed",
     "discountValue": 10,
     "validUntil": "2025-12-31T23:59:59Z",
-    "terms": ["Valid for first-time customers only", "Minimum order of $30", "Use code: FIRST10"],
+    "terms": ["Valid for first-time customers only", "Minimum order of ₹30", "Use code: FIRST10"],
     "isActive": true
   },
   {
     "id": "offer-004",
     "title": "Lunch Combo",
-    "description": "Any main course + beverage at just $14.99",
+    "description": "Any main course + beverage at just ₹14.99",
     "image": "/images/offers/lunch-combo.jpg",
     "discountType": "fixed",
     "discountValue": 5,

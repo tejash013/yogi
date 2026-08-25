@@ -2,10 +2,10 @@ import { Card, Button, Badge } from '@/components/ui';
 import { PageHeader } from '@/components/common';
 
 const dashboardStats = [
-  { label: 'Total Revenue', value: '$48,250', badge: '+12.5%', badgeVariant: 'success' as const },
+  { label: 'Total Revenue', value: '₹48,250', badge: '+12.5%', badgeVariant: 'success' as const },
   { label: 'Total Orders', value: '1,245', badge: '+8.3%', badgeVariant: 'info' as const },
   { label: 'Active Customers', value: '892', badge: '+15.2%', badgeVariant: 'primary' as const },
-  { label: 'Net Profit', value: '$12,580', badge: '+10.1%', badgeVariant: 'secondary' as const },
+  { label: 'Net Profit', value: '₹12,580', badge: '+10.1%', badgeVariant: 'secondary' as const },
 ];
 
 export default function OwnerDashboard() {
@@ -46,10 +46,10 @@ export default function OwnerDashboard() {
           </div>
           <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {[
-              { label: 'Weekly Revenue', value: '$12,450' },
-              { label: 'Monthly Revenue', value: '$48,250' },
-              { label: 'Quarterly Revenue', value: '$142,800' },
-              { label: 'Yearly Revenue', value: '$528,000' },
+              { label: 'Weekly Revenue', value: '₹12,450' },
+              { label: 'Monthly Revenue', value: '₹48,250' },
+              { label: 'Quarterly Revenue', value: '₹142,800' },
+              { label: 'Yearly Revenue', value: '₹528,000' },
             ].map((item) => (
               <div key={item.label} className="rounded-3xl border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900">
                 <p className="text-sm text-neutral-500">{item.label}</p>
@@ -75,7 +75,7 @@ export default function OwnerDashboard() {
             {[
               { label: 'Profit Margin', value: '26.1%' },
               { label: 'Table Turnover', value: '3.8/day' },
-              { label: 'Average Order Value', value: '$39.10' },
+              { label: 'Average Order Value', value: '₹39.10' },
             ].map((metric) => (
               <div key={metric.label} className="rounded-3xl border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900">
                 <div className="flex items-center justify-between gap-4">

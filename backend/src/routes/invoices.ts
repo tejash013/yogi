@@ -34,7 +34,6 @@ router.get('/', authenticate, requirePermission(permissions.invoicesRead), valid
     filter.order = { $in: orderIds };
   }
 
-  const total = await Invoice.countDocuments(filter).exec();
   const invoices = await Invoice.find(filter)
     .populate('order', 'status paymentStatus total')
     .sort({ issuedAt: -1 })

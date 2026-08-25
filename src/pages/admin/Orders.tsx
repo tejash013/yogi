@@ -33,7 +33,7 @@ const columns: Column<OrderRow>[] = [
   { key: 'customer', header: 'Customer' },
   { key: 'table', header: 'Table' },
   { key: 'items', header: 'Items' },
-  { key: 'total', header: 'Total', render: (item) => `$${item.total.toFixed(2)}` },
+  { key: 'total', header: 'Total', render: (item) => `₹${item.total.toFixed(2)}` },
   {
     key: 'status',
     header: 'Status',

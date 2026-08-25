@@ -21,7 +21,7 @@ const data: MenuItemRow[] = [
 const columns: Column<MenuItemRow>[] = [
   { key: 'name', header: 'Name' },
   { key: 'category', header: 'Category' },
-  { key: 'price', header: 'Price', render: (item) => `$${item.price.toFixed(2)}` },
+  { key: 'price', header: 'Price', render: (item) => `₹${item.price.toFixed(2)}` },
   {
     key: 'status',
     header: 'Status',

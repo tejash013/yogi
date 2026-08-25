@@ -170,7 +170,7 @@ export default function Menu() {
 
         {/* Price Range */}
         <div className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800">
-          <span className="text-xs font-medium text-neutral-500">$</span>
+          <span className="text-xs font-medium text-neutral-500">₹</span>
           <input
             type="range"
             min={0}
@@ -179,7 +179,7 @@ export default function Menu() {
             onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
             className="h-1 w-20 accent-primary-500"
           />
-          <span className="text-xs font-medium text-neutral-500">${priceRange[1]}</span>
+          <span className="text-xs font-medium text-neutral-500">₹{priceRange[1]}</span>
         </div>
 
         {/* Result count */}
