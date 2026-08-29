@@ -114,6 +114,15 @@ export const tablesApi = {
   getById: (id: string) =>
     apiClient.get<ApiResponse<Table>>(`/api/tables/${id}`),
 
+  create: (table: {
+    label: string;
+    capacity: number;
+    status?: 'available' | 'occupied' | 'reserved' | 'cleaning';
+    location?: string;
+    notes?: string;
+  }) =>
+    apiClient.post<ApiResponse<Table>>('/api/tables', table),
+
   updateStatus: (id: string, status: Table['status']) =>
     apiClient.patch<ApiResponse<Table>>(`/api/tables/${id}/status`, { status }),
 };
