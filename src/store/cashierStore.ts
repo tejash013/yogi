@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { invoicesApi, offersApi, ordersApi } from '@/api';
+import { useOrderSyncStore } from '@/store/orderSyncStore';
 import type {
   CashierOrder,
   CashierOrderItem,
@@ -638,6 +639,11 @@ splitPayments: [],
 }));
 
 void hydrateCashierData();
+
+useOrderSyncStore.subscribe((state) => {
+  if (!state.lastEvent) return;
+  void hydrateCashierData();
+});
 
 // ---- Selector helpers ----
 export const selectUnpaidOrders = (state: CashierState) =>

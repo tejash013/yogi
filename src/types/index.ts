@@ -80,8 +80,20 @@ export interface Category {
 
 // Order Types
 export type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'completed' | 'cancelled';
-export type PaymentStatus = 'unpaid' | 'paid' | 'refunded' | 'partially_paid';
+export type PaymentStatus = 'pending' | 'unpaid' | 'paid' | 'failed' | 'refunded' | 'partially_paid';
 export type PaymentMethod = 'cash' | 'card' | 'upi' | 'wallet' | 'online';
+
+export interface CreateOrderPayload {
+  userId: string;
+  tableId?: string;
+  items: Array<{
+    menuItem: string;
+    quantity: number;
+  }>;
+  orderType?: 'dine-in' | 'takeaway' | 'delivery';
+  paymentStatus?: PaymentStatus;
+  notes?: string;
+}
 
 export interface Order {
   id: string;

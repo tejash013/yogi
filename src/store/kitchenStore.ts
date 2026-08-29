@@ -3,6 +3,7 @@ import { ordersApi } from '@/api';
 import type { KitchenOrder, KitchenStatus, OrderPriority } from '@/types/kitchen';
 import { useToastStore } from '@/store/toastStore';
 import { useNotificationStore } from '@/store/notificationStore';
+import { useOrderSyncStore } from '@/store/orderSyncStore';
 import type { Notification } from '@/types';
 
 export type KitchenStatusFilter =
@@ -173,72 +174,143 @@ export const useKitchenStore = create<KitchenState>((set, get) => ({
 
   setActiveOrder: (id) => set({ activeOrderId: id }),
 
-  acceptOrder: (id) => {
-    set((state) => ({
-      orders: state.orders.map((o) =>
-        o.id === id
-          ? { ...o, status: 'confirmed', acceptedAt: o.acceptedAt ?? nowISO() }
-          : o
-      ),
-    }));
-    useToastStore.getState().showToast(`Order accepted`, 'success');
+  acceptOrder: async (id) => {
+    try {
+      await ordersApi.updateStatus(id, 'confirmed');
+      set((state) => ({
+        orders: state.orders.map((o) =>
+          o.id === id
+            ? { ...o, status: 'confirmed', acceptedAt: o.acceptedAt ?? nowISO() }
+            : o
+        ),
+      }));
+      useToastStore.getState().showToast('Order accepted', 'success');
+    } catch {
+      set((state) => ({
+        orders: state.orders.map((o) =>
+          o.id === id
+            ? { ...o, status: 'confirmed', acceptedAt: o.acceptedAt ?? nowISO() }
+            : o
+        ),
+      }));
+      useToastStore.getState().showToast('Order accepted locally', 'warning');
+    }
   },
 
-  rejectOrder: (id) => {
+  rejectOrder: async (id) => {
     const order = get().orders.find((o) => o.id === id);
-    set((state) => ({
-      orders: state.orders.map((o) =>
-        o.id === id ? { ...o, status: 'rejected' } : o
-      ),
-    }));
-    useToastStore
-      .getState()
-      .showToast(
-        `Order ${order?.orderNumber ?? ''} rejected`,
-        'error'
-      );
+    try {
+      await ordersApi.updateStatus(id, 'cancelled');
+      set((state) => ({
+        orders: state.orders.map((o) =>
+          o.id === id ? { ...o, status: 'cancelled' } : o
+        ),
+      }));
+      useToastStore.getState().showToast(`Order ${order?.orderNumber ?? ''} rejected`, 'error');
+    } catch {
+      set((state) => ({
+        orders: state.orders.map((o) =>
+          o.id === id ? { ...o, status: 'cancelled' } : o
+        ),
+      }));
+      useToastStore.getState().showToast(`Order ${order?.orderNumber ?? ''} rejected locally`, 'error');
+    }
   },
 
-  startPreparing: (id) => {
-    set((state) => ({
-      orders: state.orders.map((o) =>
-        o.id === id
-          ? { ...o, status: 'preparing', startedAt: o.startedAt ?? nowISO() }
-          : o
-      ),
-    }));
-    useToastStore.getState().showToast('Preparation started', 'info');
+  startPreparing: async (id) => {
+    try {
+      await ordersApi.updateStatus(id, 'preparing');
+      set((state) => ({
+        orders: state.orders.map((o) =>
+          o.id === id
+            ? { ...o, status: 'preparing', startedAt: o.startedAt ?? nowISO() }
+            : o
+        ),
+      }));
+      useOrderSyncStore.getState().notifyOrderChange({ type: 'update', orderId: id, status: 'preparing', at: nowISO() });
+      useToastStore.getState().showToast('Preparation started', 'info');
+    } catch {
+      set((state) => ({
+        orders: state.orders.map((o) =>
+          o.id === id
+            ? { ...o, status: 'preparing', startedAt: o.startedAt ?? nowISO() }
+            : o
+        ),
+      }));
+      useOrderSyncStore.getState().notifyOrderChange({ type: 'update', orderId: id, status: 'preparing', at: nowISO() });
+      useToastStore.getState().showToast('Preparation started locally', 'warning');
+    }
   },
 
-  markReady: (id) => {
-    set((state) => ({
-      orders: state.orders.map((o) =>
-        o.id === id
-          ? { ...o, status: 'ready', readyAt: o.readyAt ?? nowISO() }
-          : o
-      ),
-    }));
-    useToastStore.getState().showToast('Order marked ready', 'success');
+  markReady: async (id) => {
+    try {
+      await ordersApi.updateStatus(id, 'ready');
+      set((state) => ({
+        orders: state.orders.map((o) =>
+          o.id === id
+            ? { ...o, status: 'ready', readyAt: o.readyAt ?? nowISO() }
+            : o
+        ),
+      }));
+      useOrderSyncStore.getState().notifyOrderChange({ type: 'update', orderId: id, status: 'ready', at: nowISO() });
+      useToastStore.getState().showToast('Order marked ready', 'success');
+    } catch {
+      set((state) => ({
+        orders: state.orders.map((o) =>
+          o.id === id
+            ? { ...o, status: 'ready', readyAt: o.readyAt ?? nowISO() }
+            : o
+        ),
+      }));
+      useOrderSyncStore.getState().notifyOrderChange({ type: 'update', orderId: id, status: 'ready', at: nowISO() });
+      useToastStore.getState().showToast('Order marked ready locally', 'warning');
+    }
   },
 
-  completeOrder: (id) => {
-    set((state) => ({
-      orders: state.orders.map((o) =>
-        o.id === id
-          ? { ...o, status: 'completed', completedAt: nowISO() }
-          : o
-      ),
-    }));
-    useToastStore.getState().showToast('Order completed', 'success');
+  completeOrder: async (id) => {
+    try {
+      await ordersApi.updateStatus(id, 'completed');
+      set((state) => ({
+        orders: state.orders.map((o) =>
+          o.id === id
+            ? { ...o, status: 'completed', completedAt: nowISO() }
+            : o
+        ),
+      }));
+      useOrderSyncStore.getState().notifyOrderChange({ type: 'update', orderId: id, status: 'completed', at: nowISO() });
+      useToastStore.getState().showToast('Order completed', 'success');
+    } catch {
+      set((state) => ({
+        orders: state.orders.map((o) =>
+          o.id === id
+            ? { ...o, status: 'completed', completedAt: nowISO() }
+            : o
+        ),
+      }));
+      useOrderSyncStore.getState().notifyOrderChange({ type: 'update', orderId: id, status: 'completed', at: nowISO() });
+      useToastStore.getState().showToast('Order completed locally', 'warning');
+    }
   },
 
-  cancelOrder: (id) => {
-    set((state) => ({
-      orders: state.orders.map((o) =>
-        o.id === id ? { ...o, status: 'cancelled' } : o
-      ),
-    }));
-    useToastStore.getState().showToast('Order cancelled', 'warning');
+  cancelOrder: async (id) => {
+    try {
+      await ordersApi.updateStatus(id, 'cancelled');
+      set((state) => ({
+        orders: state.orders.map((o) =>
+          o.id === id ? { ...o, status: 'cancelled' } : o
+        ),
+      }));
+      useOrderSyncStore.getState().notifyOrderChange({ type: 'update', orderId: id, status: 'cancelled', at: nowISO() });
+      useToastStore.getState().showToast('Order cancelled', 'warning');
+    } catch {
+      set((state) => ({
+        orders: state.orders.map((o) =>
+          o.id === id ? { ...o, status: 'cancelled' } : o
+        ),
+      }));
+      useOrderSyncStore.getState().notifyOrderChange({ type: 'update', orderId: id, status: 'cancelled', at: nowISO() });
+      useToastStore.getState().showToast('Order cancelled locally', 'warning');
+    }
   },
 
   updateStatus: (id, status) => {

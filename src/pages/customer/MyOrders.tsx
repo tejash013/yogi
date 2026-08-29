@@ -4,6 +4,7 @@ import { Button } from '@/components/ui';
 import { OrderCard } from '@/components/customer';
 import { ROUTES } from '@/constants';
 import { ordersApi } from '@/api';
+import { useOrderSyncStore } from '@/store';
 import type { Order } from '@/types';
 
 const normalizeOrder = (item: any): Order => ({
@@ -39,6 +40,8 @@ export default function MyOrders() {
   const [filter, setFilter] = useState<'all' | 'current' | 'previous'>('all');
   const [orders, setOrders] = useState<Order[]>([]);
 
+  const orderSyncVersion = useOrderSyncStore((state) => state.version);
+
   useEffect(() => {
     const loadOrders = async () => {
       try {
@@ -51,7 +54,7 @@ export default function MyOrders() {
     };
 
     void loadOrders();
-  }, []);
+  }, [orderSyncVersion]);
 
   const handleTrack = (e: React.FormEvent) => {
     e.preventDefault();

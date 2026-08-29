@@ -4,6 +4,7 @@ import { Button, Card, Badge } from '@/components/ui';
 import { Timeline } from '@/components/customer';
 import { ROUTES, ORDER_STATUS_LABELS } from '@/constants';
 import { ordersApi } from '@/api';
+import { useOrderSyncStore } from '@/store';
 import { formatCurrency, formatTime } from '@/utils';
 import type { Order, OrderItem, OrderStatus } from '@/types';
 
@@ -48,6 +49,7 @@ function buildTimelineSteps(status: OrderStatus) {
 export default function OrderTracking() {
   const { orderId } = useParams();
   const [orders, setOrders] = useState<Order[]>([]);
+  const orderSyncVersion = useOrderSyncStore((state) => state.version);
 
   useEffect(() => {
     const loadOrder = async () => {
@@ -61,7 +63,7 @@ export default function OrderTracking() {
     };
 
     void loadOrder();
-  }, []);
+  }, [orderSyncVersion]);
 
   const order = orders.find(
     (o) =>

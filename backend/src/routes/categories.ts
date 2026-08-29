@@ -38,14 +38,14 @@ router.get('/:id', validateParams(idParamSchema), async (req, res) => {
 });
 
 router.post('/', authenticate, requirePermission(permissions.menuCreate), validateBody(categoryCreateSchema), async (req, res) => {
-  const { name, description, parentId } = req.body;
+  const { name, description, icon, parentId } = req.body;
   if (!name) {
     return res.status(400).json(failure('Category name is required'));
   }
 
   const tenant = tenantFilter(req);
   if (parentId && !(await Category.exists({ _id: parentId, ...tenant }))) return res.status(400).json(failure('Parent category belongs to another branch'));
-  const category = new Category({ name, description, parentId, ...tenant });
+  const category = new Category({ name, description, icon, parentId, ...tenant });
   await category.save();
   return res.status(201).json(success(category, 'Category created successfully'));
 });

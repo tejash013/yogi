@@ -15,6 +15,7 @@ export const paginationQuerySchema = z.object({
 export const categoryCreateSchema = z.object({
   name: z.string().trim().min(1),
   description: z.string().trim().optional(),
+  icon: z.string().trim().max(2).optional(),
   parentId: objectId.optional(),
 }).strict();
 export const categoryUpdateSchema = categoryCreateSchema.partial();
@@ -82,11 +83,11 @@ export const orderCreateSchema = z.object({
 }).strict();
 
 export const orderQuerySchema = paginationQuerySchema.extend({
-  status: z.enum(['pending', 'preparing', 'ready', 'served', 'completed', 'cancelled']).optional(),
+  status: z.enum(['pending', 'confirmed', 'preparing', 'ready', 'served', 'completed', 'cancelled']).optional(),
   userId: objectId.optional(),
 });
 export const orderStatusSchema = z.object({
-  status: z.enum(['pending', 'preparing', 'ready', 'served', 'completed', 'cancelled']),
+  status: z.enum(['pending', 'confirmed', 'preparing', 'ready', 'served', 'completed', 'cancelled']),
 }).strict();
 
 export const invoiceQuerySchema = paginationQuerySchema.extend({

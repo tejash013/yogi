@@ -96,7 +96,7 @@ export const ordersApi = {
   getUserOrders: () =>
     apiClient.get<ApiResponse<Order[]>>('/api/orders/my-orders'),
 
-  create: (order: Partial<Order>) =>
+  create: (order: Partial<Order> | { userId: string; items: Array<{ menuItem: string; quantity: number }>; orderType?: 'dine-in' | 'takeaway' | 'delivery'; paymentStatus?: 'pending' | 'paid' | 'failed' | 'refunded'; notes?: string; }) =>
     apiClient.post<ApiResponse<Order>>('/api/orders', order),
 
   updateStatus: (id: string, status: Order['status']) =>
