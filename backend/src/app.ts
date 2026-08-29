@@ -58,11 +58,14 @@ app.use(cors({
 app.use('/api/payments/webhook', express.raw({ type: 'application/json', limit: '1mb' }), paymentWebhookRouter);
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+const isDev = process.env.NODE_ENV !== 'production';
+
 const generalRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: Number(process.env.GLOBAL_RATE_LIMIT_MAX ?? 500),
+  max: Number(process.env.GLOBAL_RATE_LIMIT_MAX ?? (isDev ? 50000 : 3000)),
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => isDev,
   handler: (_req, res) => {
     res.status(429).json({
       success: false,
@@ -76,9 +79,10 @@ app.use(generalRateLimit);
 
 const authRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: Number(process.env.AUTH_RATE_LIMIT_MAX ?? 50),
+  max: Number(process.env.AUTH_RATE_LIMIT_MAX ?? (isDev ? 5000 : 50)),
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => isDev,
   skipSuccessfulRequests: false,
   keyGenerator: (req) => {
     const identifier = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : 'anonymous';
