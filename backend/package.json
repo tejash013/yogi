@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx src/server.ts",
+    "dev": "tsx watch src/server.ts",
     "build": "tsc -p .",
     "start": "node dist/server.js",
     "test": "cross-env NODE_ENV=test LOG_LEVEL=silent mocha --reporter spec --exit --timeout 20000 --file test/setup.mjs \"test/**/*.test.mjs\"",
