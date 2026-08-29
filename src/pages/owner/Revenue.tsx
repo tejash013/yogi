@@ -2,9 +2,9 @@ import { Card, Badge } from '@/components/ui';
 import { PageHeader } from '@/components/common';
 
 const revenueStreams = [
-  { label: 'Dine-in Revenue', value: '₹28,450', ratio: 59 },
-  { label: 'Takeaway Revenue', value: '₹12,800', ratio: 26.5 },
-  { label: 'Delivery Revenue', value: '₹7,000', ratio: 14.5 },
+  { label: 'Dine-in Revenue', value: '$28,450', ratio: 59 },
+  { label: 'Takeaway Revenue', value: '$12,800', ratio: 26.5 },
+  { label: 'Delivery Revenue', value: '$7,000', ratio: 14.5 },
 ];
 
 export default function Revenue() {
@@ -53,7 +53,7 @@ export default function Revenue() {
           <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">Revenue Highlights</h2>
           <ul className="mt-5 space-y-4">
             {[
-              { label: 'Best Month', value: 'December', valueDetail: '₹65,400' },
+              { label: 'Best Month', value: 'December', valueDetail: '$65,400' },
               { label: 'Best Channel', value: 'Dine-in', valueDetail: '59%' },
               { label: 'Growth Rate', value: '12.5%', valueDetail: 'vs last year' },
             ].map((item) => (

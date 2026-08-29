@@ -2,12 +2,12 @@ import { Card, Badge } from '@/components/ui';
 import { PageHeader } from '@/components/common';
 
 const expenseCategories = [
-  { label: 'Ingredients', value: '₹18,500', percentage: 42 },
-  { label: 'Staff Salaries', value: '₹12,000', percentage: 27 },
-  { label: 'Utilities', value: '₹3,200', percentage: 7 },
-  { label: 'Rent', value: '₹5,000', percentage: 11 },
-  { label: 'Marketing', value: '₹2,800', percentage: 6 },
-  { label: 'Other', value: '₹3,000', percentage: 7 },
+  { label: 'Ingredients', value: '$18,500', percentage: 42 },
+  { label: 'Staff Salaries', value: '$12,000', percentage: 27 },
+  { label: 'Utilities', value: '$3,200', percentage: 7 },
+  { label: 'Rent', value: '$5,000', percentage: 11 },
+  { label: 'Marketing', value: '$2,800', percentage: 6 },
+  { label: 'Other', value: '$3,000', percentage: 7 },
 ];
 
 export default function Expenses() {
@@ -56,8 +56,8 @@ export default function Expenses() {
           <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">Expense Summary</h2>
           <div className="mt-5 space-y-4">
             {[
-              { label: 'Total Expenses', value: '₹44,500' },
-              { label: 'Average Cost', value: '₹3,708' },
+              { label: 'Total Expenses', value: '$44,500' },
+              { label: 'Average Cost', value: '$3,708' },
               { label: 'Cost Ratio', value: '67%' },
             ].map((item) => (
               <div key={item.label} className="rounded-3xl border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900">

@@ -1,0 +1,27 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { Card, Table, Badge, Search, Button } from '@/components/ui';
+import { PageHeader } from '@/components/common';
+const data = [
+    { invoice: 'INV-001', order: 'ORD-001', customer: 'John Doe', amount: 38.85, status: 'paid', date: '2025-03-20' },
+    { invoice: 'INV-002', order: 'ORD-002', customer: 'Jane Smith', amount: 41.41, status: 'paid', date: '2025-03-20' },
+    { invoice: 'INV-003', order: 'ORD-003', customer: 'Mike Johnson', amount: 25.89, status: 'pending', date: '2025-03-19' },
+    { invoice: 'INV-004', order: 'ORD-004', customer: 'Sarah Wilson', amount: 52.30, status: 'overdue', date: '2025-03-15' },
+];
+const columns = [
+    { key: 'invoice', header: 'Invoice' },
+    { key: 'order', header: 'Order' },
+    { key: 'customer', header: 'Customer' },
+    { key: 'amount', header: 'Amount', render: (item) => `$${item.amount.toFixed(2)}` },
+    {
+        key: 'status',
+        header: 'Status',
+        render: (item) => {
+            const variant = item.status === 'paid' ? 'success' : item.status === 'pending' ? 'warning' : 'error';
+            return (_jsx(Badge, { variant: variant, size: "sm", children: item.status.charAt(0).toUpperCase() + item.status.slice(1) }));
+        },
+    },
+    { key: 'date', header: 'Date' },
+];
+export default function Invoices() {
+    return (_jsxs("div", { children: [_jsx(PageHeader, { title: "Invoices", description: "View and manage invoices", actions: _jsxs("div", { className: "flex items-center gap-3", children: [_jsx(Search, { placeholder: "Search invoices..." }), _jsx(Button, { variant: "outline", children: "Export" })] }) }), _jsx(Card, { padding: "none", children: _jsx(Table, { columns: columns, data: data }) })] }));
+}
