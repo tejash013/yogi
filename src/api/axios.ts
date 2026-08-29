@@ -18,6 +18,13 @@ function isPublicAuthRequest(url?: string) {
   return Boolean(url && /^\/api\/auth\/(login|register|refresh|forgot-password|reset-password|verify-otp)$/.test(url));
 }
 
+function redirectToLoginIfNeeded() {
+  const isAuthPage = /^\/auth(?:\/|$)/.test(window.location.pathname);
+  if (!isAuthPage) {
+    window.location.href = '/auth/login';
+  }
+}
+
 // Request interceptor
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
@@ -40,6 +47,10 @@ apiClient.interceptors.response.use(
       _retry?: boolean;
     };
 
+    if (error.response?.status === 429) {
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isPublicAuthRequest(originalRequest.url)) {
       originalRequest._retry = true;
 
@@ -60,11 +71,11 @@ apiClient.interceptors.response.use(
         // Refresh token failed, clear auth
         localStorage.removeItem('restaurantos-token');
         localStorage.removeItem('restaurantos-refresh-token');
-        window.location.href = '/auth/login';
+        redirectToLoginIfNeeded();
       }
       localStorage.removeItem('restaurantos-token');
       localStorage.removeItem('restaurantos-refresh-token');
-      window.location.href = '/auth/login';
+      redirectToLoginIfNeeded();
     }
 
     return Promise.reject(error);

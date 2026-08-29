@@ -76,7 +76,7 @@ app.use(generalRateLimit);
 
 const authRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: Number(process.env.AUTH_RATE_LIMIT_MAX ?? 10),
+  max: Number(process.env.AUTH_RATE_LIMIT_MAX ?? 50),
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: false,
