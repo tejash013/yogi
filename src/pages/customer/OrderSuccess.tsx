@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui';
 import { ROUTES } from '@/constants';
 
 export default function OrderSuccess() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [showContent, setShowContent] = useState(false);
-  const orderNumber = 'ORD-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+  const state = (location.state as { orderId?: string; orderNumber?: string } | null) ?? null;
+  const orderId = state?.orderId ?? 'unknown';
+  const orderNumber = state?.orderNumber ?? 'ORD-' + Math.random().toString(36).substring(2, 8).toUpperCase();
   const estimatedTime = '20-30';
 
   useEffect(() => {
@@ -75,7 +78,7 @@ export default function OrderSuccess() {
         <div className="flex flex-col gap-3">
           <Button
             size="lg"
-            onClick={() => navigate(ROUTES.CUSTOMER.ORDER_TRACKING.replace(':orderId', orderNumber))}
+            onClick={() => navigate(ROUTES.CUSTOMER.ORDER_TRACKING.replace(':orderId', orderId))}
           >
             Track Order
           </Button>

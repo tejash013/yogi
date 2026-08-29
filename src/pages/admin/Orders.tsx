@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Card, CardHeader, CardContent, Badge, Table, Button, Search } from '@/components/ui';
 import { PageHeader } from '@/components/common';
 import { ordersApi } from '@/api';
+import { useOrderSyncStore } from '@/store';
 import type { Column } from '@/components/ui';
 
 interface OrderRow {
@@ -50,6 +51,7 @@ export default function AdminOrders() {
   const [showFilters, setShowFilters] = useState(false);
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const orderSyncVersion = useOrderSyncStore((state) => state.version);
 
   useEffect(() => {
     const loadOrders = async () => {
@@ -86,7 +88,7 @@ export default function AdminOrders() {
     };
 
     void loadOrders();
-  }, []);
+  }, [orderSyncVersion]);
 
   const filteredOrders = useMemo(
     () =>

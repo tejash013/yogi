@@ -51,6 +51,48 @@ describe('Order ownership controls', () => {
     assert.notEqual(res.body?.data?.user, String(other.user._id));
   });
 
+  it('accepts confirmed as a valid order status update', async () => {
+    const owner = await User.create({
+      firstName: 'Owner',
+      lastName: 'Test',
+      email: `owner-confirmed-${Date.now()}@example.com`,
+      phone: '1234567890',
+      password: 'hashed-password',
+      role: 'owner',
+    });
+    const token = signAccessToken({
+      id: owner._id,
+      role: owner.role,
+      email: owner.email,
+      tokenVersion: owner.tokenVersion,
+      restaurantId: owner.restaurantId,
+      branchId: owner.branchId,
+    });
+    const category = await Category.create({ name: `confirmed-${Date.now()}` });
+    const menuItem = await MenuItem.create({
+      title: 'Confirmed item',
+      category: category._id,
+      price: 10,
+      availableQty: 5,
+    });
+
+    const order = await Order.create({
+      user: owner._id,
+      items: [{ menuItem: menuItem._id, quantity: 1, unitPrice: 10 }],
+      subtotal: 10,
+      taxes: 0.8,
+      total: 10.8,
+    });
+
+    const res = await request(app)
+      .patch(`/api/orders/${order._id}/status`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ status: 'confirmed' });
+
+    assert.equal(res.status, 200);
+    assert.equal(res.body.data.status, 'confirmed');
+  });
+
   it('reserves inventory and rejects orders after stock is exhausted', async () => {
     const customer = await createCustomer('inventory');
     const category = await Category.create({ name: `Test-${Date.now()}` });

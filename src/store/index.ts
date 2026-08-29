@@ -3,6 +3,7 @@ export { useCartStore } from './cartStore';
 export { useThemeStore } from './themeStore';
 export { useNotificationStore } from './notificationStore';
 export { useToastStore } from './toastStore';
+export { useOrderSyncStore } from './orderSyncStore';
 export { useKitchenStore } from './kitchenStore';
 export {
   selectOrderById,

@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Card, Input } from '@/components/ui';
 import { ROUTES } from '@/constants';
-import { useCartStore } from '@/store';
+import { ordersApi } from '@/api';
+import { useAuthStore, useCartStore, useOrderSyncStore } from '@/store';
 
 type DiningType = 'dine-in' | 'takeaway' | 'delivery';
 type PaymentMethod = 'card' | 'cash' | 'upi' | 'wallet';
@@ -12,6 +13,7 @@ const TAX_RATE = 0.08;
 
 export default function Checkout() {
   const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
   const { items, subtotal, clearCart } = useCartStore();
   const [diningType, setDiningType] = useState<DiningType>('dine-in');
   const [tableNumber, setTableNumber] = useState('');
@@ -19,21 +21,69 @@ export default function Checkout() {
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', notes: '' });
   const [useRewardPoints, setUseRewardPoints] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const actualTax = subtotal * TAX_RATE;
   const rewardDiscount = useRewardPoints ? Math.min(5, subtotal) : 0;
   const finalTotal = Math.max(0, subtotal + actualTax + DELIVERY_FEE - rewardDiscount);
 
-  const handlePlaceOrder = (e: React.FormEvent) => {
+  const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsProcessing(true);
 
-    // Simulate order processing
-    setTimeout(() => {
+    if (!user?.id) {
+      navigate(ROUTES.AUTH.LOGIN);
+      return;
+    }
+
+    if (items.length === 0) {
+      setSubmitError('Your cart is empty.');
+      return;
+    }
+
+    setIsProcessing(true);
+    setSubmitError(null);
+
+    try {
+      const notes = [
+        formData.notes,
+        diningType === 'dine-in' && tableNumber ? `Table ${tableNumber}` : '',
+        paymentMethod ? `Payment: ${paymentMethod}` : '',
+      ].filter(Boolean).join(' | ');
+
+      const response = await ordersApi.create({
+        userId: user.id,
+        items: items.map((item) => ({
+          menuItem: item.menuItemId,
+          quantity: item.quantity,
+        })),
+        orderType: diningType,
+        paymentStatus: 'pending',
+        notes: notes || undefined,
+      });
+
+      const createdOrder = (response?.data?.data ?? response?.data) as any;
+      const orderId = createdOrder?._id ?? createdOrder?.id ?? 'unknown';
+      const orderNumber = createdOrder?.orderNumber ?? `ORD-${String(orderId).slice(-6).toUpperCase()}`;
+
+      useOrderSyncStore.getState().notifyOrderChange({
+        type: 'create',
+        orderId,
+        status: 'pending',
+        at: new Date().toISOString(),
+      });
+
       clearCart();
+      navigate(ROUTES.CUSTOMER.ORDER_SUCCESS, {
+        state: {
+          orderId,
+          orderNumber,
+        },
+      });
+    } catch (error: any) {
+      setSubmitError(error?.response?.data?.message || 'We could not place your order. Please try again.');
+    } finally {
       setIsProcessing(false);
-      navigate(ROUTES.CUSTOMER.ORDER_SUCCESS);
-    }, 1500);
+    }
   };
 
   return (
@@ -223,6 +273,12 @@ export default function Checkout() {
                   <span className="text-xl font-bold text-primary-500">₹{finalTotal.toFixed(2)}</span>
                 </div>
               </div>
+
+              {submitError && (
+                <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 dark:border-red-900/60 dark:bg-red-900/10 dark:text-red-300">
+                  {submitError}
+                </div>
+              )}
 
               <Button
                 type="submit"
