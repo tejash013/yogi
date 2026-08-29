@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Link, Outlet } from 'react-router-dom';
+import { Link, Outlet, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/common/Navbar';
 import Sidebar, { type SidebarItem } from '@/components/common/Sidebar';
 import Logo from '@/components/common/Logo';
 import { ROUTES } from '@/constants';
+import { useAuthStore } from '@/store';
 
 const sidebarItems: SidebarItem[] = [
   {
@@ -111,23 +112,68 @@ const sidebarItems: SidebarItem[] = [
 
 export default function AdminLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const navigate = useNavigate();
+  const { user, logout } = useAuthStore();
   const visibleSidebarItems = sidebarItems;
+
+  const handleLogout = () => {
+    logout();
+    navigate(ROUTES.AUTH.LOGIN);
+  };
+
+  const getUserInitials = () => {
+    if (!user) return 'M';
+    const first = user.firstName ? user.firstName.charAt(0).toUpperCase() : '';
+    const last = user.lastName ? user.lastName.charAt(0).toUpperCase() : '';
+    return first + last || 'M';
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-neutral-50 dark:bg-neutral-900">
       <Navbar
+        brand="RestaurantOS Admin"
         showMobileMenu={false}
         showAuthControls={false}
         rightContent={
-          <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="rounded-lg p-2 text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 lg:hidden"
-            aria-label="Toggle navigation drawer"
-          >
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Desktop user profile + logout */}
+            <div className="hidden items-center gap-2 md:flex">
+              <div className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-2.5 py-1.5 dark:border-neutral-700 dark:bg-neutral-800">
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-500 text-xs font-bold text-white">
+                  {getUserInitials()}
+                </div>
+                <div className="text-left leading-none">
+                  <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                    {user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Manager'}
+                  </p>
+                  <p className="text-[10px] capitalize text-neutral-500 dark:text-neutral-400">
+                    {user?.role || 'Admin'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:bg-red-100 hover:text-red-700 dark:border-red-900/30 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40"
+                title="Log out of account"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                <span>Logout</span>
+              </button>
+            </div>
+
+            {/* Mobile drawer toggle */}
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="rounded-lg p-2 text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 lg:hidden"
+              aria-label="Toggle navigation drawer"
+            >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
         }
       />
       <div className="flex flex-1">
@@ -150,6 +196,16 @@ export default function AdminLayout() {
                 <Link to={ROUTES.ADMIN.DASHBOARD} className="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800">Overview</Link>
                 <Link to={ROUTES.ADMIN.REPORTS} className="rounded-xl bg-primary-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-600">Create Report</Link>
                 <Link to={ROUTES.ADMIN.MENU_MANAGEMENT} className="rounded-xl bg-secondary-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-secondary-600">New Item</Link>
+                <button
+                  onClick={handleLogout}
+                  className="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-600 shadow-sm transition hover:bg-red-500 hover:text-white dark:border-red-900/30 dark:bg-red-950/30 dark:text-red-400 dark:hover:bg-red-600 dark:hover:text-white"
+                  title="Logout from manager panel"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  <span>Logout</span>
+                </button>
               </div>
             </div>
             <Outlet />

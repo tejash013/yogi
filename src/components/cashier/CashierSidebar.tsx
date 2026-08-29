@@ -151,7 +151,7 @@ const counters = useMemo(() => {
           </div>
           <button
             onClick={onLogout}
-            className="flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-white"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 py-2 text-xs font-semibold text-red-600 shadow-sm transition hover:bg-red-500 hover:text-white dark:border-red-900/30 dark:bg-red-950/20 dark:text-red-400 dark:hover:bg-red-600 dark:hover:text-white"
           >
             <FiLogOut className="h-4 w-4" /> Logout
           </button>

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { cn } from '@/utils';
 import { useAuthStore, useKitchenStore } from '@/store';
+import { ROUTES } from '@/constants';
 import NotificationPanel from './NotificationPanel';
 import Logo from '@/components/common/Logo';
 
@@ -15,11 +17,18 @@ interface Props {
 export default function KitchenHeader({ onMenuClick }: Props) {
   const [now, setNow] = useState(() => new Date());
   const [notifOpen, setNotifOpen] = useState(false);
+  const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
   const headerStatus = useKitchenStore((s) => s.headerStatus);
   const onlineStatus = useKitchenStore((s) => s.onlineStatus);
   const notifications = useKitchenStore((s) => s.notifications);
   const unread = notifications.filter((n) => !n.isRead).length;
+
+  const handleLogout = () => {
+    logout();
+    navigate(ROUTES.AUTH.LOGIN);
+  };
 
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 1000);
@@ -128,6 +137,18 @@ export default function KitchenHeader({ onMenuClick }: Props) {
               </p>
             </div>
           </div>
+
+          {/* Direct Logout Button */}
+          <button
+            onClick={handleLogout}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:bg-red-500 hover:text-white dark:border-red-900/30 dark:bg-red-950/20 dark:text-red-400 dark:hover:bg-red-600 dark:hover:text-white"
+            title="Log out of kitchen terminal"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            <span className="hidden sm:inline">Logout</span>
+          </button>
         </div>
       </div>
     </header>

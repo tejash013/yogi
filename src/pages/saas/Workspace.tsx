@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { tenantsApi } from '@/api/endpoints';
 import { useAuthStore } from '@/store';
+import { ROUTES } from '@/constants';
 import type { Branch, Restaurant } from '@/types';
 
 function slugify(value: string) {
@@ -8,6 +10,7 @@ function slugify(value: string) {
 }
 
 export default function Workspace() {
+  const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
   const isPlatformAdmin = user?.role === 'platformAdmin';
@@ -91,13 +94,22 @@ export default function Workspace() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur">
                 <p className="text-xs uppercase tracking-[0.2em] text-white/50">Signed in as</p>
-                <p className="mt-1 font-medium">{user?.firstName} {user?.lastName}</p>
+                <p className="mt-1 font-medium">{user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'User'}</p>
                 <p className="text-sm text-[#d6e85e]">{user?.role === 'platformAdmin' ? 'Platform administrator' : 'Restaurant workspace'}</p>
               </div>
+              <Link
+                to={ROUTES.DEFAULT}
+                className="flex items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                Dashboard
+              </Link>
               <button
                 onClick={() => {
                   logout();
-                  window.location.href = '/auth/login';
+                  navigate(ROUTES.AUTH.LOGIN);
                 }}
                 className="flex items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/15 px-4 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-red-500 hover:border-red-500"
                 title="Sign out of workspace"

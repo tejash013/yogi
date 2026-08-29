@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
-import { FiBell, FiMenu } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
+import { FiBell, FiLogOut, FiMenu } from 'react-icons/fi';
 import { cn } from '@/utils';
 import { useAuthStore, useCashierStore } from '@/store';
+import { ROUTES } from '@/constants';
 import Logo from '@/components/common/Logo';
 
 interface Props {
@@ -14,9 +16,16 @@ interface Props {
  */
 export default function CashierHeader({ onMenuClick }: Props) {
   const [now, setNow] = useState(() => new Date());
+  const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
   const shiftStatus = useCashierStore((s) => s.shiftStatus);
   const toggleShift = useCashierStore((s) => s.toggleShift);
+
+  const handleLogout = () => {
+    logout();
+    navigate(ROUTES.AUTH.LOGIN);
+  };
 
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 1000);
@@ -108,6 +117,16 @@ export default function CashierHeader({ onMenuClick }: Props) {
               </p>
             </div>
           </div>
+
+          {/* Direct Logout Button */}
+          <button
+            onClick={handleLogout}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:bg-red-500 hover:text-white dark:border-red-900/30 dark:bg-red-950/20 dark:text-red-400 dark:hover:bg-red-600 dark:hover:text-white"
+            title="Log out of cashier terminal"
+          >
+            <FiLogOut className="h-4 w-4" />
+            <span className="hidden sm:inline">Logout</span>
+          </button>
         </div>
       </div>
     </header>

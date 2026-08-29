@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/common/Navbar';
 import Sidebar, { type SidebarItem } from '@/components/common/Sidebar';
 import Footer from '@/components/common/Footer';
 import { ROUTES } from '@/constants';
+import { useAuthStore } from '@/store';
 
 const sidebarItems: SidebarItem[] = [
   {
@@ -55,6 +56,20 @@ const sidebarItems: SidebarItem[] = [
 
 export default function OwnerLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const navigate = useNavigate();
+  const { user, logout } = useAuthStore();
+
+  const handleLogout = () => {
+    logout();
+    navigate(ROUTES.AUTH.LOGIN);
+  };
+
+  const getUserInitials = () => {
+    if (!user) return 'O';
+    const first = user.firstName ? user.firstName.charAt(0).toUpperCase() : '';
+    const last = user.lastName ? user.lastName.charAt(0).toUpperCase() : '';
+    return first + last || 'O';
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-neutral-50 dark:bg-neutral-900">
@@ -64,15 +79,45 @@ export default function OwnerLayout() {
         showMobileMenu={false}
         showAuthControls={false}
         rightContent={
-          <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="rounded-lg p-2 text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 lg:hidden"
-            aria-label="Toggle navigation drawer"
-          >
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Desktop user profile + logout */}
+            <div className="hidden items-center gap-2 md:flex">
+              <div className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-2.5 py-1.5 dark:border-neutral-700 dark:bg-neutral-800">
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-500 text-xs font-bold text-white">
+                  {getUserInitials()}
+                </div>
+                <div className="text-left leading-none">
+                  <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                    {user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Owner'}
+                  </p>
+                  <p className="text-[10px] capitalize text-neutral-500 dark:text-neutral-400">
+                    {user?.role || 'Owner'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:bg-red-100 hover:text-red-700 dark:border-red-900/30 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40"
+                title="Log out of account"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                <span>Logout</span>
+              </button>
+            </div>
+
+            {/* Mobile drawer toggle */}
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="rounded-lg p-2 text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 lg:hidden"
+              aria-label="Toggle navigation drawer"
+            >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
         }
       />
       <div className="flex flex-1">
@@ -87,22 +132,34 @@ export default function OwnerLayout() {
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="text-sm uppercase tracking-[0.24em] text-neutral-500 dark:text-neutral-400">Owner panel</p>
-                <h1 className="mt-2 text-2xl font-semibold text-neutral-900 dark:text-white">Welcome back, Owner</h1>
+                <h1 className="mt-2 text-2xl font-semibold text-neutral-900 dark:text-white">Welcome back, {user?.firstName || 'Owner'}</h1>
                 <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">Access revenue, analytics, expenses and reports from one place.</p>
               </div>
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl bg-neutral-50 p-3 text-center dark:bg-neutral-800">
-                  <p className="text-xs text-neutral-500">Revenue</p>
-                  <p className="mt-1 text-lg font-semibold text-neutral-900 dark:text-white">$48.2K</p>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="rounded-2xl bg-neutral-50 p-3 text-center dark:bg-neutral-800">
+                    <p className="text-xs text-neutral-500">Revenue</p>
+                    <p className="mt-1 text-lg font-semibold text-neutral-900 dark:text-white">$48.2K</p>
+                  </div>
+                  <div className="rounded-2xl bg-neutral-50 p-3 text-center dark:bg-neutral-800">
+                    <p className="text-xs text-neutral-500">Reports</p>
+                    <p className="mt-1 text-lg font-semibold text-neutral-900 dark:text-white">6</p>
+                  </div>
+                  <div className="rounded-2xl bg-neutral-50 p-3 text-center dark:bg-neutral-800">
+                    <p className="text-xs text-neutral-500">Margin</p>
+                    <p className="mt-1 text-lg font-semibold text-neutral-900 dark:text-white">26%</p>
+                  </div>
                 </div>
-                <div className="rounded-2xl bg-neutral-50 p-3 text-center dark:bg-neutral-800">
-                  <p className="text-xs text-neutral-500">Reports</p>
-                  <p className="mt-1 text-lg font-semibold text-neutral-900 dark:text-white">6</p>
-                </div>
-                <div className="rounded-2xl bg-neutral-50 p-3 text-center dark:bg-neutral-800">
-                  <p className="text-xs text-neutral-500">Margin</p>
-                  <p className="mt-1 text-lg font-semibold text-neutral-900 dark:text-white">26%</p>
-                </div>
+                <button
+                  onClick={handleLogout}
+                  className="inline-flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600 shadow-sm transition hover:bg-red-500 hover:text-white dark:border-red-900/30 dark:bg-red-950/30 dark:text-red-400 dark:hover:bg-red-600 dark:hover:text-white"
+                  title="Logout from owner panel"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  <span>Logout</span>
+                </button>
               </div>
             </div>
           </div>
