@@ -2,7 +2,7 @@ FROM node:20-alpine AS builder
 WORKDIR /usr/src/app
 COPY package.json package-lock.json* ./
 RUN npm ci
-COPY tsconfig.json tsconfig.node.json tsconfig.app.json ./
+COPY tsconfig.json ./
 COPY src ./src
 RUN npm run build
 
