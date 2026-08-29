@@ -1,6 +1,6 @@
 import { create } from 'zustand';
+import { ordersApi } from '@/api';
 import type { KitchenOrder, KitchenStatus, OrderPriority } from '@/types/kitchen';
-import { kitchenOrders, kitchenNotifications } from '@/data/kitchenOrders';
 import { useToastStore } from '@/store/toastStore';
 import { useNotificationStore } from '@/store/notificationStore';
 import type { Notification } from '@/types';
@@ -64,6 +64,52 @@ interface KitchenNotificationShim {
 
 const nowISO = () => new Date().toISOString();
 
+const normalizeKitchenOrder = (order: any): KitchenOrder => {
+  const status = String(order?.status ?? 'pending');
+  const kitchenStatus: KitchenStatus =
+    status === 'pending' ? 'new' :
+    status === 'confirmed' ? 'confirmed' :
+    status === 'preparing' ? 'preparing' :
+    status === 'ready' ? 'ready' :
+    status === 'served' || status === 'completed' ? 'completed' :
+    status === 'cancelled' ? 'cancelled' :
+    'new';
+
+  const createdAt = order?.createdAt ?? new Date().toISOString();
+  const orderId = String(order?._id ?? order?.id ?? `k-${Date.now()}`);
+
+  return {
+    id: orderId,
+    orderNumber: order?.orderNumber ?? `ORD-${orderId.slice(-6).toUpperCase()}`,
+    customerName:
+      order?.user?.firstName || order?.user?.name
+        ? `${order?.user?.firstName ?? ''} ${order?.user?.lastName ?? ''}`.trim() || order?.user?.name || 'Guest Customer'
+        : 'Guest Customer',
+    tableNumber: order?.table ?? order?.tableNumber ?? undefined,
+    orderType: (order?.orderType ?? 'dine-in') as KitchenOrder['orderType'],
+    status: kitchenStatus,
+    priority: /urgent|high/i.test(String(order?.notes ?? '')) ? 'urgent' : 'normal',
+    items: Array.isArray(order?.items)
+      ? order.items.map((item: any, index: number) => ({
+          id: String(item?._id ?? item?.id ?? `${orderId}-item-${index}`),
+          name: item?.name ?? item?.menuItem?.title ?? item?.menuItem?.name ?? 'Menu item',
+          quantity: Number(item?.quantity ?? 1),
+          variants: Array.isArray(item?.variants) ? item.variants : undefined,
+          addons: Array.isArray(item?.addons) ? item.addons : undefined,
+          specialInstructions: item?.specialInstructions ?? undefined,
+          prepTimeMin: Number(item?.prepTimeMin ?? 12),
+        }))
+      : [],
+    createdAt,
+    acceptedAt: order?.acceptedAt ?? (status === 'confirmed' ? new Date().toISOString() : undefined),
+    startedAt: order?.startedAt ?? (status === 'preparing' || status === 'ready' ? new Date().toISOString() : undefined),
+    readyAt: order?.readyAt ?? (status === 'ready' ? new Date().toISOString() : undefined),
+    completedAt: order?.completedAt ?? (status === 'completed' ? new Date().toISOString() : undefined),
+    expectedPrepTimeMin: Number(order?.expectedPrepTimeMin ?? order?.prepTimeMin ?? 15),
+    notes: order?.notes ?? undefined,
+  };
+};
+
 const mapToGlobalNotification = (n: KitchenNotificationShim): Notification => ({
   id: n.id,
   title: n.title,
@@ -73,9 +119,25 @@ const mapToGlobalNotification = (n: KitchenNotificationShim): Notification => ({
   createdAt: n.createdAt,
 });
 
+const hydrateKitchenOrders = async () => {
+  try {
+    const response = await ordersApi.getAll({ page: 1, limit: 100 }).catch(() => ({ data: { data: [] } }));
+    const list = Array.isArray(response?.data?.data) ? response.data.data : [];
+    useKitchenStore.setState({
+      orders: list.map(normalizeKitchenOrder),
+      notifications: [],
+    });
+  } catch {
+    useKitchenStore.setState({
+      orders: [],
+      notifications: [],
+    });
+  }
+};
+
 export const useKitchenStore = create<KitchenState>((set, get) => ({
-  orders: kitchenOrders,
-  notifications: kitchenNotifications,
+  orders: [],
+  notifications: [],
   headerStatus: 'online',
   activeOrderId: null,
 
@@ -228,6 +290,8 @@ export const useKitchenStore = create<KitchenState>((set, get) => ({
     useNotificationStore.getState().addNotification(mapToGlobalNotification(n));
   },
 }));
+
+void hydrateKitchenOrders();
 
 // ---- Selector helpers ----
 export const selectOrderById =

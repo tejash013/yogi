@@ -18,6 +18,13 @@ const offerSchema = new Schema(
   { timestamps: true }
 );
 
-offerSchema.index({ restaurantId: 1, branchId: 1, code: 1 }, { unique: true, sparse: true });
+offerSchema.index(
+  { restaurantId: 1, branchId: 1, code: 1 },
+  {
+    unique: true,
+    sparse: true,
+    partialFilterExpression: { code: { $type: 'string' } },
+  }
+);
 
 export default model('Offer', offerSchema);

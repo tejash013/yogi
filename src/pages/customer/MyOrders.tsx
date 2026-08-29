@@ -1,18 +1,57 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui';
 import { OrderCard } from '@/components/customer';
 import { ROUTES } from '@/constants';
+import { ordersApi } from '@/api';
 import type { Order } from '@/types';
-import ordersData from '@/data/orders.json';
 
-const orders = ordersData as Order[];
+const normalizeOrder = (item: any): Order => ({
+  id: item._id ?? item.id,
+  orderNumber: item.orderNumber ?? `ORD-${String(item._id ?? item.id).slice(-6).toUpperCase()}`,
+  userId: item.user ?? item.userId ?? '',
+  userName: item.userName ?? item.user?.firstName ? `${item.user.firstName} ${item.user.lastName ?? ''}`.trim() : 'Customer',
+  items: Array.isArray(item.items) ? item.items.map((entry: any) => ({
+    id: entry._id ?? entry.id ?? `${entry.menuItem ?? entry.name ?? 'item'}-${Math.random()}`,
+    menuItemId: entry.menuItem ?? entry.menuItemId ?? '',
+    name: entry.name ?? entry.menuItem?.title ?? entry.menuItem?.name ?? 'Menu item',
+    quantity: Number(entry.quantity ?? 1),
+    unitPrice: Number(entry.unitPrice ?? entry.price ?? 0),
+    totalPrice: Number(entry.totalPrice ?? (Number(entry.unitPrice ?? entry.price ?? 0) * Number(entry.quantity ?? 1))),
+    specialInstructions: entry.specialInstructions,
+  })) : [],
+  subtotal: Number(item.subtotal ?? 0),
+  tax: Number(item.tax ?? item.taxes ?? 0),
+  discount: Number(item.discount ?? 0),
+  total: Number(item.total ?? 0),
+  status: item.status ?? 'pending',
+  paymentStatus: item.paymentStatus ?? 'pending',
+  paymentMethod: item.paymentMethod ?? 'card',
+  deliveryType: item.deliveryType ?? 'dine-in',
+  createdAt: item.createdAt ?? new Date().toISOString(),
+  updatedAt: item.updatedAt ?? item.createdAt ?? new Date().toISOString(),
+});
 
 export default function MyOrders() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [trackNumber, setTrackNumber] = useState('');
   const [filter, setFilter] = useState<'all' | 'current' | 'previous'>('all');
+  const [orders, setOrders] = useState<Order[]>([]);
+
+  useEffect(() => {
+    const loadOrders = async () => {
+      try {
+        const response = await ordersApi.getUserOrders().catch(() => ({ data: { data: [] } }));
+        const orderList = Array.isArray(response?.data?.data) ? response.data.data : [];
+        setOrders(orderList.map(normalizeOrder));
+      } catch {
+        setOrders([]);
+      }
+    };
+
+    void loadOrders();
+  }, []);
 
   const handleTrack = (e: React.FormEvent) => {
     e.preventDefault();

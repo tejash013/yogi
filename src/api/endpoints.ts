@@ -58,6 +58,9 @@ export const menuApi = {
   getById: (id: string) =>
     apiClient.get<ApiResponse<MenuItem>>(`/api/menu/${id}`),
 
+  create: (item: Partial<MenuItem> & { title?: string; category?: string; availableQty?: number }) =>
+    apiClient.post<ApiResponse<MenuItem>>('/api/menu', item),
+
   getPopular: () =>
     apiClient.get<ApiResponse<MenuItem[]>>('/api/menu/popular'),
 
