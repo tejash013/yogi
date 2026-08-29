@@ -153,6 +153,17 @@ const seededOffers = defaultOffers.map((offer) => {
 });
 
 export async function seedDatabase() {
+  try {
+    await Offer.collection.dropIndex('restaurantId_1_branchId_1_code_1').catch(() => undefined);
+  } catch {
+    // Ignore missing index issues while cleaning stale duplicates.
+  }
+
+  await Offer.updateMany(
+    { $or: [{ offerType: { $ne: 'coupon' }, code: { $exists: true } }, { offerType: 'coupon', code: { $in: [null, ''] } }] },
+    { $unset: { code: '' } }
+  ).catch(() => undefined);
+
   const categoryCount = await Category.countDocuments({ ...tenant, isActive: true }).exec();
   if (categoryCount === 0) {
     const categories = await Category.insertMany(defaultCategories.map((category) => ({ ...tenant, ...category })));
@@ -173,4 +184,6 @@ export async function seedDatabase() {
   if (offerCount === 0) {
     await Offer.insertMany(seededOffers.map((offer) => ({ ...tenant, ...offer })));
   }
+
+  await Offer.syncIndexes();
 }

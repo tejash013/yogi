@@ -119,19 +119,34 @@ const mapToGlobalNotification = (n: KitchenNotificationShim): Notification => ({
   createdAt: n.createdAt,
 });
 
+let kitchenOrdersHydrationPromise: Promise<void> | null = null;
+
 const hydrateKitchenOrders = async () => {
+  if (kitchenOrdersHydrationPromise) {
+    await kitchenOrdersHydrationPromise;
+    return;
+  }
+
+  kitchenOrdersHydrationPromise = (async () => {
+    try {
+      const response = await ordersApi.getAll({ page: 1, limit: 100 }).catch(() => ({ data: { data: [] } }));
+      const list = Array.isArray(response?.data?.data) ? response.data.data : [];
+      useKitchenStore.setState({
+        orders: list.map(normalizeKitchenOrder),
+        notifications: [],
+      });
+    } catch {
+      useKitchenStore.setState({
+        orders: [],
+        notifications: [],
+      });
+    }
+  })();
+
   try {
-    const response = await ordersApi.getAll({ page: 1, limit: 100 }).catch(() => ({ data: { data: [] } }));
-    const list = Array.isArray(response?.data?.data) ? response.data.data : [];
-    useKitchenStore.setState({
-      orders: list.map(normalizeKitchenOrder),
-      notifications: [],
-    });
-  } catch {
-    useKitchenStore.setState({
-      orders: [],
-      notifications: [],
-    });
+    await kitchenOrdersHydrationPromise;
+  } finally {
+    kitchenOrdersHydrationPromise = null;
   }
 };
 

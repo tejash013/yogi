@@ -13,17 +13,37 @@ const offerSchema = new Schema(
     terms: [{ type: String, trim: true }],
     isActive: { type: Boolean, default: true },
     offerType: { type: String, enum: ['offer', 'coupon'], default: 'offer' },
-    code: { type: String, trim: true },
+    code: {
+      type: String,
+      trim: true,
+      default: undefined,
+      set: (value: string | undefined | null) => {
+        if (typeof value !== 'string') return undefined;
+        const normalized = value.trim();
+        return normalized || undefined;
+      },
+    },
   },
   { timestamps: true }
 );
+
+offerSchema.pre('validate', function (next) {
+  if (this.offerType !== 'coupon') {
+    this.code = undefined;
+  }
+
+  if (this.offerType === 'coupon' && (!this.code || !this.code.trim())) {
+    return next(new Error('Coupon offers require a non-empty code'));
+  }
+
+  next();
+});
 
 offerSchema.index(
   { restaurantId: 1, branchId: 1, code: 1 },
   {
     unique: true,
-    sparse: true,
-    partialFilterExpression: { code: { $type: 'string' } },
+    partialFilterExpression: { offerType: 'coupon', code: { $type: 'string' } },
   }
 );
 

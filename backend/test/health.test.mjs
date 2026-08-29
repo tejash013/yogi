@@ -10,6 +10,19 @@ describe('Health endpoints', () => {
     assert.equal(res.headers['x-request-id'], 'health-test');
   });
 
+  it('GET /health should not rate-limit a normal burst of refreshes', async () => {
+    const requests = Array.from({ length: 110 }, (_, index) =>
+      request(app)
+        .get('/health')
+        .set('x-request-id', `health-refresh-${index}`)
+    );
+
+    const responses = await Promise.all(requests);
+    const tooMany = responses.filter((res) => res.status === 429);
+
+    assert.equal(tooMany.length, 0, `Unexpected 429 responses: ${tooMany.length}`);
+  });
+
   it('GET /ready should report database readiness', async () => {
     const res = await request(app).get('/ready');
     assert.equal(res.status, 200);

@@ -58,12 +58,22 @@ app.use(cors({
 app.use('/api/payments/webhook', express.raw({ type: 'application/json', limit: '1mb' }), paymentWebhookRouter);
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
-app.use(
-  rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
-  })
-);
+const generalRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: Number(process.env.GLOBAL_RATE_LIMIT_MAX ?? 500),
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (_req, res) => {
+    res.status(429).json({
+      success: false,
+      data: null,
+      message: 'Too many requests. Please wait a moment and try again.',
+      errors: [],
+    });
+  },
+});
+app.use(generalRateLimit);
+
 const authRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: Number(process.env.AUTH_RATE_LIMIT_MAX ?? 10),

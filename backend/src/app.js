@@ -27,12 +27,21 @@ export const app = express();
 app.use(logger);
 app.use(helmet());
 app.use(cors({ origin: true }));
-app.use(
-  rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 100,
-  })
-);
+const generalRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: Number(process.env.GLOBAL_RATE_LIMIT_MAX ?? 500),
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (_req, res) => {
+    res.status(429).json({
+      success: false,
+      data: null,
+      message: 'Too many requests. Please wait a moment and try again.',
+      errors: [],
+    });
+  },
+});
+app.use(generalRateLimit);
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
