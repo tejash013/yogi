@@ -116,7 +116,7 @@ const { items, subtotal, removeItem, updateQuantity, clearCart } = useCartStore(
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value)}
                   placeholder="Enter coupon code"
-                  className="flex-1 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-600 dark:bg-neutral-800"
+                  className="flex-1 rounded-xl border border-neutral-200 bg-white px-3.5 py-2 text-sm text-neutral-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
                   disabled={couponApplied}
                 />
                 {!couponApplied ? (
@@ -124,49 +124,50 @@ const { items, subtotal, removeItem, updateQuantity, clearCart } = useCartStore(
                 ) : (
                   <button
                     onClick={() => { setCouponApplied(false); setCouponDiscount(0); }}
-                    className="text-sm font-medium text-red-500"
+                    className="text-sm font-medium text-red-500 hover:text-red-600"
                   >
                     Remove
                   </button>
                 )}
               </div>
               {couponApplied && (
-                <p className="mt-1 text-xs font-medium text-green-600">Coupon applied!</p>
+                <p className="mt-1 text-xs font-semibold text-green-500">Coupon applied!</p>
               )}
             </div>
 
             {/* Special Instructions */}
             <input
               type="text"
-              placeholder="Special instructions..."
-              className="mb-4 w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-600 dark:bg-neutral-800"
+              placeholder="Special delivery instructions..."
+              className="mb-4 w-full rounded-xl border border-neutral-200 bg-white px-3.5 py-2 text-sm text-neutral-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
             />
 
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               <div className="flex justify-between text-sm">
-                <span className="text-neutral-500">Subtotal</span>
-                <span className="font-medium">${subtotal.toFixed(2)}</span>
+                <span className="text-neutral-500 dark:text-neutral-400">Subtotal</span>
+                <span className="font-semibold text-neutral-800 dark:text-neutral-200">${subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-neutral-500">Tax (8%)</span>
-                <span className="font-medium">${actualTax.toFixed(2)}</span>
+                <span className="text-neutral-500 dark:text-neutral-400">Tax (8%)</span>
+                <span className="font-semibold text-neutral-800 dark:text-neutral-200">${actualTax.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-neutral-500">Delivery Fee</span>
-                <span className="font-medium">${DELIVERY_FEE.toFixed(2)}</span>
+                <span className="text-neutral-500 dark:text-neutral-400">Delivery Fee</span>
+                <span className="font-semibold text-neutral-800 dark:text-neutral-200">${DELIVERY_FEE.toFixed(2)}</span>
               </div>
               {couponApplied && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-green-600">Discount</span>
-                  <span className="font-medium text-green-600">-${couponDiscount.toFixed(2)}</span>
+                  <span className="text-green-500 font-semibold">Discount</span>
+                  <span className="font-bold text-green-500">-${couponDiscount.toFixed(2)}</span>
                 </div>
               )}
-              <hr className="border-neutral-200 dark:border-neutral-600" />
-              <div className="flex justify-between">
-                <span className="font-semibold">Total</span>
-                <span className="text-xl font-bold text-primary-500">${finalTotal.toFixed(2)}</span>
+              <hr className="border-neutral-100 dark:border-neutral-800" />
+              <div className="flex justify-between items-center">
+                <span className="font-bold text-neutral-900 dark:text-white">Total</span>
+                <span className="text-2xl font-extrabold text-primary-500">${finalTotal.toFixed(2)}</span>
               </div>
             </div>
+
 
             <Link to={ROUTES.CUSTOMER.CHECKOUT} className="mt-6 block">
               <Button fullWidth size="lg">

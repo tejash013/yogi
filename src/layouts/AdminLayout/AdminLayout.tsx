@@ -116,11 +116,13 @@ export default function AdminLayout() {
   return (
     <div className="flex min-h-screen flex-col bg-neutral-50 dark:bg-neutral-900">
       <Navbar
-        showMobileMenu={true}
+        showMobileMenu={false}
+        showAuthControls={false}
         rightContent={
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="rounded-lg p-2 text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 lg:hidden"
+            aria-label="Toggle navigation drawer"
           >
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -157,4 +159,6 @@ export default function AdminLayout() {
     </div>
   );
 }
+
+
 

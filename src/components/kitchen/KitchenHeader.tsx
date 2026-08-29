@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { cn } from '@/utils';
-import { useKitchenStore } from '@/store';
+import { useAuthStore, useKitchenStore } from '@/store';
 import NotificationPanel from './NotificationPanel';
 import Logo from '@/components/common/Logo';
 
@@ -10,11 +10,12 @@ interface Props {
 
 /**
  * Kitchen header with logo, title, live clock, notifications,
- * staff profile and online/offline toggle.
+ * staff profile, online/offline toggle and logout button.
  */
 export default function KitchenHeader({ onMenuClick }: Props) {
   const [now, setNow] = useState(() => new Date());
   const [notifOpen, setNotifOpen] = useState(false);
+  const user = useAuthStore((s) => s.user);
   const headerStatus = useKitchenStore((s) => s.headerStatus);
   const onlineStatus = useKitchenStore((s) => s.onlineStatus);
   const notifications = useKitchenStore((s) => s.notifications);
@@ -116,11 +117,15 @@ export default function KitchenHeader({ onMenuClick }: Props) {
           {/* Profile */}
           <div className="flex items-center gap-2 rounded-lg border border-neutral-200 px-2 py-1.5 dark:border-neutral-700">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-500 text-sm font-bold text-white">
-              KS
+              {user?.firstName ? user.firstName.charAt(0).toUpperCase() : 'KS'}
             </div>
             <div className="hidden leading-tight sm:block">
-              <p className="text-sm font-medium text-neutral-900 dark:text-white">Kitchen Staff</p>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400">Chef</p>
+              <p className="text-sm font-medium text-neutral-900 dark:text-white">
+                {user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Kitchen Staff'}
+              </p>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 capitalize">
+                {user?.role || 'Chef'}
+              </p>
             </div>
           </div>
         </div>
@@ -128,3 +133,5 @@ export default function KitchenHeader({ onMenuClick }: Props) {
     </header>
   );
 }
+
+

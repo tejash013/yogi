@@ -22,7 +22,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
         {label && (
           <label
             htmlFor={selectId}
-            className="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300"
+            className="mb-1.5 block text-sm font-semibold text-neutral-700 dark:text-neutral-200"
           >
             {label}
             {props.required && <span className="ml-1 text-error">*</span>}
@@ -33,7 +33,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
             ref={ref}
             id={selectId}
             className={cn(
-              'w-full appearance-none rounded-lg border border-neutral-300 bg-white px-3 py-2 pr-8 text-neutral-900 transition-colors duration-200 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100',
+              'w-full appearance-none rounded-xl border border-neutral-300 bg-white px-3.5 py-2.5 pr-9 text-sm text-neutral-900 transition-all duration-200 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-700 dark:bg-neutral-850 dark:text-neutral-100 dark:focus:border-primary-400',
               error && 'border-error focus:border-error focus:ring-error/20',
               className
             )}

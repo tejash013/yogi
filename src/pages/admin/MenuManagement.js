@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Button, Card, CardHeader, CardContent, Table, Badge, Search } from '@/components/ui';
 import { PageHeader } from '@/components/common';
 const data = [
-    { name: 'Margherita Pizza', category: 'Pizza', price: 12.99, status: 'Available', rating: 4.5 },
+
     { name: 'Grilled Salmon', category: 'Main Course', price: 24.99, status: 'Available', rating: 4.7 },
     { name: 'Caesar Salad', category: 'Salads', price: 9.99, status: 'Available', rating: 4.3 },
     { name: 'Chocolate Lava Cake', category: 'Desserts', price: 8.99, status: 'Out of Stock', rating: 4.8 },

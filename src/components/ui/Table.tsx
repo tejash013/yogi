@@ -47,15 +47,15 @@ export default function Table<T extends Record<string, any>>({
   }
 
   return (
-    <div className={cn('overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-700', className)}>
-      <table className="min-w-full divide-y divide-neutral-200 dark:divide-neutral-700">
-        <thead className="bg-neutral-50 dark:bg-neutral-800">
+    <div className={cn('overflow-x-auto rounded-2xl border border-neutral-200/90 bg-white shadow-soft dark:border-neutral-800 dark:bg-neutral-850', className)}>
+      <table className="min-w-full divide-y divide-neutral-200/80 dark:divide-neutral-800">
+        <thead className="bg-neutral-50/80 dark:bg-neutral-900/80">
           <tr>
             {columns.map((col) => (
               <th
                 key={col.key}
                 className={cn(
-                  'px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400',
+                  'px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400',
                   col.headerClassName
                 )}
               >
@@ -64,21 +64,21 @@ export default function Table<T extends Record<string, any>>({
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-neutral-200 bg-white dark:divide-neutral-700 dark:bg-neutral-900">
+        <tbody className="divide-y divide-neutral-100 bg-white dark:divide-neutral-800 dark:bg-neutral-850">
           {data.map((item, index) => (
             <tr
               key={index}
               onClick={() => onRowClick?.(item)}
               className={cn(
-                'transition-colors',
-                onRowClick && 'cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800'
+                'transition-colors duration-150',
+                onRowClick && 'cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/60'
               )}
             >
               {columns.map((col) => (
                 <td
                   key={col.key}
                   className={cn(
-                    'whitespace-nowrap px-4 py-3 text-sm text-neutral-700 dark:text-neutral-300',
+                    'whitespace-nowrap px-4 py-3.5 text-sm text-neutral-700 dark:text-neutral-200',
                     col.className
                   )}
                 >
@@ -92,5 +92,6 @@ export default function Table<T extends Record<string, any>>({
         </tbody>
       </table>
     </div>
+
   );
 }

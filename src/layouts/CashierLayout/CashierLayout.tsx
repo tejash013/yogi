@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { CashierHeader, CashierSidebar } from '@/components/cashier';
 import { ToastContainer } from '@/components/ui';
-import { useToastStore } from '@/store';
+import { useAuthStore, useToastStore } from '@/store';
 import { ROUTES } from '@/constants';
 
 /**
@@ -12,10 +12,12 @@ import { ROUTES } from '@/constants';
 export default function CashierLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
+  const logout = useAuthStore((s) => s.logout);
   const toasts = useToastStore((s) => s.toasts);
   const dismissToast = useToastStore((s) => s.dismissToast);
 
   const handleLogout = () => {
+    logout();
     navigate(ROUTES.AUTH.LOGIN);
   };
 
@@ -39,3 +41,4 @@ export default function CashierLayout() {
     </div>
   );
 }
+

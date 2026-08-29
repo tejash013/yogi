@@ -1,7 +1,7 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/utils';
 import { ROUTES } from '@/constants';
-import { useKitchenStore } from '@/store';
+import { useAuthStore, useKitchenStore } from '@/store';
 
 const navItems = [
   {
@@ -61,12 +61,21 @@ interface Props {
 
 export default function KitchenSidebar({ isOpen, onClose }: Props) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const logout = useAuthStore((s) => s.logout);
+  const user = useAuthStore((s) => s.user);
   const orders = useKitchenStore((s) => s.orders);
 
   const counts = {
     active: orders.filter((o) => ['new', 'confirmed'].includes(o.status)).length,
     preparing: orders.filter((o) => o.status === 'preparing').length,
     ready: orders.filter((o) => o.status === 'ready').length,
+  };
+
+  const handleLogout = () => {
+    logout();
+    onClose();
+    navigate(ROUTES.AUTH.LOGIN);
   };
 
   return (
@@ -116,11 +125,31 @@ export default function KitchenSidebar({ isOpen, onClose }: Props) {
         </nav>
 
         <div className="border-t border-neutral-200 p-4 dark:border-neutral-700">
-          <p className="text-xs text-neutral-500 dark:text-neutral-400">
-            Kitchen Control · v1.0
-          </p>
+          <div className="mb-3 flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-500 text-xs font-bold text-white">
+              {user?.firstName ? user.firstName.charAt(0).toUpperCase() : 'KS'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="truncate text-xs font-semibold text-neutral-900 dark:text-white">
+                {user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Kitchen Staff'}
+              </p>
+              <p className="truncate text-[10px] text-neutral-500 dark:text-neutral-400">
+                Kitchen Station
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 py-2 text-xs font-semibold text-red-600 shadow-sm transition hover:bg-red-500 hover:text-white dark:border-red-900/30 dark:bg-red-950/20 dark:text-red-400 dark:hover:bg-red-600 dark:hover:text-white"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Logout
+          </button>
         </div>
-</aside>
+      </aside>
     </>
   );
 }
+

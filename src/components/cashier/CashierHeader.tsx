@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
-import { FiBell, FiLogOut, FiMenu } from 'react-icons/fi';
-import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '@/constants';
+import { FiBell, FiMenu } from 'react-icons/fi';
 import { cn } from '@/utils';
-import { useCashierStore } from '@/store';
+import { useAuthStore, useCashierStore } from '@/store';
 import Logo from '@/components/common/Logo';
 
 interface Props {
@@ -16,7 +14,7 @@ interface Props {
  */
 export default function CashierHeader({ onMenuClick }: Props) {
   const [now, setNow] = useState(() => new Date());
-  const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user);
   const shiftStatus = useCashierStore((s) => s.shiftStatus);
   const toggleShift = useCashierStore((s) => s.toggleShift);
 
@@ -36,11 +34,6 @@ export default function CashierHeader({ onMenuClick }: Props) {
     minute: '2-digit',
     second: '2-digit',
   });
-
-  const handleLogout = () => {
-    // Navigate to login (existing auth flow uses a demo user).
-    navigate(ROUTES.AUTH.LOGIN);
-  };
 
   return (
     <header className="sticky top-0 z-40 border-b border-neutral-200 bg-white/80 backdrop-blur-lg dark:border-neutral-700 dark:bg-neutral-900/80">
@@ -104,24 +97,21 @@ export default function CashierHeader({ onMenuClick }: Props) {
           {/* Profile */}
           <div className="flex items-center gap-2 rounded-lg border border-neutral-200 px-2 py-1.5 dark:border-neutral-700">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-500 text-sm font-bold text-white">
-              MK
+              {user?.firstName ? user.firstName.charAt(0).toUpperCase() : 'MK'}
             </div>
             <div className="hidden leading-tight sm:block">
-              <p className="text-sm font-medium text-neutral-900 dark:text-white">Meera K</p>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400">Cashier</p>
+              <p className="text-sm font-medium text-neutral-900 dark:text-white">
+                {user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Meera K'}
+              </p>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 capitalize">
+                {user?.role || 'Cashier'}
+              </p>
             </div>
           </div>
-
-          {/* Logout */}
-          <button
-            onClick={handleLogout}
-            className="rounded-lg p-2 text-neutral-500 hover:bg-error/10 hover:text-error"
-            aria-label="Logout"
-          >
-            <FiLogOut className="h-5 w-5" />
-          </button>
         </div>
       </div>
     </header>
   );
 }
+
+

@@ -9,6 +9,7 @@ function slugify(value: string) {
 
 export default function Workspace() {
   const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
   const isPlatformAdmin = user?.role === 'platformAdmin';
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -87,10 +88,25 @@ export default function Workspace() {
               <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">Your restaurant network, in one view.</h1>
               <p className="mt-4 max-w-xl text-sm leading-6 text-white/70">Provision restaurants, organize branches, and keep every operational workspace separated by design.</p>
             </div>
-            <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur">
-              <p className="text-xs uppercase tracking-[0.2em] text-white/50">Signed in as</p>
-              <p className="mt-1 font-medium">{user?.firstName} {user?.lastName}</p>
-              <p className="text-sm text-[#d6e85e]">{user?.role === 'platformAdmin' ? 'Platform administrator' : 'Restaurant workspace'}</p>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur">
+                <p className="text-xs uppercase tracking-[0.2em] text-white/50">Signed in as</p>
+                <p className="mt-1 font-medium">{user?.firstName} {user?.lastName}</p>
+                <p className="text-sm text-[#d6e85e]">{user?.role === 'platformAdmin' ? 'Platform administrator' : 'Restaurant workspace'}</p>
+              </div>
+              <button
+                onClick={() => {
+                  logout();
+                  window.location.href = '/auth/login';
+                }}
+                className="flex items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/15 px-4 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-red-500 hover:border-red-500"
+                title="Sign out of workspace"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Sign Out
+              </button>
             </div>
           </div>
         </header>

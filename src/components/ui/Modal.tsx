@@ -56,14 +56,14 @@ export default function Modal({
       />
       <div
         className={cn(
-          'relative w-full rounded-2xl bg-white shadow-modal dark:bg-neutral-800',
+          'relative w-full rounded-2xl border border-neutral-200/80 bg-white shadow-modal dark:border-neutral-800 dark:bg-neutral-850',
           sizes[size]
         )}
       >
         {(title || showCloseButton) && (
-          <div className="flex items-center justify-between border-b border-neutral-200 px-6 py-4 dark:border-neutral-700">
+          <div className="flex items-center justify-between border-b border-neutral-100 px-6 py-4 dark:border-neutral-800">
             {title && (
-              <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
+              <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">
                 {title}
               </h2>
             )}

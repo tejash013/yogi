@@ -24,9 +24,9 @@ export default function Card({
   return (
     <div
       className={cn(
-        'rounded-xl border border-neutral-200 bg-white shadow-soft dark:border-neutral-700 dark:bg-neutral-800',
+        'rounded-2xl border border-neutral-200/80 bg-white shadow-soft transition-all duration-200 dark:border-neutral-800 dark:bg-neutral-850/95',
         paddings[padding],
-        hover && 'card-hover cursor-pointer',
+        hover && 'cursor-pointer hover:-translate-y-0.5 hover:shadow-card hover:border-neutral-300 dark:hover:border-neutral-700',
         className
       )}
       {...props}
@@ -59,7 +59,7 @@ export function CardTitle({
   return (
     <h3
       className={cn(
-        'text-lg font-semibold text-neutral-900 dark:text-white',
+        'text-lg font-bold text-neutral-900 dark:text-neutral-100',
         className
       )}
       {...props}
@@ -89,7 +89,7 @@ export function CardFooter({
   return (
     <div
       className={cn(
-        'mt-4 flex items-center justify-end gap-3 border-t border-neutral-200 pt-4 dark:border-neutral-700',
+        'mt-4 flex items-center justify-end gap-3 border-t border-neutral-100 pt-4 dark:border-neutral-800',
         className
       )}
       {...props}
@@ -98,4 +98,5 @@ export function CardFooter({
     </div>
   );
 }
+
 

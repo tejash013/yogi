@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { useThemeStore } from '@/store';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuthStore, useThemeStore } from '@/store';
+import { ROUTES } from '@/constants';
 import { cn } from '@/utils';
 
 export interface NavItem {
@@ -13,6 +14,7 @@ interface NavbarProps {
   items?: NavItem[];
   showThemeToggle?: boolean;
   showMobileMenu?: boolean;
+  showAuthControls?: boolean;
   rightContent?: React.ReactNode;
 }
 
@@ -21,11 +23,27 @@ export default function Navbar({
   items = [],
   showThemeToggle = true,
   showMobileMenu = true,
+  showAuthControls = true,
   rightContent,
 }: NavbarProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const { theme, toggleTheme } = useThemeStore();
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, isAuthenticated, logout } = useAuthStore();
+
+  const handleLogout = () => {
+    logout();
+    setIsMobileOpen(false);
+    navigate(ROUTES.AUTH.LOGIN);
+  };
+
+  const getUserInitials = () => {
+    if (!user) return 'U';
+    const first = user.firstName ? user.firstName.charAt(0).toUpperCase() : '';
+    const last = user.lastName ? user.lastName.charAt(0).toUpperCase() : '';
+    return first + last || (user.email ? user.email.charAt(0).toUpperCase() : 'U');
+  };
 
   return (
     <nav className="sticky top-0 z-40 border-b border-neutral-200 bg-white/80 backdrop-blur-lg dark:border-neutral-700 dark:bg-neutral-900/80">
@@ -33,7 +51,7 @@ export default function Navbar({
         <div className="flex h-16 items-center justify-between">
           {/* Logo / Brand */}
           <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-500">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-500 shadow-sm">
               <span className="text-sm font-bold text-white">R</span>
             </div>
             <span className="text-lg font-bold text-neutral-900 dark:text-white">
@@ -80,11 +98,61 @@ export default function Navbar({
                 )}
               </button>
             )}
+
             {rightContent}
+
+            {showAuthControls && !rightContent && (
+              <>
+                {isAuthenticated ? (
+                  <div className="hidden items-center gap-2 md:flex">
+                    <div className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-2.5 py-1.5 dark:border-neutral-700 dark:bg-neutral-800">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-500 text-xs font-bold text-white">
+                        {getUserInitials()}
+                      </div>
+                      <div className="text-left leading-none">
+                        <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                          {user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'User'}
+                        </p>
+                        <p className="text-[10px] capitalize text-neutral-500 dark:text-neutral-400">
+                          {user?.role || 'Guest'}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleLogout}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:bg-red-100 hover:text-red-700 dark:border-red-900/30 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40"
+                      title="Log out of account"
+                    >
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
+                      <span>Logout</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="hidden items-center gap-2 md:flex">
+                    <Link
+                      to={ROUTES.AUTH.LOGIN}
+                      className="rounded-lg px-3 py-1.5 text-sm font-medium text-neutral-600 transition-colors hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                    >
+                      Login
+                    </Link>
+                    <Link
+                      to={ROUTES.AUTH.REGISTER}
+                      className="rounded-lg bg-primary-500 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-primary-600"
+                    >
+                      Register
+                    </Link>
+                  </div>
+                )}
+              </>
+            )}
+
             {showMobileMenu && (
               <button
                 onClick={() => setIsMobileOpen(!isMobileOpen)}
                 className="rounded-lg p-2 text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 md:hidden"
+                aria-label="Toggle navigation menu"
               >
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   {isMobileOpen ? (
@@ -100,28 +168,81 @@ export default function Navbar({
       </div>
 
       {/* Mobile Menu */}
-      {isMobileOpen && items.length > 0 && (
-        <div className="border-t border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900 md:hidden">
-          <div className="space-y-1 px-4 py-3">
-            {items.map((item) => (
-              <Link
-                key={item.href}
-                to={item.href}
-                onClick={() => setIsMobileOpen(false)}
-                className={cn(
-                  'block rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                  location.pathname === item.href
-                    ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'
-                    : 'text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800'
-                )}
+      {isMobileOpen && (
+        <div className="border-t border-neutral-200 bg-white shadow-lg dark:border-neutral-700 dark:bg-neutral-900 md:hidden">
+          {isAuthenticated && (
+            <div className="flex items-center gap-3 border-b border-neutral-100 bg-neutral-50/70 px-4 py-3 dark:border-neutral-800 dark:bg-neutral-800/50">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-500 text-sm font-bold text-white">
+                {getUserInitials()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="truncate font-semibold text-neutral-900 dark:text-white">
+                  {user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'User'}
+                </p>
+                <p className="truncate text-xs text-neutral-500 dark:text-neutral-400">
+                  {user?.email || (user?.role ? `Role: ${user.role}` : '')}
+                </p>
+              </div>
+              <span className="rounded-full bg-primary-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-primary-700 dark:bg-primary-900/30 dark:text-primary-300">
+                {user?.role || 'user'}
+              </span>
+            </div>
+          )}
+
+          {items.length > 0 && (
+            <div className="space-y-1 px-4 py-3">
+              {items.map((item) => (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  onClick={() => setIsMobileOpen(false)}
+                  className={cn(
+                    'block rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                    location.pathname === item.href
+                      ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'
+                      : 'text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800'
+                  )}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          )}
+
+          <div className="border-t border-neutral-100 px-4 py-3 dark:border-neutral-800">
+            {isAuthenticated ? (
+              <button
+                onClick={handleLogout}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-500 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-600"
               >
-                {item.label}
-              </Link>
-            ))}
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Logout
+              </button>
+            ) : (
+              <div className="flex gap-2">
+                <Link
+                  to={ROUTES.AUTH.LOGIN}
+                  onClick={() => setIsMobileOpen(false)}
+                  className="flex-1 rounded-xl border border-neutral-200 py-2 text-center text-sm font-medium text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800"
+                >
+                  Login
+                </Link>
+                <Link
+                  to={ROUTES.AUTH.REGISTER}
+                  onClick={() => setIsMobileOpen(false)}
+                  className="flex-1 rounded-xl bg-primary-500 py-2 text-center text-sm font-semibold text-white hover:bg-primary-600"
+                >
+                  Register
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       )}
     </nav>
   );
 }
+
 

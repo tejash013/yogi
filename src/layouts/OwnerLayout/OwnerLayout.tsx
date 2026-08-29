@@ -62,10 +62,12 @@ export default function OwnerLayout() {
         brand="RestaurantOS Owner"
         showThemeToggle={true}
         showMobileMenu={false}
+        showAuthControls={false}
         rightContent={
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="rounded-lg p-2 text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 lg:hidden"
+            aria-label="Toggle navigation drawer"
           >
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -88,18 +90,18 @@ export default function OwnerLayout() {
                 <h1 className="mt-2 text-2xl font-semibold text-neutral-900 dark:text-white">Welcome back, Owner</h1>
                 <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">Access revenue, analytics, expenses and reports from one place.</p>
               </div>
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-3xl bg-neutral-50 p-4 text-center dark:bg-neutral-900">
-                  <p className="text-sm text-neutral-500">Total revenue</p>
-                  <p className="mt-2 text-xl font-semibold text-neutral-900 dark:text-white">$48.2K</p>
+              <div className="grid gap-3 grid-cols-3">
+                <div className="rounded-2xl bg-neutral-50 p-3 text-center dark:bg-neutral-800">
+                  <p className="text-xs text-neutral-500">Revenue</p>
+                  <p className="mt-1 text-lg font-semibold text-neutral-900 dark:text-white">$48.2K</p>
                 </div>
-                <div className="rounded-3xl bg-neutral-50 p-4 text-center dark:bg-neutral-900">
-                  <p className="text-sm text-neutral-500">New reports</p>
-                  <p className="mt-2 text-xl font-semibold text-neutral-900 dark:text-white">6</p>
+                <div className="rounded-2xl bg-neutral-50 p-3 text-center dark:bg-neutral-800">
+                  <p className="text-xs text-neutral-500">Reports</p>
+                  <p className="mt-1 text-lg font-semibold text-neutral-900 dark:text-white">6</p>
                 </div>
-                <div className="rounded-3xl bg-neutral-50 p-4 text-center dark:bg-neutral-900">
-                  <p className="text-sm text-neutral-500">Profit margin</p>
-                  <p className="mt-2 text-xl font-semibold text-neutral-900 dark:text-white">26%</p>
+                <div className="rounded-2xl bg-neutral-50 p-3 text-center dark:bg-neutral-800">
+                  <p className="text-xs text-neutral-500">Margin</p>
+                  <p className="mt-1 text-lg font-semibold text-neutral-900 dark:text-white">26%</p>
                 </div>
               </div>
             </div>
@@ -111,4 +113,6 @@ export default function OwnerLayout() {
     </div>
   );
 }
+
+
 

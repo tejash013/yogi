@@ -74,20 +74,20 @@ export default function Menu() {
     <div className="space-y-6">
       {/* Header with Search */}
       <div className="relative">
-        <svg className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-400 dark:text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search menu..."
-          className="w-full rounded-2xl border border-neutral-200 bg-white py-3.5 pl-12 pr-4 text-sm text-neutral-900 placeholder-neutral-400 shadow-soft transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:placeholder-neutral-500"
+          placeholder="Search delicious dishes, ingredients..."
+          className="w-full rounded-2xl border border-neutral-200/90 bg-white py-3.5 pl-12 pr-10 text-sm text-neutral-900 placeholder-neutral-400 shadow-soft transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-800 dark:bg-neutral-850 dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:border-primary-400"
         />
         {search && (
           <button
             onClick={() => setSearch('')}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -100,22 +100,22 @@ export default function Menu() {
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
         <button
           onClick={() => handleCategoryFilter('all')}
-          className={`flex-shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-all ${
+          className={`flex-shrink-0 rounded-full px-4 py-2 text-xs font-bold transition-all border ${
             selectedCategory === 'all'
-              ? 'bg-primary-500 text-white shadow-md shadow-primary-500/30'
-              : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300'
+              ? 'bg-primary-500 text-white border-primary-400 shadow-md shadow-primary-500/25'
+              : 'bg-white text-neutral-700 border-neutral-200/80 hover:bg-neutral-50 dark:bg-neutral-850 dark:border-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-800'
           }`}
         >
-          All
+          All Items
         </button>
         {categories.map((cat) => (
           <button
             key={cat.id}
             onClick={() => handleCategoryFilter(cat.id)}
-            className={`flex-shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-all ${
+            className={`flex-shrink-0 rounded-full px-4 py-2 text-xs font-bold transition-all border ${
               selectedCategory === cat.id
-                ? 'bg-primary-500 text-white shadow-md shadow-primary-500/30'
-                : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300'
+                ? 'bg-primary-500 text-white border-primary-400 shadow-md shadow-primary-500/25'
+                : 'bg-white text-neutral-700 border-neutral-200/80 hover:bg-neutral-50 dark:bg-neutral-850 dark:border-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-800'
             }`}
           >
             {cat.icon} {cat.name}
@@ -129,7 +129,7 @@ export default function Menu() {
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value)}
-          className="rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-600 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+          className="rounded-xl border border-neutral-200/90 bg-white px-3.5 py-2 text-xs font-semibold text-neutral-700 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-800 dark:bg-neutral-850 dark:text-neutral-200"
         >
           <option value="recommended">Recommended</option>
           <option value="popular">Popular</option>
@@ -139,54 +139,55 @@ export default function Menu() {
         </select>
 
         {/* Veg / Non-Veg Toggle */}
-        <div className="flex rounded-xl border border-neutral-200 dark:border-neutral-700 overflow-hidden">
+        <div className="flex rounded-xl border border-neutral-200/90 bg-white dark:border-neutral-800 dark:bg-neutral-850 shadow-sm overflow-hidden p-0.5">
           <button
             onClick={() => {
               setShowVegOnly(!showVegOnly);
               if (!showVegOnly) setShowNonVegOnly(false);
             }}
-            className={`px-3 py-2 text-sm font-medium transition-colors ${
+            className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
               showVegOnly
-                ? 'bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400'
-                : 'bg-white text-neutral-500 dark:bg-neutral-800'
+                ? 'bg-green-500 text-white shadow-sm'
+                : 'text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white'
             }`}
           >
-            <span className="mr-1">🟢</span> Veg
+            <span className="mr-1">🌱</span> Veg
           </button>
           <button
             onClick={() => {
               setShowNonVegOnly(!showNonVegOnly);
               if (!showNonVegOnly) setShowVegOnly(false);
             }}
-            className={`px-3 py-2 text-sm font-medium transition-colors ${
+            className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
               showNonVegOnly
-                ? 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400'
-                : 'bg-white text-neutral-500 dark:bg-neutral-800'
+                ? 'bg-red-500 text-white shadow-sm'
+                : 'text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white'
             }`}
           >
-            <span className="mr-1">🔴</span> Non-Veg
+            <span className="mr-1">🍗</span> Non-Veg
           </button>
         </div>
 
         {/* Price Range */}
-        <div className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800">
-          <span className="text-xs font-medium text-neutral-500">$</span>
+        <div className="flex items-center gap-2 rounded-xl border border-neutral-200/90 bg-white px-3.5 py-2 shadow-sm dark:border-neutral-800 dark:bg-neutral-850">
+          <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400">Max:</span>
           <input
             type="range"
             min={0}
             max={50}
             value={priceRange[1]}
             onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
-            className="h-1 w-20 accent-primary-500"
+            className="h-1.5 w-20 accent-primary-500 cursor-pointer"
           />
-          <span className="text-xs font-medium text-neutral-500">${priceRange[1]}</span>
+          <span className="text-xs font-extrabold text-primary-500">${priceRange[1]}</span>
         </div>
 
         {/* Result count */}
-        <span className="text-sm text-neutral-400">
-          {filtered.length} items
+        <span className="text-xs font-semibold text-neutral-500 dark:text-neutral-400">
+          {filtered.length} items found
         </span>
       </div>
+
 
       {/* Menu Grid */}
       {isLoading ? (

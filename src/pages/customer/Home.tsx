@@ -99,23 +99,28 @@ export default function CustomerHome() {
     <div className="space-y-8">
       {/* Search Bar */}
       <div className="relative">
-        <svg className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-400 dark:text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search for dishes, categories..."
-          className="w-full rounded-2xl border border-neutral-200 bg-white py-3.5 pl-12 pr-4 text-sm text-neutral-900 placeholder-neutral-400 shadow-soft transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:placeholder-neutral-500"
+          placeholder="Search for dishes, cuisines, drinks..."
+          className="w-full rounded-2xl border border-neutral-200/90 bg-white py-3.5 pl-12 pr-4 text-sm text-neutral-900 placeholder-neutral-400 shadow-soft transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-800 dark:bg-neutral-850 dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:border-primary-400"
         />
       </div>
 
       {/* Offers Banner */}
       <section>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-neutral-900 dark:text-white">Today's Offers</h2>
-          <span className="text-xs font-medium text-primary-500">View All</span>
+          <h2 className="text-xl font-bold tracking-tight text-neutral-900 dark:text-white">Today's Specials & Offers</h2>
+          <Link to={ROUTES.CUSTOMER.COUPONS} className="inline-flex items-center gap-1 text-xs font-semibold text-primary-500 hover:text-primary-600 transition-colors">
+            View All
+            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
         </div>
         <div
           ref={offerScrollRef}
@@ -137,11 +142,12 @@ export default function CustomerHome() {
       {/* Categories */}
       <section>
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-neutral-900 dark:text-white">Categories</h2>
-          <div className="flex gap-1">
+          <h2 className="text-xl font-bold tracking-tight text-neutral-900 dark:text-white">Explore Categories</h2>
+          <div className="flex gap-1.5">
             <button
               onClick={() => scrollCategory('left')}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 text-neutral-600 transition-colors hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200/90 bg-white text-neutral-700 shadow-sm transition-colors hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-850 dark:text-neutral-300 dark:hover:bg-neutral-800"
+              aria-label="Scroll left"
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -149,7 +155,8 @@ export default function CustomerHome() {
             </button>
             <button
               onClick={() => scrollCategory('right')}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 text-neutral-600 transition-colors hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200/90 bg-white text-neutral-700 shadow-sm transition-colors hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-850 dark:text-neutral-300 dark:hover:bg-neutral-800"
+              aria-label="Scroll right"
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -175,7 +182,7 @@ export default function CustomerHome() {
       {/* Filtered Items by Category */}
       {selectedCategory && filteredItems.length > 0 && (
         <section>
-          <h2 className="mb-4 text-lg font-bold text-neutral-900 dark:text-white">
+          <h2 className="mb-4 text-xl font-bold tracking-tight text-neutral-900 dark:text-white">
             {categories.find((c) => c.id === selectedCategory)?.name}
           </h2>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -189,9 +196,12 @@ export default function CustomerHome() {
       {/* Popular Foods */}
       <section>
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-neutral-900 dark:text-white">Popular Foods</h2>
-          <Link to={ROUTES.CUSTOMER.MENU} className="text-sm font-medium text-primary-500 hover:text-primary-600">
+          <h2 className="text-xl font-bold tracking-tight text-neutral-900 dark:text-white">Popular Foods</h2>
+          <Link to={ROUTES.CUSTOMER.MENU} className="inline-flex items-center gap-1 text-sm font-semibold text-primary-500 hover:text-primary-600 transition-colors">
             View All
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
           </Link>
         </div>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -204,9 +214,12 @@ export default function CustomerHome() {
       {/* Recommended Foods */}
       <section>
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-neutral-900 dark:text-white">Recommended For You</h2>
-          <Link to={ROUTES.CUSTOMER.MENU} className="text-sm font-medium text-primary-500 hover:text-primary-600">
+          <h2 className="text-xl font-bold tracking-tight text-neutral-900 dark:text-white">Recommended For You</h2>
+          <Link to={ROUTES.CUSTOMER.MENU} className="inline-flex items-center gap-1 text-sm font-semibold text-primary-500 hover:text-primary-600 transition-colors">
             View All
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
           </Link>
         </div>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -219,9 +232,12 @@ export default function CustomerHome() {
       {/* Best Sellers */}
       <section>
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-neutral-900 dark:text-white">Best Sellers</h2>
-          <Link to={ROUTES.CUSTOMER.MENU} className="text-sm font-medium text-primary-500 hover:text-primary-600">
+          <h2 className="text-xl font-bold tracking-tight text-neutral-900 dark:text-white">Best Sellers</h2>
+          <Link to={ROUTES.CUSTOMER.MENU} className="inline-flex items-center gap-1 text-sm font-semibold text-primary-500 hover:text-primary-600 transition-colors">
             View All
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
           </Link>
         </div>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -234,9 +250,12 @@ export default function CustomerHome() {
       {/* New Arrivals */}
       <section className="pb-8">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-neutral-900 dark:text-white">New Arrivals</h2>
-          <Link to={ROUTES.CUSTOMER.MENU} className="text-sm font-medium text-primary-500 hover:text-primary-600">
+          <h2 className="text-xl font-bold tracking-tight text-neutral-900 dark:text-white">New Arrivals</h2>
+          <Link to={ROUTES.CUSTOMER.MENU} className="inline-flex items-center gap-1 text-sm font-semibold text-primary-500 hover:text-primary-600 transition-colors">
             View All
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
           </Link>
         </div>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -245,6 +264,7 @@ export default function CustomerHome() {
           ))}
         </div>
       </section>
+
     </div>
   );
 }

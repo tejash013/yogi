@@ -55,10 +55,10 @@ export default function OrderCard({
                 {config.label}
               </Badge>
             </div>
-            <p className="text-sm text-neutral-500">{formatDate(createdAt)}</p>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">{formatDate(createdAt)}</p>
             <div className="mt-2">
               {items.map((item, idx) => (
-                <span key={idx} className="text-sm text-neutral-600 dark:text-neutral-400">
+                <span key={idx} className="text-sm text-neutral-600 dark:text-neutral-300">
                   {item.name} x{item.quantity}
                   {idx < items.length - 1 && ', '}
                 </span>
@@ -73,7 +73,7 @@ export default function OrderCard({
         </div>
 
         {(onRepeatOrder || onInvoice) && (
-          <div className="mt-4 flex gap-2 border-t border-neutral-100 pt-4 dark:border-neutral-700">
+          <div className="mt-4 flex gap-2 border-t border-neutral-100 pt-4 dark:border-neutral-800">
             {onRepeatOrder && (
               <Button size="sm" variant="outline" onClick={(e) => { e.preventDefault(); onRepeatOrder(); }}>
                 <svg className="mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -93,6 +93,7 @@ export default function OrderCard({
           </div>
         )}
       </Card>
+
     </Link>
   );
 }

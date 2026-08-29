@@ -108,7 +108,7 @@ export default function FoodDetails() {
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Image Gallery */}
         <div>
-          <div className="mb-3 overflow-hidden rounded-2xl bg-neutral-100 dark:bg-neutral-700">
+          <div className="mb-3 overflow-hidden rounded-2xl border border-neutral-200/90 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-850">
             <img
               src={allImages[selectedImage]}
               alt={item.name}
@@ -125,7 +125,7 @@ export default function FoodDetails() {
                   className={`h-16 w-16 overflow-hidden rounded-xl border-2 transition-all ${
                     selectedImage === idx
                       ? 'border-primary-500 ring-2 ring-primary-500/30'
-                      : 'border-neutral-200 dark:border-neutral-600'
+                      : 'border-neutral-200 dark:border-neutral-800'
                   }`}
                 >
                   <img
@@ -154,7 +154,7 @@ export default function FoodDetails() {
 
           <div className="mb-4 flex items-center gap-4">
             <Rating value={item.rating} readonly showValue totalReviews={item.totalReviews} />
-            <span className="flex items-center gap-1 text-sm text-neutral-500">
+            <span className="flex items-center gap-1 text-sm text-neutral-500 dark:text-neutral-400">
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -170,13 +170,13 @@ export default function FoodDetails() {
           <div className="mb-6">
             {item.discountPrice ? (
               <div className="flex items-center gap-2">
-                <span className="text-3xl font-bold text-primary-500">
+                <span className="text-3xl font-extrabold text-primary-500">
                   ${item.discountPrice.toFixed(2)}
                 </span>
-                <span className="text-lg text-neutral-400 line-through">${item.price.toFixed(2)}</span>
+                <span className="text-lg text-neutral-400 line-through dark:text-neutral-500">${item.price.toFixed(2)}</span>
               </div>
             ) : (
-              <span className="text-3xl font-bold text-primary-500">
+              <span className="text-3xl font-extrabold text-primary-500">
                 ${item.price.toFixed(2)}
               </span>
             )}
@@ -184,7 +184,7 @@ export default function FoodDetails() {
 
           {/* Variants */}
           <div className="mb-6">
-            <h3 className="mb-3 font-semibold text-neutral-900 dark:text-white">Choose Size</h3>
+            <h3 className="mb-3 font-bold text-neutral-900 dark:text-white">Choose Size</h3>
             <div className="flex gap-2">
               {variants.map((v) => (
                 <button
@@ -192,12 +192,12 @@ export default function FoodDetails() {
                   onClick={() => setSelectedVariant(v.id)}
                   className={`flex-1 rounded-xl border-2 py-3 text-center transition-all ${
                     selectedVariant === v.id
-                      ? 'border-primary-500 bg-primary-50 text-primary-600 dark:bg-primary-900/20'
-                      : 'border-neutral-200 text-neutral-600 hover:border-neutral-300 dark:border-neutral-600 dark:text-neutral-300'
+                      ? 'border-primary-500 bg-primary-50 text-primary-600 dark:bg-primary-950/30 dark:text-primary-400'
+                      : 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300 dark:border-neutral-800 dark:bg-neutral-850 dark:text-neutral-300 dark:hover:border-neutral-700'
                   }`}
                 >
                   <p className="text-sm font-semibold">{v.label}</p>
-                  <p className="text-xs text-neutral-400">
+                  <p className="text-xs text-neutral-400 dark:text-neutral-500">
                     {v.price === 0 ? 'Standard' : `+$${v.price.toFixed(2)}`}
                   </p>
                 </button>
@@ -207,7 +207,7 @@ export default function FoodDetails() {
 
           {/* Addons */}
           <div className="mb-6">
-            <h3 className="mb-3 font-semibold text-neutral-900 dark:text-white">Add Extras</h3>
+            <h3 className="mb-3 font-bold text-neutral-900 dark:text-white">Add Extras</h3>
             <div className="grid grid-cols-2 gap-2">
               {addons.map((addon) => (
                 <button
@@ -215,8 +215,8 @@ export default function FoodDetails() {
                   onClick={() => toggleAddon(addon.id)}
                   className={`flex items-center justify-between rounded-xl border-2 px-3 py-2.5 transition-all ${
                     selectedAddons.includes(addon.id)
-                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                      : 'border-neutral-200 hover:border-neutral-300 dark:border-neutral-600'
+                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-950/30'
+                      : 'border-neutral-200 bg-white hover:border-neutral-300 dark:border-neutral-800 dark:bg-neutral-850 dark:hover:border-neutral-700'
                   }`}
                 >
                   <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
@@ -230,15 +230,16 @@ export default function FoodDetails() {
 
           {/* Special Instructions */}
           <div className="mb-6">
-            <h3 className="mb-2 font-semibold text-neutral-900 dark:text-white">Special Instructions</h3>
+            <h3 className="mb-2 font-bold text-neutral-900 dark:text-white">Special Instructions</h3>
             <textarea
               value={specialInstructions}
               onChange={(e) => setSpecialInstructions(e.target.value)}
               placeholder="Any special requests? (e.g., no onions, extra spicy)"
-              className="w-full rounded-xl border border-neutral-200 bg-white p-3 text-sm text-neutral-900 placeholder-neutral-400 transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:placeholder-neutral-500"
+              className="w-full rounded-2xl border border-neutral-200/90 bg-white p-3.5 text-sm text-neutral-900 placeholder-neutral-400 transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-800 dark:bg-neutral-850 dark:text-white dark:placeholder-neutral-500"
               rows={3}
             />
           </div>
+
 
           {/* Quantity & Add to Cart */}
           <div className="flex items-center gap-4">
