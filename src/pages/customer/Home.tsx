@@ -61,7 +61,6 @@ export default function CustomerHome() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
@@ -83,10 +82,9 @@ export default function CustomerHome() {
         setMenuItems([]);
         setCategories([]);
         setOffers([]);
-      } finally {
-        setLoading(false);
       }
     };
+
 
     void loadData();
   }, []);
