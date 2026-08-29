@@ -12,6 +12,7 @@ import {
   ordersRouter,
   reportsRouter,
   schemaRouter,
+  settingsRouter,
   tablesRouter,
   usersRouter,
 } from './routes/index.js';
@@ -118,6 +119,7 @@ app.use('/api/invoices', invoicesRouter);
 app.use('/api/offers', offersRouter);
 app.use('/api/reports', reportsRouter);
 app.use('/api/schema', schemaRouter);
+app.use('/api/settings', settingsRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/tenants', tenantsRouter);
 
