@@ -30,7 +30,7 @@ export const kitchenOrders = [
                 name: 'Caesar Salad',
                 quantity: 1,
                 variants: ['Dressing: On the side'],
-                addons: ['Grilled Chicken +$3'],
+                addons: ['Grilled Chicken +₹3'],
                 prepTimeMin: 10,
             },
         ],
@@ -77,7 +77,7 @@ export const kitchenOrders = [
                 name: 'BBQ Chicken Wings',
                 quantity: 1,
                 variants: ['Spicy'],
-                addons: ['Ranch Dip +$1'],
+                addons: ['Ranch Dip +₹1'],
                 prepTimeMin: 20,
             },
             {
@@ -131,7 +131,7 @@ export const kitchenOrders = [
                 name: 'Gourmet Burger',
                 quantity: 1,
                 variants: ['Beef, Well Done'],
-                addons: ['Bacon +$2', 'Avocado +$2'],
+                addons: ['Bacon +₹2', 'Avocado +₹2'],
                 prepTimeMin: 22,
             },
             {
@@ -266,7 +266,7 @@ export const kitchenOrders = [
                 id: 'ki-901',
                 name: 'Chicken Burger',
                 quantity: 1,
-                addons: ['Cheese +$1'],
+                addons: ['Cheese +₹1'],
                 prepTimeMin: 18,
             },
             {

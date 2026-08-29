@@ -28,7 +28,6 @@ router.get('/', authenticate, requirePermission(permissions.inventoryRead), vali
     ];
   }
 
-  const total = await Inventory.countDocuments(filter).exec();
   const items = await Inventory.find(filter)
     .sort({ name: 1 })
     .skip((page - 1) * limit)

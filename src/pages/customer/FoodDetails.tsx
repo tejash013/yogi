@@ -1,13 +1,34 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Badge, Button, Card } from '@/components/ui';
 import { QuantitySelector, Rating, FoodCard } from '@/components/customer';
 import { ROUTES } from '@/constants';
+import { menuApi } from '@/api';
 import { useCartStore } from '@/store';
 import type { MenuItem, CartItem } from '@/types';
-import menuData from '@/data/menu.json';
 
-const menuItems = menuData as MenuItem[];
+const normalizeMenuItem = (item: any): MenuItem => ({
+  id: item._id ?? item.id,
+  name: item.title ?? item.name,
+  description: item.description ?? '',
+  price: Number(item.price ?? 0),
+  discountPrice: item.discountPrice ? Number(item.discountPrice) : undefined,
+  categoryId: item.category ?? item.categoryId ?? '',
+  categoryName: item.categoryName ?? item.category?.name ?? 'General',
+  image: item.image ?? '/images/placeholder.jpg',
+  images: Array.isArray(item.images) && item.images.length > 0 ? item.images : [item.image ?? '/images/placeholder.jpg'],
+  ingredients: item.ingredients ?? [],
+  allergens: item.allergens ?? [],
+  nutritionalInfo: item.nutritionalInfo ?? { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 },
+  isAvailable: item.isAvailable ?? item.isActive ?? true,
+  isPopular: Boolean(item.isPopular),
+  isRecommended: Boolean(item.isRecommended),
+  preparationTime: item.preparationTime ?? 15,
+  rating: Number(item.rating ?? 4.5),
+  totalReviews: Number(item.totalReviews ?? 0),
+  tags: item.tags ?? [],
+  createdAt: item.createdAt ?? new Date().toISOString(),
+});
 
 interface Review {
   id: string;
@@ -26,12 +47,40 @@ const sampleReviews: Review[] = [
 export default function FoodDetails() {
   const { id } = useParams();
   const addItem = useCartStore((s) => s.addItem);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedVariant, setSelectedVariant] = useState('regular');
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
   const [addedToCart, setAddedToCart] = useState(false);
+
+  useEffect(() => {
+    const loadItem = async () => {
+      try {
+        const [itemRes, listRes] = await Promise.all([
+          menuApi.getById(String(id ?? '')).catch(() => ({ data: { data: null } })),
+          menuApi.getAll({ page: 1, limit: 100 }).catch(() => ({ data: { data: [] } })),
+        ]);
+
+        const itemData = itemRes?.data?.data ?? null;
+        const list = Array.isArray(listRes?.data?.data) ? listRes.data.data : [];
+        const normalizedItems = list.map(normalizeMenuItem);
+
+        if (itemData) {
+          const currentItem = normalizeMenuItem(itemData);
+          setMenuItems([currentItem, ...normalizedItems.filter((entry) => entry.id !== currentItem.id)]);
+          return;
+        }
+
+        setMenuItems(normalizedItems);
+      } catch {
+        setMenuItems([]);
+      }
+    };
+
+    void loadItem();
+  }, [id]);
 
   const item = menuItems.find((m) => m.id === id);
   if (!item) {
@@ -205,6 +254,7 @@ export default function FoodDetails() {
             </div>
           </div>
 
+
           {/* Addons */}
           <div className="mb-6">
             <h3 className="mb-3 font-bold text-neutral-900 dark:text-white">Add Extras</h3>
@@ -222,7 +272,7 @@ export default function FoodDetails() {
                   <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
                     {addon.label}
                   </span>
-                  <span className="text-xs font-semibold text-primary-500">+${addon.price.toFixed(2)}</span>
+                  <span className="text-xs font-semibold text-primary-500">+₹{addon.price.toFixed(2)}</span>
                 </button>
               ))}
             </div>
@@ -265,7 +315,7 @@ export default function FoodDetails() {
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
-                  Add to Cart · ${totalPrice.toFixed(2)}
+                  Add to Cart · ₹{totalPrice.toFixed(2)}
                 </>
               )}
             </Button>

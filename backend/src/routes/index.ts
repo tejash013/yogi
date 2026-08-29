@@ -8,6 +8,7 @@ import offersRouter from './offers.js';
 import ordersRouter from './orders.js';
 import reportsRouter from './reports.js';
 import schemaRouter from './schemaRoutes.js';
+import settingsRouter from './settings.js';
 import tablesRouter from './tables.js';
 import usersRouter from './users.js';
 
@@ -22,6 +23,7 @@ export {
   ordersRouter,
   reportsRouter,
   schemaRouter,
+  settingsRouter,
   tablesRouter,
   usersRouter,
 };

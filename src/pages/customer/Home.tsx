@@ -2,14 +2,55 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FoodCard, CategoryCard, OfferBanner } from '@/components/customer';
 import { ROUTES } from '@/constants';
+import { categoriesApi, menuApi, offersApi } from '@/api';
 import type { MenuItem, Category, Offer } from '@/types';
-import menuData from '@/data/menu.json';
-import categoriesData from '@/data/categories.json';
-import offersData from '@/data/offers.json';
 
-const menuItems = menuData as MenuItem[];
-const categories = categoriesData as Category[];
-const offers = offersData as Offer[];
+const normalizeMenuItem = (item: any): MenuItem => ({
+  id: item._id ?? item.id,
+  name: item.title ?? item.name,
+  description: item.description ?? '',
+  price: Number(item.price ?? 0),
+  discountPrice: item.discountPrice ? Number(item.discountPrice) : undefined,
+  categoryId: item.category ?? item.categoryId ?? '',
+  categoryName: item.categoryName ?? item.category?.name ?? 'General',
+  image: item.image ?? '/images/placeholder.jpg',
+  images: Array.isArray(item.images) && item.images.length > 0 ? item.images : [item.image ?? '/images/placeholder.jpg'],
+  ingredients: item.ingredients ?? [],
+  allergens: item.allergens ?? [],
+  nutritionalInfo: item.nutritionalInfo ?? { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 },
+  isAvailable: item.isAvailable ?? item.isActive ?? true,
+  isPopular: Boolean(item.isPopular),
+  isRecommended: Boolean(item.isRecommended),
+  preparationTime: item.preparationTime ?? 15,
+  rating: Number(item.rating ?? 4.5),
+  totalReviews: Number(item.totalReviews ?? 0),
+  tags: item.tags ?? [],
+  createdAt: item.createdAt ?? new Date().toISOString(),
+});
+
+const normalizeCategory = (item: any): Category => ({
+  id: item._id ?? item.id,
+  name: item.name ?? 'Category',
+  description: item.description ?? '',
+  image: item.image ?? '/images/category.jpg',
+  icon: item.icon ?? '🍽️',
+  isActive: item.isActive ?? true,
+  sortOrder: item.sortOrder ?? 0,
+  itemCount: item.itemCount ?? 0,
+  createdAt: item.createdAt ?? new Date().toISOString(),
+});
+
+const normalizeOffer = (item: any): Offer => ({
+  id: item._id ?? item.id,
+  title: item.title ?? item.name ?? 'Offer',
+  description: item.description ?? '',
+  image: item.image ?? '/images/offer.jpg',
+  discountType: item.discountType ?? 'percentage',
+  discountValue: Number(item.discountValue ?? 0),
+  validUntil: item.validUntil ?? new Date().toISOString(),
+  terms: item.terms ?? [],
+  isActive: item.isActive ?? true,
+});
 
 export default function CustomerHome() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -17,6 +58,38 @@ export default function CustomerHome() {
   const categoryScrollRef = useRef<HTMLDivElement>(null);
   const offerScrollRef = useRef<HTMLDivElement>(null);
   const [activeOfferIndex, setActiveOfferIndex] = useState(0);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [menuRes, categoriesRes, offersRes] = await Promise.all([
+          menuApi.getPopular().catch(() => ({ data: { data: [] } })),
+          categoriesApi.getAll().catch(() => ({ data: { data: [] } })),
+          offersApi.getAll().catch(() => ({ data: { data: [] } })),
+        ]);
+
+        const items = Array.isArray(menuRes?.data?.data) ? menuRes.data.data : [];
+        const categoryList = Array.isArray(categoriesRes?.data?.data) ? categoriesRes.data.data : [];
+        const offerList = Array.isArray(offersRes?.data?.data) ? offersRes.data.data : [];
+
+        setMenuItems(items.map(normalizeMenuItem));
+        setCategories(categoryList.map(normalizeCategory));
+        setOffers(offerList.map(normalizeOffer));
+      } catch {
+        setMenuItems([]);
+        setCategories([]);
+        setOffers([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void loadData();
+  }, []);
 
   const popularItems = menuItems.filter((item) => item.isPopular);
   const recommendedItems = menuItems.filter((item) => item.isRecommended);
@@ -138,6 +211,7 @@ export default function CustomerHome() {
           ))}
         </div>
       </section>
+
 
       {/* Categories */}
       <section>

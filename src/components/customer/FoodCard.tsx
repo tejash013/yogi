@@ -144,6 +144,7 @@ export default function FoodCard({ item, onFavoriteToggle, isFavorite }: FoodCar
             </span>
           )}
         </div>
+
         <Button
           size="sm"
           onClick={handleAddToCart}

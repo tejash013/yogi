@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import Order from '../models/Order.js';
 import { userRepo, orderRepo } from '../repos/index.js';
 import Table from '../models/Table.js';
 import MenuItem from '../models/MenuItem.js';
@@ -13,11 +12,6 @@ import { recordAudit } from '../utils/audit.js';
 import { tenantFilter } from '../utils/tenant.js';
 
 const router = Router();
-
-function paginate(items: any[], page: number, limit: number) {
-  const start = (page - 1) * limit;
-  return paginated(items.slice(start, start + limit), items.length, page, limit);
-}
 
 function emitOrderEvent(event: string, order: any, payload: Record<string, unknown>) {
   try {

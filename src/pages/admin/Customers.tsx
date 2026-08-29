@@ -21,7 +21,7 @@ const columns: Column<CustomerRow>[] = [
   { key: 'email', header: 'Email' },
   { key: 'phone', header: 'Phone' },
   { key: 'orders', header: 'Orders' },
-  { key: 'spent', header: 'Total Spent', render: (item) => `$${item.spent.toFixed(2)}` },
+  { key: 'spent', header: 'Total Spent', render: (item) => `₹${item.spent.toFixed(2)}` },
 ];
 
 export default function Customers() {
@@ -48,7 +48,7 @@ export default function Customers() {
             </div>
             <div className="rounded-3xl bg-neutral-50 p-5 dark:bg-neutral-900">
               <p className="text-sm text-neutral-500 dark:text-neutral-400">Average spend</p>
-              <p className="mt-3 text-3xl font-semibold text-neutral-900 dark:text-white">$177</p>
+              <p className="mt-3 text-3xl font-semibold text-neutral-900 dark:text-white">₹177</p>
             </div>
           </CardContent>
         </Card>

@@ -75,7 +75,7 @@ const { items, subtotal, removeItem, updateQuantity, clearCart } = useCartStore(
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-neutral-900 dark:text-white truncate">{item.name}</h3>
-                  <p className="mt-0.5 text-sm text-neutral-500">${item.price.toFixed(2)} each</p>
+                  <p className="mt-0.5 text-sm text-neutral-500">₹{item.price.toFixed(2)} each</p>
                   <div className="mt-2 flex items-center justify-between">
                     <QuantitySelector
                       quantity={item.quantity}
@@ -95,7 +95,7 @@ const { items, subtotal, removeItem, updateQuantity, clearCart } = useCartStore(
                 </div>
                 <div className="text-right">
                   <span className="font-bold text-neutral-900 dark:text-white">
-                    ${(item.price * item.quantity).toFixed(2)}
+                    ₹{(item.price * item.quantity).toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -167,6 +167,7 @@ const { items, subtotal, removeItem, updateQuantity, clearCart } = useCartStore(
                 <span className="text-2xl font-extrabold text-primary-500">${finalTotal.toFixed(2)}</span>
               </div>
             </div>
+
 
 
             <Link to={ROUTES.CUSTOMER.CHECKOUT} className="mt-6 block">

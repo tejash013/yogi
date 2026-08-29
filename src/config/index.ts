@@ -22,9 +22,9 @@ const config = {
     allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
   },
   currency: {
-    code: 'USD',
-    symbol: '$',
-    locale: 'en-US',
+    code: 'INR',
+    symbol: '₹',
+    locale: 'en-IN',
   },
   dateTime: {
     dateFormat: 'MMM dd, yyyy',

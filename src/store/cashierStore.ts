@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { invoicesApi, offersApi, ordersApi } from '@/api';
 import type {
   CashierOrder,
   CashierOrderItem,
@@ -11,13 +12,6 @@ import type {
   ShiftStatus,
   TaxRule,
 } from '@/types/cashier';
-import {
-  cashierCoupons,
-  cashierInvoices,
-  cashierOrders,
-  cashierPayments,
-  cashierTaxes,
-} from '@/data/cashierData';
 import { useToastStore } from '@/store/toastStore';
 
 // ---- Currency formatter (INR) ----
@@ -95,12 +89,151 @@ interface CashierState {
 
 const uid = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
+const normalizeCashierCustomer = (user: any) => ({
+  id: String(user?._id ?? user?.id ?? 'guest-user'),
+  name: user?.firstName || user?.name ? `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim() || user?.name || 'Guest Customer' : 'Guest Customer',
+  phone: user?.phone ?? '',
+  email: user?.email ?? '',
+});
+
+const normalizeCashierOrder = (order: any): CashierOrder => {
+  const statusValue = String(order?.status ?? 'pending');
+  const mapStatus = (value: string): CashierOrder['status'] => {
+    if (value === 'pending') return 'new';
+    if (value === 'confirmed') return 'confirmed';
+    if (value === 'preparing') return 'preparing';
+    if (value === 'ready') return 'ready';
+    if (value === 'completed' || value === 'served') return 'completed';
+    if (value === 'cancelled') return 'cancelled';
+    return 'new';
+  };
+
+  const orderId = String(order?._id ?? order?.id ?? `ord-${Date.now()}`);
+  const itemList = Array.isArray(order?.items) ? order.items : [];
+
+  return {
+    id: orderId,
+    orderNumber: order?.orderNumber ?? `ORD-${orderId.slice(-6).toUpperCase()}`,
+    tableNumber: order?.table ?? order?.tableNumber ?? undefined,
+    customer: normalizeCashierCustomer(order?.user),
+    orderType: (order?.orderType ?? 'dine-in') as CashierOrder['orderType'],
+    status: mapStatus(statusValue),
+    paymentStatus: (order?.paymentStatus ?? 'pending') as CashierOrder['paymentStatus'],
+    items: itemList.map((entry: any, index: number) => ({
+      id: String(entry?._id ?? entry?.id ?? `${orderId}-item-${index}`),
+      name: entry?.name ?? entry?.menuItem?.title ?? entry?.menuItem?.name ?? 'Menu Item',
+      image: entry?.image ?? '/images/placeholder.jpg',
+      variant: entry?.variant,
+      addons: Array.isArray(entry?.addons) ? entry.addons : [],
+      quantity: Number(entry?.quantity ?? 1),
+      unitPrice: Number(entry?.unitPrice ?? entry?.price ?? 0),
+      totalPrice: Number(entry?.totalPrice ?? Number(entry?.unitPrice ?? entry?.price ?? 0) * Number(entry?.quantity ?? 1)),
+      specialInstructions: entry?.specialInstructions,
+    })),
+    subtotal: Number(order?.subtotal ?? 0),
+    discount: Number(order?.discount ?? 0),
+    tax: Number(order?.tax ?? order?.taxes ?? 0),
+    additionalCharges: 0,
+    total: Number(order?.total ?? 0),
+    createdAt: order?.createdAt ?? new Date().toISOString(),
+    cashierName: 'Store',
+  };
+};
+
+const normalizeInvoice = (invoice: any): Invoice => {
+  const invoiceId = String(invoice?._id ?? invoice?.id ?? `inv-${Date.now()}`);
+  const order = invoice?.order ?? {};
+  const amount = Number(invoice?.amount ?? order?.total ?? 0);
+
+  return {
+    id: invoiceId,
+    invoiceNumber: `INV-${invoiceId.slice(-6).toUpperCase()}`,
+    orderNumber: order?.orderNumber ?? `ORD-${invoiceId.slice(-6).toUpperCase()}`,
+    tableNumber: order?.table ?? undefined,
+    orderType: (order?.orderType ?? 'dine-in') as Invoice['orderType'],
+    customer: { id: 'guest-user', name: 'Guest Customer', phone: '', email: '' },
+    items: [],
+    subtotal: amount,
+    discount: 0,
+    tax: 0,
+    additionalCharges: 0,
+    grandTotal: amount,
+    paidAmount: Number(invoice?.paidAmount ?? amount),
+    paymentMethod: (invoice?.paymentMethod ?? 'cash') as CashierPaymentMethod,
+    status: invoice?.status === 'paid' ? 'paid' : invoice?.status === 'cancelled' ? 'cancelled' : 'pending',
+    issuedAt: invoice?.issuedAt ?? invoice?.createdAt ?? new Date().toISOString(),
+  };
+};
+
+const defaultTaxes: TaxRule[] = [
+  { id: 'tax-001', name: 'CGST', percentage: 2.5 },
+  { id: 'tax-002', name: 'SGST', percentage: 2.5 },
+  { id: 'tax-003', name: 'Service Charge', percentage: 5 },
+];
+
+const hydrateCashierData = async () => {
+  try {
+    const [ordersResponse, invoicesResponse, couponResponse] = await Promise.all([
+      ordersApi.getAll({ page: 1, limit: 100 }).catch(() => ({ data: { data: [] } })),
+      invoicesApi.getAll({ page: 1, limit: 100 }).catch(() => ({ data: { data: [] } })),
+      offersApi.getCoupons().catch(() => ({ data: { data: [] } })),
+    ]);
+
+    const orderList = Array.isArray(ordersResponse?.data?.data) ? ordersResponse.data.data : [];
+    const invoiceList = Array.isArray(invoicesResponse?.data?.data) ? invoicesResponse.data.data : [];
+    const couponList = Array.isArray(couponResponse?.data?.data) ? couponResponse.data.data : [];
+
+    useCashierStore.setState({
+      orders: orderList.map(normalizeCashierOrder),
+      invoices: invoiceList.map(normalizeInvoice),
+      payments: invoiceList.map((invoice: any) => ({
+        id: String(invoice?._id ?? invoice?.id ?? `pay-${Date.now()}`),
+        paymentNumber: `PAY-${String(invoice?._id ?? invoice?.id ?? '000').slice(-6).toUpperCase()}`,
+        orderNumber: invoice?.order?.orderNumber ?? `ORD-${String(invoice?._id ?? invoice?.id ?? '000').slice(-6).toUpperCase()}`,
+        invoiceNumber: `INV-${String(invoice?._id ?? invoice?.id ?? '000').slice(-6).toUpperCase()}`,
+        customerName: 'Guest Customer',
+        amount: Number(invoice?.amount ?? 0),
+        originalAmount: Number(invoice?.amount ?? 0),
+        paymentMethod: (invoice?.paymentMethod ?? 'cash') as CashierPaymentMethod,
+        status: invoice?.status === 'paid' ? 'paid' : invoice?.status === 'cancelled' ? 'failed' : 'pending',
+        transactionId: invoice?.transactionId ?? `TXN-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
+        date: invoice?.issuedAt ?? invoice?.createdAt ?? new Date().toISOString(),
+        cashier: 'Store',
+        breakdown: [{ method: (invoice?.paymentMethod ?? 'cash') as CashierPaymentMethod, amount: Number(invoice?.amount ?? 0) }],
+      })),
+      coupons: couponList.map((coupon: any) => ({
+        id: String(coupon?._id ?? coupon?.id ?? coupon?.code ?? uid('cpn')),
+        code: coupon?.code ?? 'UNKNOWN',
+        description: coupon?.title ?? coupon?.description ?? 'Coupon',
+        discountType: coupon?.discountType ?? 'percentage',
+        discountValue: Number(coupon?.discountValue ?? 0),
+        minOrderAmount: Number(coupon?.minOrderAmount ?? 0),
+        maxDiscount: coupon?.maxDiscount ? Number(coupon.maxDiscount) : undefined,
+        validFrom: coupon?.validFrom ?? new Date().toISOString(),
+        validUntil: coupon?.validUntil ?? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        usageLimit: Number(coupon?.usageLimit ?? 100),
+        usedCount: Number(coupon?.usedCount ?? 0),
+        isActive: coupon?.isActive ?? true,
+      })),
+      taxes: defaultTaxes,
+    });
+  } catch {
+    useCashierStore.setState({
+      orders: [],
+      payments: [],
+      invoices: [],
+      coupons: [],
+      taxes: defaultTaxes,
+    });
+  }
+};
+
 export const useCashierStore = create<CashierState>((set, get) => ({
-  orders: cashierOrders,
-  payments: cashierPayments,
-  invoices: cashierInvoices,
-  coupons: cashierCoupons,
-taxes: cashierTaxes,
+  orders: [],
+  payments: [],
+  invoices: [],
+  coupons: [],
+  taxes: defaultTaxes,
 
   shiftStatus: 'active',
 
@@ -503,6 +636,8 @@ splitPayments: [],
       paymentSuccess: null,
     }),
 }));
+
+void hydrateCashierData();
 
 // ---- Selector helpers ----
 export const selectUnpaidOrders = (state: CashierState) =>

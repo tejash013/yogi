@@ -3,11 +3,11 @@ import { useState } from 'react';
 import { Button, Card } from '@/components/ui';
 import { CouponCard } from '@/components/customer';
 const coupons = [
-    { code: 'FIRST10', description: '$10 off on first order above $30', discountValue: '$10 OFF', minOrder: '$30', validUntil: 'Dec 31, 2025', isExpired: false },
-    { code: 'WELCOME20', description: '20% off on your next order', discountValue: '20% OFF', minOrder: '$20', validUntil: 'Dec 31, 2025', isExpired: false },
-    { code: 'HAPPYHOUR', description: '15% off on beverages 4-7 PM', discountValue: '15% OFF', minOrder: '$10', validUntil: 'Dec 31, 2025', isExpired: false },
-    { code: 'FAMILYFEAST', description: 'Free dessert with 2 main courses', discountValue: 'FREE DESSERT', minOrder: '$30', validUntil: 'Mar 15, 2025', isExpired: true },
-    { code: 'LOYALTY50', description: '$5 off for loyalty members', discountValue: '$5 OFF', minOrder: '$15', validUntil: 'Feb 28, 2025', isExpired: true },
+    { code: 'FIRST10', description: '₹10 off on first order above ₹30', discountValue: '₹10 OFF', minOrder: '₹30', validUntil: 'Dec 31, 2025', isExpired: false },
+    { code: 'WELCOME20', description: '20% off on your next order', discountValue: '20% OFF', minOrder: '₹20', validUntil: 'Dec 31, 2025', isExpired: false },
+    { code: 'HAPPYHOUR', description: '15% off on beverages 4-7 PM', discountValue: '15% OFF', minOrder: '₹10', validUntil: 'Dec 31, 2025', isExpired: false },
+    { code: 'FAMILYFEAST', description: 'Free dessert with 2 main courses', discountValue: 'FREE DESSERT', minOrder: '₹30', validUntil: 'Mar 15, 2025', isExpired: true },
+    { code: 'LOYALTY50', description: '₹5 off for loyalty members', discountValue: '₹5 OFF', minOrder: '₹15', validUntil: 'Feb 28, 2025', isExpired: true },
 ];
 export default function Coupons() {
     const [copiedCode, setCopiedCode] = useState('');

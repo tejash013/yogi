@@ -90,7 +90,7 @@ export default function OwnerLayout() {
                 <h1 className="mt-2 text-2xl font-semibold text-neutral-900 dark:text-white">Welcome back, Owner</h1>
                 <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">Access revenue, analytics, expenses and reports from one place.</p>
               </div>
-              <div className="grid gap-3 grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-3">
                 <div className="rounded-2xl bg-neutral-50 p-3 text-center dark:bg-neutral-800">
                   <p className="text-xs text-neutral-500">Revenue</p>
                   <p className="mt-1 text-lg font-semibold text-neutral-900 dark:text-white">$48.2K</p>
@@ -106,6 +106,7 @@ export default function OwnerLayout() {
               </div>
             </div>
           </div>
+
           <Outlet />
         </main>
       </div>

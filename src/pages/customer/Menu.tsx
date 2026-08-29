@@ -1,11 +1,42 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FoodCard, LoadingSkeleton } from '@/components/customer';
+import { categoriesApi, menuApi } from '@/api';
 import type { MenuItem, Category } from '@/types';
-import menuData from '@/data/menu.json';
-import categoriesData from '@/data/categories.json';
 
-const menuItems = menuData as MenuItem[];
-const categories = categoriesData as Category[];
+const normalizeMenuItem = (item: any): MenuItem => ({
+  id: item._id ?? item.id,
+  name: item.title ?? item.name,
+  description: item.description ?? '',
+  price: Number(item.price ?? 0),
+  discountPrice: item.discountPrice ? Number(item.discountPrice) : undefined,
+  categoryId: item.category ?? item.categoryId ?? '',
+  categoryName: item.categoryName ?? item.category?.name ?? 'General',
+  image: item.image ?? '/images/placeholder.jpg',
+  images: Array.isArray(item.images) && item.images.length > 0 ? item.images : [item.image ?? '/images/placeholder.jpg'],
+  ingredients: item.ingredients ?? [],
+  allergens: item.allergens ?? [],
+  nutritionalInfo: item.nutritionalInfo ?? { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 },
+  isAvailable: item.isAvailable ?? item.isActive ?? true,
+  isPopular: Boolean(item.isPopular),
+  isRecommended: Boolean(item.isRecommended),
+  preparationTime: item.preparationTime ?? 15,
+  rating: Number(item.rating ?? 4.5),
+  totalReviews: Number(item.totalReviews ?? 0),
+  tags: item.tags ?? [],
+  createdAt: item.createdAt ?? new Date().toISOString(),
+});
+
+const normalizeCategory = (item: any): Category => ({
+  id: item._id ?? item.id,
+  name: item.name ?? 'Category',
+  description: item.description ?? '',
+  image: item.image ?? '/images/category.jpg',
+  icon: item.icon ?? '🍽️',
+  isActive: item.isActive ?? true,
+  sortOrder: item.sortOrder ?? 0,
+  itemCount: item.itemCount ?? 0,
+  createdAt: item.createdAt ?? new Date().toISOString(),
+});
 
 export default function Menu() {
   const [search, setSearch] = useState('');
@@ -14,9 +45,31 @@ export default function Menu() {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 50]);
   const [showVegOnly, setShowVegOnly] = useState(false);
   const [showNonVegOnly, setShowNonVegOnly] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
 
-  // Filter logic
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [menuRes, categoriesRes] = await Promise.all([
+          menuApi.getAll({ page: 1, limit: 100 }).catch(() => ({ data: { data: [] } })),
+          categoriesApi.getAll().catch(() => ({ data: { data: [] } })),
+        ]);
+
+        const items = Array.isArray(menuRes?.data?.data) ? menuRes.data.data : [];
+        const categoryList = Array.isArray(categoriesRes?.data?.data) ? categoriesRes.data.data : [];
+
+        setMenuItems(items.map(normalizeMenuItem));
+        setCategories(categoryList.map(normalizeCategory));
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void loadData();
+  }, []);
+
   let filtered = [...menuItems];
 
   if (search) {
@@ -181,6 +234,7 @@ export default function Menu() {
           />
           <span className="text-xs font-extrabold text-primary-500">${priceRange[1]}</span>
         </div>
+
 
         {/* Result count */}
         <span className="text-xs font-semibold text-neutral-500 dark:text-neutral-400">

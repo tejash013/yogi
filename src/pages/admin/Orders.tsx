@@ -1,39 +1,38 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card, CardHeader, CardContent, Badge, Table, Button, Search } from '@/components/ui';
 import { PageHeader } from '@/components/common';
+import { ordersApi } from '@/api';
 import type { Column } from '@/components/ui';
 
 interface OrderRow {
+  id: string;
   order: string;
   customer: string;
-  table: number;
+  table?: number;
   items: number;
   total: number;
   status: string;
 }
 
-const data: OrderRow[] = [
-  { order: 'ORD-001', customer: 'John Doe', table: 5, items: 3, total: 38.85, status: 'Preparing' },
-  { order: 'ORD-002', customer: 'Jane Smith', table: 3, items: 2, total: 41.41, status: 'Completed' },
-  { order: 'ORD-003', customer: 'Mike Johnson', table: 8, items: 4, total: 25.89, status: 'Pending' },
-];
-
-const statusColors: Record<string, 'warning' | 'primary' | 'success'> = {
+const statusColors: Record<string, 'warning' | 'primary' | 'success' | 'error' | 'neutral'> = {
   pending: 'warning',
   confirmed: 'primary',
   preparing: 'primary',
   ready: 'success',
   completed: 'success',
+  cancelled: 'error',
 };
 
-const statusOptions = ['All', 'Pending', 'Preparing', 'Completed'] as const;
+const statusOptions = ['All', 'pending', 'confirmed', 'preparing', 'ready', 'completed', 'cancelled'] as const;
+
+type StatusFilter = typeof statusOptions[number];
 
 const columns: Column<OrderRow>[] = [
   { key: 'order', header: 'Order' },
   { key: 'customer', header: 'Customer' },
-  { key: 'table', header: 'Table' },
+  { key: 'table', header: 'Table', render: (item) => (item.table ? `#${item.table}` : '—') },
   { key: 'items', header: 'Items' },
-  { key: 'total', header: 'Total', render: (item) => `$${item.total.toFixed(2)}` },
+  { key: 'total', header: 'Total', render: (item) => `₹${item.total.toFixed(2)}` },
   {
     key: 'status',
     header: 'Status',
@@ -46,14 +45,54 @@ const columns: Column<OrderRow>[] = [
 ];
 
 export default function AdminOrders() {
-  const [statusFilter, setStatusFilter] = useState<typeof statusOptions[number]>('All');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('All');
   const [search, setSearch] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadOrders = async () => {
+      setIsLoading(true);
+      try {
+        const response = await ordersApi.getAll({ page: 1, limit: 200 }).catch(() => ({ data: { data: [] } }));
+        const list = Array.isArray(response?.data?.data) ? response.data.data : [];
+
+        const mapped = list.map((order: any) => {
+          const user = order?.user ?? {};
+          const customerName = user?.firstName || user?.name
+            ? `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim() || user?.name || 'Guest Customer'
+            : 'Guest Customer';
+
+          const itemCount = Array.isArray(order?.items) ? order.items.length : 0;
+          const total = Number(order?.total ?? order?.subtotal ?? 0);
+          const tableNumber = order?.table ? Number(order.table) : order?.tableNumber ? Number(order.tableNumber) : undefined;
+
+          return {
+            id: String(order?._id ?? order?.id ?? `ord-${Math.random()}`),
+            order: order?.orderNumber ?? `ORD-${String(order?._id ?? order?.id ?? '000').slice(-6).toUpperCase()}`,
+            customer: customerName,
+            table: Number.isFinite(tableNumber) ? tableNumber : undefined,
+            items: itemCount,
+            total,
+            status: String(order?.status ?? 'pending').charAt(0).toUpperCase() + String(order?.status ?? 'pending').slice(1),
+          };
+        });
+
+        setOrders(mapped);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void loadOrders();
+  }, []);
 
   const filteredOrders = useMemo(
     () =>
-      data.filter((order) => {
+      orders.filter((order) => {
         const matchesStatus =
-          statusFilter === 'All' || order.status === statusFilter;
+          statusFilter === 'All' || order.status.toLowerCase() === statusFilter.toLowerCase();
         const matchesSearch =
           order.order.toLowerCase().includes(search.toLowerCase()) ||
           order.customer.toLowerCase().includes(search.toLowerCase()) ||
@@ -61,7 +100,7 @@ export default function AdminOrders() {
 
         return matchesStatus && matchesSearch;
       }),
-    [statusFilter, search]
+    [orders, statusFilter, search]
   );
 
   const orderCount = filteredOrders.length;
@@ -73,33 +112,60 @@ export default function AdminOrders() {
         description="Track live order progress and manage kitchen flow"
         actions={
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Search placeholder="Search orders..." />
-            <Button variant="outline">Filter</Button>
+            <Search placeholder="Search orders..." value={search} onChange={(e) => setSearch(e.target.value)} onClear={() => setSearch('')} />
+            <Button
+              variant="outline"
+              onClick={() => setShowFilters((current) => !current)}
+              className="rounded-full border-[#d9c2a4] bg-white text-[#241d18] hover:bg-[#f7eddc] dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+            >
+              {showFilters ? 'Hide filters' : 'Filter'}
+            </Button>
           </div>
         }
       />
+
+      {showFilters ? (
+        <Card className="rounded-[24px] border-[#efe4d7] bg-[#fffdfb] p-4 dark:border-neutral-700 dark:bg-neutral-900">
+          <div className="flex flex-wrap items-center gap-2">
+            {statusOptions.map((status) => (
+              <Button
+                key={status}
+                variant={statusFilter === status ? 'primary' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  setStatusFilter(status);
+                  setShowFilters(false);
+                }}
+                className={statusFilter === status ? 'rounded-full bg-[#171412] text-white hover:bg-[#2a241f]' : 'rounded-full border-[#d9c2a4] bg-white text-[#241d18] hover:bg-[#f7eddc] dark:border-neutral-700 dark:bg-neutral-900 dark:text-white'}
+              >
+                {status}
+              </Button>
+            ))}
+          </div>
+        </Card>
+      ) : null}
 
       <div className="grid gap-4 xl:grid-cols-3">
         {statusOptions.map((status) => {
           const matchingCount =
             status === 'All'
-              ? data.length
-              : data.filter((order) => order.status === status).length;
+              ? orders.length
+              : orders.filter((order) => order.status.toLowerCase() === status.toLowerCase()).length;
 
           return (
-            <Card key={status} className="rounded-[1.5rem] border-neutral-200 p-6 shadow-soft dark:border-neutral-700">
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">{status}</p>
+            <Card key={status} className="rounded-[28px] border-[#eee2d4] bg-[#fffdfb] p-5 shadow-[0_18px_50px_rgba(83,67,45,0.05)] dark:border-neutral-700 dark:bg-neutral-900">
+              <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">{status === 'All' ? 'All orders' : status}</p>
               <div className="mt-4 flex items-center justify-between gap-4">
-                <p className="text-3xl font-semibold text-neutral-900 dark:text-white">{matchingCount}</p>
-                <Badge variant={status === 'Completed' ? 'success' : status === 'Pending' ? 'warning' : 'primary'} size="sm">Live</Badge>
+                <p className="text-3xl font-semibold tracking-[-0.04em] text-neutral-900 dark:text-white">{matchingCount}</p>
+                <Badge variant={status === 'completed' ? 'success' : status === 'cancelled' ? 'error' : status === 'pending' ? 'warning' : 'primary'} size="sm" className="rounded-full">Live</Badge>
               </div>
             </Card>
           );
         })}
       </div>
 
-      <Card>
-        <CardHeader>
+      <Card className="overflow-hidden rounded-[30px] border-[#efe4d7] bg-[#fffdfb] shadow-[0_20px_60px_rgba(85,68,44,0.04)] dark:border-neutral-700 dark:bg-neutral-900">
+        <CardHeader className="border-b border-[#f0e4d7] bg-[#f9f4ee] px-5 py-4 dark:border-neutral-700 dark:bg-neutral-800/80">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h3 className="text-xl font-semibold text-neutral-900 dark:text-white">Order log</h3>
@@ -119,19 +185,26 @@ export default function AdminOrders() {
                     variant={statusFilter === status ? 'primary' : 'outline'}
                     size="sm"
                     onClick={() => setStatusFilter(status)}
+                    className={statusFilter === status ? 'rounded-full bg-[#171412] text-white hover:bg-[#2a241f]' : 'rounded-full border-[#d9c2a4] bg-white text-[#241d18] hover:bg-[#f7eddc] dark:border-neutral-700 dark:bg-neutral-900 dark:text-white'}
                   >
-                    {status}
+                    {status === 'All' ? 'All' : status}
                   </Button>
                 ))}
               </div>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="mb-4 rounded-3xl border border-neutral-200 bg-neutral-50 p-4 text-sm text-neutral-700 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
-            Showing {orderCount} of {data.length} orders.
+        <CardContent className="p-5">
+          <div className="mb-4 rounded-[22px] border border-[#f0e4d7] bg-[#f9f5f1] px-4 py-3 text-sm text-neutral-700 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
+            Showing {orderCount} of {orders.length} orders.
           </div>
-          <Table columns={columns} data={filteredOrders} />
+          {isLoading ? (
+            <div className="rounded-[22px] border border-dashed border-[#eadcc7] bg-[#f9f4ee] p-10 text-center text-sm text-neutral-500 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400">
+              Loading orders...
+            </div>
+          ) : (
+            <Table columns={columns} data={filteredOrders} emptyMessage="No orders match this filter." className="rounded-[20px] border-[#f0e4d7]" />
+          )}
         </CardContent>
       </Card>
     </div>

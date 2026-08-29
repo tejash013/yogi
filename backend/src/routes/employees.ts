@@ -28,7 +28,6 @@ router.get('/', authenticate, requirePermission(permissions.employeesRead), vali
     ];
   }
 
-  const total = await Employee.countDocuments(filter).exec();
   const employees = await Employee.find(filter)
     .sort({ name: 1 })
     .skip((page - 1) * limit)

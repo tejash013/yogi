@@ -1,15 +1,55 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui';
 import { FoodCard } from '@/components/customer';
 import { ROUTES } from '@/constants';
+import { menuApi } from '@/api';
 import type { MenuItem } from '@/types';
-import menuData from '@/data/menu.json';
 
-const menuItems = menuData as MenuItem[];
+const normalizeMenuItem = (item: any): MenuItem => ({
+  id: item._id ?? item.id,
+  name: item.title ?? item.name,
+  description: item.description ?? '',
+  price: Number(item.price ?? 0),
+  discountPrice: item.discountPrice ? Number(item.discountPrice) : undefined,
+  categoryId: item.category ?? item.categoryId ?? '',
+  categoryName: item.categoryName ?? item.category?.name ?? 'General',
+  image: item.image ?? '/images/placeholder.jpg',
+  images: Array.isArray(item.images) && item.images.length > 0 ? item.images : [item.image ?? '/images/placeholder.jpg'],
+  ingredients: item.ingredients ?? [],
+  allergens: item.allergens ?? [],
+  nutritionalInfo: item.nutritionalInfo ?? { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 },
+  isAvailable: item.isAvailable ?? item.isActive ?? true,
+  isPopular: Boolean(item.isPopular),
+  isRecommended: Boolean(item.isRecommended),
+  preparationTime: item.preparationTime ?? 15,
+  rating: Number(item.rating ?? 4.5),
+  totalReviews: Number(item.totalReviews ?? 0),
+  tags: item.tags ?? [],
+  createdAt: item.createdAt ?? new Date().toISOString(),
+});
 
 export default function Favorites() {
-  const [favorites, setFavorites] = useState<string[]>(['menu-001', 'menu-004', 'menu-006']);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+
+  useEffect(() => {
+    const loadFavorites = async () => {
+      try {
+        const response = await menuApi.getAll({ page: 1, limit: 100 }).catch(() => ({ data: { data: [] } }));
+        const items = Array.isArray(response?.data?.data) ? response.data.data : [];
+        const seededFavorites = (items as any[]).slice(0, 3).map((item) => item._id ?? item.id);
+        setMenuItems(items.map(normalizeMenuItem));
+        setFavorites(seededFavorites);
+      } catch {
+        setMenuItems([]);
+        setFavorites([]);
+      }
+    };
+
+    void loadFavorites();
+  }, []);
+
   const favoriteItems = menuItems.filter((item) => favorites.includes(item.id));
 
   const toggleFavorite = (id: string) => {

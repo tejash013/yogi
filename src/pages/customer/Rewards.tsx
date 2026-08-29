@@ -6,11 +6,11 @@ const nextTier = 2500;
 const tierProgress = (currentPoints / nextTier) * 100;
 
 const rewards = [
-  { points: 500, reward: '$5 Off', label: 'Any order above $20' },
+  { points: 500, reward: '₹5 Off', label: 'Any order above ₹20' },
   { points: 1000, reward: 'Free Dessert', label: 'Any dessert on the menu' },
-  { points: 2500, reward: '$25 Off', label: 'Any order above $50' },
-  { points: 5000, reward: 'Free Meal', label: 'Any main course up to $25' },
-  { points: 10000, reward: '$75 Off', label: 'Any order above $100' },
+  { points: 2500, reward: '₹25 Off', label: 'Any order above ₹50' },
+  { points: 5000, reward: 'Free Meal', label: 'Any main course up to ₹25' },
+  { points: 10000, reward: '₹75 Off', label: 'Any order above ₹100' },
 ];
 
 const history = [
@@ -18,7 +18,7 @@ const history = [
   { date: '2025-03-14', description: 'Order #ORD-002', points: 35 },
   { date: '2025-03-12', description: 'Order #ORD-003', points: 20 },
   { date: '2025-03-10', description: 'Order #ORD-004', points: 15 },
-  { date: '2025-03-08', description: 'Reward Redeemed - $5 Off', points: -500 },
+  { date: '2025-03-08', description: 'Reward Redeemed - ₹5 Off', points: -500 },
 ];
 
 export default function Rewards() {
@@ -33,7 +33,7 @@ export default function Rewards() {
           <div className="relative">
             <p className="text-sm text-white/70">Your Points Balance</p>
             <p className="mt-1 text-5xl font-bold">{currentPoints.toLocaleString()}</p>
-            <p className="mt-1 text-sm text-white/70">Earn 1 point for every $1 spent</p>
+            <p className="mt-1 text-sm text-white/70">Earn 1 point for every ₹1 spent</p>
 
             {/* Tier Progress */}
             <div className="mt-6">
@@ -77,7 +77,7 @@ export default function Rewards() {
         <div className="space-y-3">
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-50 text-sm font-bold text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">1</div>
-            <p className="text-sm text-neutral-600 dark:text-neutral-400">Place an order - Earn 1 point per $1 spent</p>
+            <p className="text-sm text-neutral-600 dark:text-neutral-400">Place an order - Earn 1 point per ₹1 spent</p>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-50 text-sm font-bold text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">2</div>

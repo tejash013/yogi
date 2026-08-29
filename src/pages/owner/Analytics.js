@@ -4,7 +4,7 @@ import { PageHeader } from '@/components/common';
 const analyticsHighlights = [
     { label: 'Repeat Customers', value: '67%', badge: 'Up 4%' },
     { label: 'Online Orders', value: '58%', badge: 'Up 9%' },
-    { label: 'Average Spend', value: '$38.40', badge: 'Up 6%' },
+    { label: 'Average Spend', value: '₹38.40', badge: 'Up 6%' },
 ];
 const popularItems = [
     { name: 'Margherita Pizza', orders: 245, revenue: 3182.55 },

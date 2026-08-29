@@ -11,5 +11,6 @@ export {
   invoicesApi,
   offersApi,
   reportsApi,
+  settingsApi,
 } from './endpoints';
 

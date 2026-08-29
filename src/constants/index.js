@@ -155,8 +155,8 @@ export const APP_CONFIG = {
     SUPPORT_PHONE: '+1-800-RESTAURANT',
     ITEMS_PER_PAGE: 10,
     MAX_UPLOAD_SIZE: 5 * 1024 * 1024, // 5MB
-    CURRENCY: 'USD',
-    CURRENCY_SYMBOL: '$',
+    CURRENCY: 'INR',
+    CURRENCY_SYMBOL: '₹',
     DATE_FORMAT: 'MMM dd, yyyy',
     TIME_FORMAT: 'hh:mm a',
     DATE_TIME_FORMAT: 'MMM dd, yyyy hh:mm a',

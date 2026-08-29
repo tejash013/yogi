@@ -58,6 +58,9 @@ export const menuApi = {
   getById: (id: string) =>
     apiClient.get<ApiResponse<MenuItem>>(`/api/menu/${id}`),
 
+  create: (item: Partial<MenuItem> & { title?: string; category?: string; availableQty?: number }) =>
+    apiClient.post<ApiResponse<MenuItem>>('/api/menu', item),
+
   getPopular: () =>
     apiClient.get<ApiResponse<MenuItem[]>>('/api/menu/popular'),
 
@@ -77,6 +80,9 @@ export const categoriesApi = {
 
   getById: (id: string) =>
     apiClient.get<ApiResponse<Category>>(`/api/categories/${id}`),
+
+  create: (payload: Partial<Category>) =>
+    apiClient.post<ApiResponse<Category>>('/api/categories', payload),
 };
 
 // Orders API
@@ -188,6 +194,11 @@ export const reportsApi = {
 
   getExpenses: (params: { startDate: string; endDate: string }) =>
     apiClient.get<ApiResponse<unknown>>('/api/reports/expenses', { params }),
+};
+
+export const settingsApi = {
+  get: () => apiClient.get<ApiResponse<Record<string, any>>>('/api/settings'),
+  update: (payload: Record<string, any>) => apiClient.patch<ApiResponse<Record<string, any>>>('/api/settings', payload),
 };
 
 export default apiClient;

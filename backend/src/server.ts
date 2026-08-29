@@ -13,6 +13,7 @@ import { connectDatabase } from './db.js';
 import mongoose from 'mongoose';
 import { logger } from './utils/logger.js';
 import User from './models/User.js';
+import { seedDatabase } from './data/seed.js';
 
 const port = Number(process.env.PORT ?? 3000);
 
@@ -28,6 +29,7 @@ async function startServer() {
     if (migratedUsers.modifiedCount > 0) {
       logger.info({ count: migratedUsers.modifiedCount }, 'Migrated legacy admin users to manager');
     }
+    await seedDatabase();
     logger.info('Successfully connected to MongoDB');
   } catch (error) {
     logger.fatal({ err: error }, 'MongoDB connection error');

@@ -101,7 +101,7 @@ export default function CustomerProfile() {
             <p className="text-xs text-white/70">Reward Points</p>
           </div>
           <div className="rounded-xl bg-white/10 p-3 text-center backdrop-blur-sm">
-            <p className="text-2xl font-bold">${profileData.walletBalance.toFixed(2)}</p>
+            <p className="text-2xl font-bold">₹{profileData.walletBalance.toFixed(2)}</p>
             <p className="text-xs text-white/70">Wallet Balance</p>
           </div>
         </div>

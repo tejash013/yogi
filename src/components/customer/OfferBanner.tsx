@@ -44,7 +44,7 @@ export default function OfferBanner({ offer }: OfferBannerProps) {
           <span className="text-2xl font-bold">
             {offer.discountType === 'percentage'
               ? `${offer.discountValue}% OFF`
-              : `$${offer.discountValue} OFF`}
+              : `₹${offer.discountValue} OFF`}
           </span>
         </div>
       </div>

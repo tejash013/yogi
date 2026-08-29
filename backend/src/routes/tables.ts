@@ -22,7 +22,6 @@ router.get('/', authenticate, requirePermission(permissions.tablesRead), validat
   const filter: any = { ...tenantFilter(req) };
   if (status) filter.status = status;
 
-  const total = await Table.countDocuments(filter).exec();
   const tables = await Table.find(filter)
     .sort({ label: 1 })
     .skip((page - 1) * limit)

@@ -168,7 +168,7 @@ export default function Checkout() {
                     <span className="text-neutral-600 dark:text-neutral-400">
                       {item.name} x{item.quantity}
                     </span>
-                    <span className="font-medium">${(item.price * item.quantity).toFixed(2)}</span>
+                    <span className="font-medium">₹{(item.price * item.quantity).toFixed(2)}</span>
                   </div>
                 ))}
               </div>
@@ -178,15 +178,15 @@ export default function Checkout() {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-neutral-500">Subtotal</span>
-                  <span>${subtotal.toFixed(2)}</span>
+                  <span>₹{subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-neutral-500">Tax (8%)</span>
-                  <span>${actualTax.toFixed(2)}</span>
+                  <span>₹{actualTax.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-neutral-500">Delivery Fee</span>
-                  <span>${DELIVERY_FEE.toFixed(2)}</span>
+                  <span>₹{DELIVERY_FEE.toFixed(2)}</span>
                 </div>
 
                 {/* Reward Points */}
@@ -194,7 +194,7 @@ export default function Checkout() {
                   <div className="flex items-center gap-2">
                     <span className="text-lg">⭐</span>
                     <span className="text-xs text-amber-700 dark:text-amber-300">
-                      Use reward points ($5 off)
+                      Use reward points (₹5 off)
                     </span>
                   </div>
                   <button
@@ -213,14 +213,14 @@ export default function Checkout() {
                 {useRewardPoints && (
                   <div className="flex justify-between text-sm">
                     <span className="text-green-600">Reward Discount</span>
-                    <span className="font-medium text-green-600">-${rewardDiscount.toFixed(2)}</span>
+                    <span className="font-medium text-green-600">-₹{rewardDiscount.toFixed(2)}</span>
                   </div>
                 )}
 
                 <hr className="border-neutral-200 dark:border-neutral-600" />
                 <div className="flex justify-between">
                   <span className="font-semibold">Total</span>
-                  <span className="text-xl font-bold text-primary-500">${finalTotal.toFixed(2)}</span>
+                  <span className="text-xl font-bold text-primary-500">₹{finalTotal.toFixed(2)}</span>
                 </div>
               </div>
 
@@ -231,7 +231,7 @@ export default function Checkout() {
                 className="mt-6"
                 isLoading={isProcessing}
               >
-                {isProcessing ? 'Placing Order...' : `Place Order · $${finalTotal.toFixed(2)}`}
+                {isProcessing ? 'Placing Order...' : `Place Order · ₹${finalTotal.toFixed(2)}`}
               </Button>
             </Card>
           </div>

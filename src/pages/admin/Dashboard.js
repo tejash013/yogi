@@ -4,7 +4,7 @@ import { Button, Card, CardHeader, CardContent, Badge } from '@/components/ui';
 import { PageHeader } from '@/components/common';
 const stats = [
     { label: 'Total Orders', value: '156', badge: '+12%', variant: 'primary' },
-    { label: 'Revenue', value: '$4,892', badge: '+8%', variant: 'success' },
+    { label: 'Revenue', value: '₹4,892', badge: '+8%', variant: 'success' },
     { label: 'Customers', value: '89', badge: '+5%', variant: 'info' },
     { label: 'Active Tables', value: '12/20', badge: '60%', variant: 'secondary' },
 ];

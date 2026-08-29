@@ -22,6 +22,8 @@ export const permissions = {
   reportsRead: 'reports:read',
   tablesRead: 'tables:read',
   tablesManage: 'tables:manage',
+  settingsRead: 'settings:read',
+  settingsManage: 'settings:manage',
 } as const;
 
 export type Permission = (typeof permissions)[keyof typeof permissions];
