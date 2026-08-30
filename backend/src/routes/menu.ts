@@ -80,6 +80,10 @@ router.get('/:id', validateParams(idParamSchema), async (req, res) => {
 router.post('/', authenticate, requirePermission(permissions.menuCreate), validateBody(menuCreateSchema), async (req, res) => {
   const { title, description, category, price, image, isPopular, isRecommended, availableQty, tags } = req.body;
 
+  const normalizedAvailableQty = Number.isFinite(Number(availableQty)) && Number(availableQty) >= 0
+    ? Number(availableQty)
+    : 10;
+
   const tenant = tenantFilter(req);
   const categoryExists = await Category.findOne({ _id: category, ...tenant }).exec();
   if (!categoryExists) {
@@ -95,7 +99,7 @@ router.post('/', authenticate, requirePermission(permissions.menuCreate), valida
     image,
     isPopular: Boolean(isPopular),
     isRecommended: Boolean(isRecommended),
-    availableQty: Number(availableQty) || 0,
+    availableQty: normalizedAvailableQty,
     tags: Array.isArray(tags) ? tags : [],
   });
   await menuItem.save();

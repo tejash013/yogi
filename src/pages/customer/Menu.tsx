@@ -56,7 +56,7 @@ export default function Menu() {
     const loadData = async () => {
       try {
         const [menuRes, categoriesRes] = await Promise.all([
-          menuApi.getAll({ page: 1, limit: 200 }).catch(() => ({ data: { data: [] } })),
+          menuApi.getAll({ page: 1, limit: 100 }).catch(() => ({ data: { data: [] } })),
           categoriesApi.getAll().catch(() => ({ data: { data: [] } })),
         ]);
 

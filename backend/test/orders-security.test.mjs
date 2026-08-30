@@ -38,6 +38,41 @@ describe('Order ownership controls', () => {
     assert.equal(res.status, 403);
   });
 
+  it('defaults new menu items to a sellable stock level', async () => {
+    const owner = await User.create({
+      firstName: 'Owner',
+      lastName: 'Test',
+      email: `menu-stock-${Date.now()}@example.com`,
+      phone: '1234567890',
+      password: 'hashed-password',
+      role: 'owner',
+    });
+
+    const token = signAccessToken({
+      id: owner._id,
+      role: owner.role,
+      email: owner.email,
+      tokenVersion: owner.tokenVersion,
+      restaurantId: owner.restaurantId,
+      branchId: owner.branchId,
+    });
+
+    const category = await Category.create({ name: `stock-${Date.now()}` });
+    const res = await request(app)
+      .post('/api/menu')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        title: 'Auto stocked item',
+        description: 'Should default to 10 available units',
+        category: category._id,
+        price: 12,
+        image: 'https://example.com/item.jpg',
+      });
+
+    assert.equal(res.status, 201);
+    assert.ok(res.body?.data?.availableQty >= 1, 'Expected new menu items to be stockable by default');
+  });
+
   it('does not create an order under another user account', async () => {
     const owner = await createCustomer('creator');
     const other = await createCustomer('target');

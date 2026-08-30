@@ -69,7 +69,7 @@ export default function CustomerHome() {
     const loadData = async () => {
       try {
         const [menuRes, categoriesRes, offersRes] = await Promise.all([
-          menuApi.getAll({ page: 1, limit: 200 }).catch(() => ({ data: { data: [] } })),
+          menuApi.getAll({ page: 1, limit: 100 }).catch(() => ({ data: { data: [] } })),
           categoriesApi.getAll().catch(() => ({ data: { data: [] } })),
           offersApi.getAll().catch(() => ({ data: { data: [] } })),
         ]);
