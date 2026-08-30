@@ -8,12 +8,12 @@ import { useCartStore } from '@/store';
 import type { MenuItem, CartItem } from '@/types';
 
 const normalizeMenuItem = (item: any): MenuItem => ({
-  id: item._id ?? item.id,
+  id: String(item._id ?? item.id ?? ''),
   name: item.title ?? item.name,
   description: item.description ?? '',
   price: Number(item.price ?? 0),
   discountPrice: item.discountPrice ? Number(item.discountPrice) : undefined,
-  categoryId: item.category ?? item.categoryId ?? '',
+  categoryId: String(item.category?._id ?? item.categoryId ?? item.category ?? ''),
   categoryName: item.categoryName ?? item.category?.name ?? 'General',
   image: item.image ?? '/images/placeholder.jpg',
   images: Array.isArray(item.images) && item.images.length > 0 ? item.images : [item.image ?? '/images/placeholder.jpg'],

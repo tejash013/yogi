@@ -30,7 +30,8 @@ export default function Checkout() {
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!user?.id) {
+    const customerId = user?.id ?? (user as any)?._id;
+    if (!customerId) {
       navigate(ROUTES.AUTH.LOGIN);
       return;
     }
@@ -51,7 +52,7 @@ export default function Checkout() {
       ].filter(Boolean).join(' | ');
 
       const response = await ordersApi.create({
-        userId: user.id,
+        userId: String(customerId),
         items: items.map((item) => ({
           menuItem: item.menuItemId,
           quantity: item.quantity,

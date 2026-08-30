@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Badge, Button, Card, CardContent, Search, Table } from '@/components/ui';
 import { PageHeader } from '@/components/common';
 import { usersApi } from '@/api';
+import { useOrderSyncStore } from '@/store';
 import type { Column } from '@/components/ui';
 import type { User, UserRole } from '@/types';
 
@@ -16,6 +17,7 @@ export default function Users() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [savingId, setSavingId] = useState('');
+  const syncVersion = useOrderSyncStore((state) => state.version);
 
   const loadUsers = async () => {
     setIsLoading(true);
@@ -32,7 +34,7 @@ export default function Users() {
 
   useEffect(() => {
     void loadUsers();
-  }, [search]);
+  }, [search, syncVersion]);
 
   const updateAccess = async (user: UserRow, payload: { role?: UserRole; status?: User['status']; branch?: string }) => {
     const id = user.id || user._id;
@@ -43,6 +45,11 @@ export default function Users() {
       const response = await usersApi.updateAccess(id, payload);
       const updated = response.data.data;
       setUsers((current) => current.map((item) => (item.id === id ? { ...item, ...updated } : item)));
+      useOrderSyncStore.getState().notifyResourceChange({
+        type: 'update',
+        resource: 'user',
+        at: new Date().toISOString(),
+      });
     } catch {
       setError('Access update failed. Your account may not have permission for this change.');
     } finally {

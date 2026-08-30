@@ -15,7 +15,7 @@ export const paginationQuerySchema = z.object({
 export const categoryCreateSchema = z.object({
   name: z.string().trim().min(1),
   description: z.string().trim().optional(),
-  icon: z.string().trim().max(2).optional(),
+  icon: z.string().trim().min(1).max(50).optional(),
   parentId: objectId.optional(),
 }).strict();
 export const categoryUpdateSchema = categoryCreateSchema.partial();

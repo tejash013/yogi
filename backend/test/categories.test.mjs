@@ -11,7 +11,7 @@ function hashPassword(password) {
 }
 
 describe('Categories API', () => {
-  it('creates a category with an icon field', async () => {
+  it('creates a category with an emoji icon field', async () => {
     const email = `category-create+${Date.now()}@example.com`;
     await User.create({
       firstName: 'Category',
@@ -35,11 +35,11 @@ describe('Categories API', () => {
       .send({
         name: 'Pizza',
         description: 'Chef specials',
-        icon: '🍕',
+        icon: '🍽️',
       });
 
     assert.equal(res.status, 201);
     assert.equal(res.body.data.name, 'Pizza');
-    assert.equal(res.body.data.icon, '🍕');
+    assert.equal(res.body.data.icon, '🍽️');
   });
 });

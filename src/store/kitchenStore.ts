@@ -380,6 +380,11 @@ export const useKitchenStore = create<KitchenState>((set, get) => ({
 
 void hydrateKitchenOrders();
 
+useOrderSyncStore.subscribe((state) => {
+  if (!state.lastEvent) return;
+  void hydrateKitchenOrders();
+});
+
 // ---- Selector helpers ----
 export const selectOrderById =
   (id: string) =>

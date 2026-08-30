@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Card, Button, Input, Select } from '@/components/ui';
 import { PageHeader } from '@/components/common';
 import { settingsApi } from '@/api';
+import { useOrderSyncStore } from '@/store';
 
 const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -18,6 +19,7 @@ export default function AdminSettings() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const syncVersion = useOrderSyncStore((state) => state.version);
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -41,7 +43,7 @@ export default function AdminSettings() {
     };
 
     void loadSettings();
-  }, []);
+  }, [syncVersion]);
 
   const businessHourEntries = useMemo(() => Object.entries(form.businessHours), [form.businessHours]);
 
@@ -56,6 +58,11 @@ export default function AdminSettings() {
         phone: form.phone,
         address: form.address,
         businessHours: form.businessHours,
+      });
+      useOrderSyncStore.getState().notifyResourceChange({
+        type: 'update',
+        resource: 'settings',
+        at: new Date().toISOString(),
       });
       setMessage('Settings saved successfully.');
     } catch {

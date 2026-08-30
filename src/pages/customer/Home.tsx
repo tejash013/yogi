@@ -3,15 +3,16 @@ import { Link } from 'react-router-dom';
 import { FoodCard, CategoryCard, OfferBanner } from '@/components/customer';
 import { ROUTES } from '@/constants';
 import { categoriesApi, menuApi, offersApi } from '@/api';
+import { useOrderSyncStore } from '@/store';
 import type { MenuItem, Category, Offer } from '@/types';
 
 const normalizeMenuItem = (item: any): MenuItem => ({
-  id: item._id ?? item.id,
+  id: String(item._id ?? item.id ?? ''),
   name: item.title ?? item.name,
   description: item.description ?? '',
   price: Number(item.price ?? 0),
   discountPrice: item.discountPrice ? Number(item.discountPrice) : undefined,
-  categoryId: item.category ?? item.categoryId ?? '',
+  categoryId: String(item.category?._id ?? item.categoryId ?? item.category ?? ''),
   categoryName: item.categoryName ?? item.category?.name ?? 'General',
   image: item.image ?? '/images/placeholder.jpg',
   images: Array.isArray(item.images) && item.images.length > 0 ? item.images : [item.image ?? '/images/placeholder.jpg'],
@@ -29,7 +30,7 @@ const normalizeMenuItem = (item: any): MenuItem => ({
 });
 
 const normalizeCategory = (item: any): Category => ({
-  id: item._id ?? item.id,
+  id: String(item._id ?? item.id ?? ''),
   name: item.name ?? 'Category',
   description: item.description ?? '',
   image: item.image ?? '/images/category.jpg',
@@ -61,6 +62,7 @@ export default function CustomerHome() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
+  const syncVersion = useOrderSyncStore((state) => state.version);
 
   useEffect(() => {
     const loadData = async () => {
@@ -87,7 +89,7 @@ export default function CustomerHome() {
 
 
     void loadData();
-  }, []);
+  }, [syncVersion]);
 
   const popularItems = menuItems.filter((item) => item.isPopular);
   const recommendedItems = menuItems.filter((item) => item.isRecommended);

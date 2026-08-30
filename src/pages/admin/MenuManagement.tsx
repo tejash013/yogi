@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Button, Card, CardHeader, CardContent, Table, Badge, Search } from '@/components/ui';
 import { PageHeader } from '@/components/common';
 import { categoriesApi, menuApi } from '@/api';
+import { useOrderSyncStore } from '@/store';
 import type { Column } from '@/components/ui';
 
 type MenuItemRow = {
@@ -35,6 +36,7 @@ export default function MenuManagement() {
   const [items, setItems] = useState<MenuItemRow[]>([]);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const syncVersion = useOrderSyncStore((state) => state.version);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [form, setForm] = useState({
@@ -76,7 +78,7 @@ export default function MenuManagement() {
 
   useEffect(() => {
     void loadData();
-  }, []);
+  }, [syncVersion]);
 
   const filteredItems = useMemo(
     () =>
@@ -109,6 +111,12 @@ export default function MenuManagement() {
         tags: form.tags ? form.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : [],
         isPopular: form.isPopular,
         isRecommended: form.isRecommended,
+      });
+
+      useOrderSyncStore.getState().notifyResourceChange({
+        type: 'create',
+        resource: 'menu',
+        at: new Date().toISOString(),
       });
 
       setForm({ title: '', description: '', category: '', price: '0', image: '', tags: '', isPopular: false, isRecommended: false });

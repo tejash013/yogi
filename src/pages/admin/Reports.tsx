@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Card, CardHeader, CardContent, Button, Badge } from '@/components/ui';
 import { PageHeader } from '@/components/common';
 import { reportsApi } from '@/api';
+import { useOrderSyncStore } from '@/store';
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('en-IN', {
@@ -16,6 +17,7 @@ export default function AdminReports() {
   const [expenses, setExpenses] = useState<any>({});
   const [isLoading, setIsLoading] = useState(true);
   const [refreshCount, setRefreshCount] = useState(0);
+  const syncVersion = useOrderSyncStore((state) => state.version);
 
   useEffect(() => {
     const loadReports = async () => {
@@ -39,7 +41,7 @@ export default function AdminReports() {
     };
 
     void loadReports();
-  }, [refreshCount]);
+  }, [refreshCount, syncVersion]);
 
   const summary = useMemo(
     () => [
@@ -58,7 +60,14 @@ export default function AdminReports() {
       <PageHeader
         title="Reports"
         description="Generate and view reports"
-        actions={<Button onClick={() => setRefreshCount((count) => count + 1)} className="rounded-full bg-[#171412] text-white hover:bg-[#2a241f] dark:bg-[#f3d7a2] dark:text-[#171412]">Generate Report</Button>}
+        actions={<Button onClick={() => {
+          useOrderSyncStore.getState().notifyResourceChange({
+            type: 'update',
+            resource: 'report',
+            at: new Date().toISOString(),
+          });
+          setRefreshCount((count) => count + 1);
+        }} className="rounded-full bg-[#171412] text-white hover:bg-[#2a241f] dark:bg-[#f3d7a2] dark:text-[#171412]">Generate Report</Button>}
       />
 
       {isLoading ? (

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button, Card, Badge, CardHeader, CardContent, Search } from '@/components/ui';
 import { PageHeader } from '@/components/common';
 import { categoriesApi, menuApi } from '@/api';
+import { useOrderSyncStore } from '@/store';
 
 type CategoryRow = {
   id: string;
@@ -19,6 +20,7 @@ export default function Categories() {
   const [categories, setCategories] = useState<CategoryRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const syncVersion = useOrderSyncStore((state) => state.version);
   const [isSaving, setIsSaving] = useState(false);
   const [createError, setCreateError] = useState('');
   const [newCategory, setNewCategory] = useState({ name: '', description: '', icon: '🍽️' });
@@ -66,7 +68,7 @@ export default function Categories() {
     };
 
     void loadCategories();
-  }, []);
+  }, [syncVersion]);
 
   const filteredCategories = useMemo(
     () =>
@@ -94,6 +96,12 @@ export default function Categories() {
         name: newCategory.name.trim(),
         description: newCategory.description.trim() || 'Curated menu section',
         icon: newCategory.icon,
+      });
+
+      useOrderSyncStore.getState().notifyResourceChange({
+        type: 'create',
+        resource: 'category',
+        at: new Date().toISOString(),
       });
 
       setNewCategory({ name: '', description: '', icon: '🍽️' });

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { authApi } from '@/api/endpoints';
+import { useOrderSyncStore } from '@/store/orderSyncStore';
 import type { User, UserRole, LoginCredentials, RegisterData } from '@/types';
 
 interface AuthState {
@@ -27,18 +28,31 @@ function readTokenPayload(token: string): Partial<User> | null {
   }
 }
 
+function normalizeUser(user: (Partial<User> & { _id?: string }) | null | undefined): User | null {
+  if (!user) return null;
+
+  const normalizedId = user.id ?? user._id;
+  if (!normalizedId) return null;
+
+  return {
+    ...user,
+    id: String(normalizedId),
+  } as User;
+}
+
 const supportedRoles: UserRole[] = ['customer', 'cashier', 'chef', 'manager', 'owner', 'platformAdmin'];
 const storedToken = localStorage.getItem('restaurantos-token');
 const storedPayload = storedToken ? readTokenPayload(storedToken) : null;
+const normalizedStoredUser = normalizeUser(storedPayload as (Partial<User> & { _id?: string }) | null);
 const hasValidStoredSession = Boolean(
   storedToken &&
-    storedPayload?.id &&
-    typeof storedPayload.role === 'string' &&
-    supportedRoles.includes(storedPayload.role as UserRole)
+    normalizedStoredUser?.id &&
+    typeof normalizedStoredUser.role === 'string' &&
+    supportedRoles.includes(normalizedStoredUser.role as UserRole)
 );
 
 export const useAuthStore = create<AuthState>((set) => ({
-  user: storedPayload?.id ? storedPayload as User : null,
+  user: normalizedStoredUser,
   token: storedToken,
   refreshToken: localStorage.getItem('restaurantos-refresh-token'),
   isAuthenticated: hasValidStoredSession,
@@ -56,12 +70,17 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       const response = await authApi.login(credentials);
       const { user, token, refreshToken } = response.data.data;
+      const normalizedUser = normalizeUser(user as (Partial<User> & { _id?: string }) | null);
+
+      if (!normalizedUser) {
+        throw new Error('Session user is invalid. Please log in again.');
+      }
 
       localStorage.setItem('restaurantos-token', token);
       localStorage.setItem('restaurantos-refresh-token', refreshToken);
 
       set({
-        user,
+        user: normalizedUser,
         token,
         refreshToken,
         isAuthenticated: true,
@@ -103,12 +122,17 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       const response = await authApi.register(data);
       const { user, token, refreshToken } = response.data.data;
+      const normalizedUser = normalizeUser(user as (Partial<User> & { _id?: string }) | null);
+
+      if (!normalizedUser) {
+        throw new Error('Session user is invalid. Please try again.');
+      }
 
       localStorage.setItem('restaurantos-token', token);
       localStorage.setItem('restaurantos-refresh-token', refreshToken);
 
       set({
-        user,
+        user: normalizedUser,
         token,
         refreshToken,
         isAuthenticated: true,
@@ -136,10 +160,16 @@ export const useAuthStore = create<AuthState>((set) => ({
       isAuthenticated: false,
       error: null,
     });
+    useOrderSyncStore.getState().notifyResourceChange({
+      type: 'delete',
+      resource: 'auth',
+      at: new Date().toISOString(),
+    });
   },
 
   setUser: (user: User) => {
-    set({ user, isAuthenticated: true });
+    const normalizedUser = normalizeUser(user as (Partial<User> & { _id?: string }) | null);
+    set({ user: normalizedUser, isAuthenticated: !!normalizedUser });
   },
 
   clearError: () => {

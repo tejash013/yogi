@@ -544,6 +544,11 @@ splitPayments: [],
         date: new Date().toISOString(),
       },
     }));
+    useOrderSyncStore.getState().notifyResourceChange({
+      type: 'update',
+      resource: 'payment',
+      at: new Date().toISOString(),
+    });
     useToastStore.getState().showToast('Payment completed successfully', 'success');
     return { ok: true };
   },
@@ -581,6 +586,11 @@ splitPayments: [],
           : inv
       ),
     }));
+    useOrderSyncStore.getState().notifyResourceChange({
+      type: 'update',
+      resource: 'payment',
+      at: new Date().toISOString(),
+    });
     useToastStore
       .getState()
       .showToast(isFull ? 'Full refund processed' : 'Partial refund processed', 'success');
