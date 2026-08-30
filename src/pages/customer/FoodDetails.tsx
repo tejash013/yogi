@@ -15,6 +15,7 @@ const normalizeMenuItem = (item: any): MenuItem => ({
   discountPrice: item.discountPrice ? Number(item.discountPrice) : undefined,
   categoryId: String(item.category?._id ?? item.categoryId ?? item.category ?? ''),
   categoryName: item.categoryName ?? item.category?.name ?? 'General',
+  availableQty: Number(item.availableQty ?? item.stock ?? 0),
   image: item.image ?? '/images/placeholder.jpg',
   images: Array.isArray(item.images) && item.images.length > 0 ? item.images : [item.image ?? '/images/placeholder.jpg'],
   ingredients: item.ingredients ?? [],

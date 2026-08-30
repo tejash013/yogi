@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui';
 import { ROUTES } from '@/constants';
-import { useCartStore } from '@/store';
+import { useCartStore, useToastStore } from '@/store';
 import type { MenuItem, CartItem } from '@/types';
 
 interface FoodCardProps {
@@ -17,11 +17,18 @@ export default function FoodCard({ item, onFavoriteToggle, isFavorite }: FoodCar
   const [added, setAdded] = useState(false);
 
   const handleAddToCart = () => {
+    const currentQty = useCartStore.getState().items.find((entry) => entry.menuItemId === item.id)?.quantity ?? 0;
+    if (currentQty + 1 > (item.availableQty ?? Number.MAX_SAFE_INTEGER)) {
+      useToastStore.getState().showToast(`Only ${item.availableQty ?? 0} left in stock for ${item.name}.`, 'error');
+      return;
+    }
+
     const cartItem: CartItem = {
       menuItemId: item.id,
       name: item.name,
       price: item.discountPrice || item.price,
       quantity: 1,
+      availableQty: item.availableQty,
       image: item.image,
     };
     addItem(cartItem);

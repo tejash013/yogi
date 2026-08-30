@@ -79,6 +79,7 @@ const { items, subtotal, removeItem, updateQuantity, clearCart } = useCartStore(
                   <div className="mt-2 flex items-center justify-between">
                     <QuantitySelector
                       quantity={item.quantity}
+                      max={item.availableQty ?? 99}
                       onIncrease={() => updateQuantity(item.menuItemId, item.quantity + 1)}
                       onDecrease={() => updateQuantity(item.menuItemId, item.quantity - 1)}
                       size="sm"

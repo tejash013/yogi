@@ -385,6 +385,14 @@ useOrderSyncStore.subscribe((state) => {
   void hydrateKitchenOrders();
 });
 
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (event) => {
+    if (event.key === 'restaurantos-order-sync') {
+      void hydrateKitchenOrders();
+    }
+  });
+}
+
 // ---- Selector helpers ----
 export const selectOrderById =
   (id: string) =>

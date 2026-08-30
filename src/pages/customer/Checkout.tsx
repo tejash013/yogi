@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button, Card, Input } from '@/components/ui';
 import { ROUTES } from '@/constants';
 import { ordersApi } from '@/api';
+import { getApiErrorMessage } from '@/api/errors';
 import { useAuthStore, useCartStore, useOrderSyncStore } from '@/store';
 
 type DiningType = 'dine-in' | 'takeaway' | 'delivery';
@@ -81,7 +82,14 @@ export default function Checkout() {
         },
       });
     } catch (error: any) {
-      setSubmitError(error?.response?.data?.message || 'We could not place your order. Please try again.');
+      const message = getApiErrorMessage(error, 'We could not place your order. Please try again.');
+
+      if (error?.response?.status === 409) {
+        setSubmitError('One or more items in your cart are no longer available in the required quantity. Please adjust the cart and try again.');
+        return;
+      }
+
+      setSubmitError(message);
     } finally {
       setIsProcessing(false);
     }

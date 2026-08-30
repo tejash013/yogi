@@ -5,6 +5,16 @@ import axios, {
 } from 'axios';
 import config from '@/config';
 
+function readTokenPayload(token: string): { restaurantId?: string; branchId?: string } | null {
+  try {
+    const payload = token.split('.')[1];
+    if (!payload) return null;
+    return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+  } catch {
+    return null;
+  }
+}
+
 const apiClient: AxiosInstance = axios.create({
   baseURL: config.api.baseUrl,
   timeout: config.api.timeout,
@@ -31,6 +41,14 @@ apiClient.interceptors.request.use(
     const token = localStorage.getItem('restaurantos-token');
     if (token && !isPublicAuthRequest(config.url)) {
       config.headers.Authorization = `Bearer ${token}`;
+
+      const payload = readTokenPayload(token);
+      if (payload?.restaurantId) {
+        config.headers['x-restaurant-id'] = payload.restaurantId;
+      }
+      if (payload?.branchId) {
+        config.headers['x-branch-id'] = payload.branchId;
+      }
     }
     return config;
   },

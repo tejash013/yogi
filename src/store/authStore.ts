@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { authApi } from '@/api/endpoints';
 import { useOrderSyncStore } from '@/store/orderSyncStore';
+import { socketService } from '@/services/socket';
 import type { User, UserRole, LoginCredentials, RegisterData } from '@/types';
 
 interface AuthState {
@@ -153,6 +154,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: () => {
     localStorage.removeItem('restaurantos-token');
     localStorage.removeItem('restaurantos-refresh-token');
+    socketService.disconnect();
     set({
       user: null,
       token: null,

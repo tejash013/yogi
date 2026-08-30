@@ -12,6 +12,7 @@ const normalizeMenuItem = (item: any): MenuItem => ({
   discountPrice: item.discountPrice ? Number(item.discountPrice) : undefined,
   categoryId: String(item.category?._id ?? item.categoryId ?? item.category ?? ''),
   categoryName: item.categoryName ?? item.category?.name ?? 'General',
+  availableQty: Number(item.availableQty ?? item.stock ?? 0),
   image: item.image ?? '/images/placeholder.jpg',
   images: Array.isArray(item.images) && item.images.length > 0 ? item.images : [item.image ?? '/images/placeholder.jpg'],
   ingredients: item.ingredients ?? [],
@@ -55,12 +56,12 @@ export default function Menu() {
     const loadData = async () => {
       try {
         const [menuRes, categoriesRes] = await Promise.all([
-          menuApi.getAll({ page: 1, limit: 100 }).catch(() => ({ data: { data: [] } })),
+          menuApi.getAll({ page: 1, limit: 200 }).catch(() => ({ data: { data: [] } })),
           categoriesApi.getAll().catch(() => ({ data: { data: [] } })),
         ]);
 
-        const items = Array.isArray(menuRes?.data?.data) ? menuRes.data.data : [];
-        const categoryList = Array.isArray(categoriesRes?.data?.data) ? categoriesRes.data.data : [];
+        const items = Array.isArray(menuRes?.data?.data) ? menuRes.data.data : Array.isArray(menuRes?.data) ? menuRes.data : [];
+        const categoryList = Array.isArray(categoriesRes?.data?.data) ? categoriesRes.data.data : Array.isArray(categoriesRes?.data) ? categoriesRes.data : [];
 
         setMenuItems(items.map(normalizeMenuItem));
         setCategories(categoryList.map(normalizeCategory));

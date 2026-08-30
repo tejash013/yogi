@@ -655,6 +655,14 @@ useOrderSyncStore.subscribe((state) => {
   void hydrateCashierData();
 });
 
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (event) => {
+    if (event.key === 'restaurantos-order-sync') {
+      void hydrateCashierData();
+    }
+  });
+}
+
 // ---- Selector helpers ----
 export const selectUnpaidOrders = (state: CashierState) =>
   state.orders.filter(
