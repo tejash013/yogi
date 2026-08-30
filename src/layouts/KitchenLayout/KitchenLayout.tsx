@@ -1,17 +1,30 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { KitchenHeader, KitchenSidebar } from '@/components/kitchen';
 import { ToastContainer } from '@/components/ui';
-import { useToastStore } from '@/store';
+import { useToastStore, useKitchenStore } from '@/store';
 
 /**
  * Main kitchen layout: sticky header + collapsible sidebar + content area.
- * Also renders global toast notifications.
+ * Also renders global toast notifications and manages live order polling.
  */
 export default function KitchenLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const toasts = useToastStore((s) => s.toasts);
   const dismissToast = useToastStore((s) => s.dismissToast);
+  const fetchOrders = useKitchenStore((s) => s.fetchOrders);
+
+  useEffect(() => {
+    // Fetch immediately on mount
+    void fetchOrders();
+
+    // Auto-poll every 5 seconds for live orders
+    const interval = setInterval(() => {
+      void fetchOrders();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [fetchOrders]);
 
   return (
     <div className="flex min-h-screen flex-col bg-neutral-50 dark:bg-neutral-900">

@@ -10,4 +10,6 @@ export { default as OrderCard } from './OrderCard';
 export { default as Timeline } from './Timeline';
 export { default as LoadingSkeleton } from './LoadingSkeleton';
 export { default as Drawer } from './Drawer';
+export { default as QuickOrderModal } from './QuickOrderModal';
+export { default as CustomerInvoiceModal } from './CustomerInvoiceModal';
 

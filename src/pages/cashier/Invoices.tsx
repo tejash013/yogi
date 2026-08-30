@@ -5,10 +5,10 @@ import { InvoiceTable, InvoiceView, ReceiptView } from '@/components/cashier';
 import { formatINR, useCashierStore } from '@/store';
 import type { Invoice } from '@/types/cashier';
 import { PAYMENT_METHOD_LABELS } from '@/types/cashier';
-import { restaurantInfo } from '@/data/cashierData';
 
 export default function Invoices() {
   const invoices = useCashierStore((s) => s.invoices);
+  const restaurantInfo = useCashierStore((s) => s.restaurantInfo);
   const [search, setSearch] = useState('');
   const [viewInvoice, setViewInvoice] = useState<Invoice | null>(null);
   const [printInvoice, setPrintInvoice] = useState<Invoice | null>(null);

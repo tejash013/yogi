@@ -70,11 +70,25 @@ export default function LiveOrders() {
     ? orders.find((o) => o.id === activeOrderId) ?? null
     : null;
 
+  const fetchOrders = useKitchenStore((s) => s.fetchOrders);
+  const isLoading = useKitchenStore((s) => s.isLoading);
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Live Orders"
         description="Real-time order board — accept, prepare and complete orders"
+        actions={
+          <button
+            type="button"
+            onClick={() => void fetchOrders()}
+            disabled={isLoading}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-300 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 shadow-sm transition hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200"
+          >
+            <span className={`inline-block h-2 w-2 rounded-full ${isLoading ? 'bg-amber-500 animate-ping' : 'bg-green-500'}`} />
+            {isLoading ? 'Syncing...' : 'Sync Orders'}
+          </button>
+        }
       />
 
       <KitchenFilters />

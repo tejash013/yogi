@@ -98,18 +98,19 @@ export default function FoodDetails() {
 
   const allImages = item.images.length > 0 ? item.images : [item.image];
   const recommendedItems = menuItems.filter((m) => m.id !== item.id && m.categoryId === item.categoryId).slice(0, 4);
+  const basePrice = item.discountPrice || item.price;
 
   const variants = [
-    { id: 'regular', label: 'Regular', price: 0 },
-    { id: 'large', label: 'Large', price: 3 },
-    { id: 'xl', label: 'Extra Large', price: 5 },
+    { id: 'regular', label: 'Regular Portion', price: 0 },
+    { id: 'medium', label: 'Medium Combo', price: Math.max(30, Math.round(basePrice * 0.35)) },
+    { id: 'large', label: 'Large Feast', price: Math.max(60, Math.round(basePrice * 0.7)) },
   ];
 
   const addons = [
-    { id: 'extra-cheese', label: 'Extra Cheese', price: 1.99 },
-    { id: 'bacon', label: 'Bacon', price: 2.49 },
-    { id: 'avocado', label: 'Avocado', price: 1.49 },
-    { id: 'mushrooms', label: 'Mushrooms', price: 0.99 },
+    { id: 'extra-cheese', label: 'Extra Gourmet Cheese', price: 50 },
+    { id: 'signature-sauce', label: 'Signature Dip & Sauce', price: 35 },
+    { id: 'crispy-onions', label: 'Crispy Fried Toppings', price: 30 },
+    { id: 'beverage-add', label: 'Add Soft Drink', price: 45 },
   ];
 
   const variantPrice = variants.find((v) => v.id === selectedVariant)?.price || 0;
@@ -117,7 +118,6 @@ export default function FoodDetails() {
     const addon = addons.find((a) => a.id === aId);
     return sum + (addon?.price || 0);
   }, 0);
-  const basePrice = item.discountPrice || item.price;
   const totalPrice = (basePrice + variantPrice + addonPrice) * quantity;
 
   const handleAddToCart = () => {
@@ -126,6 +126,7 @@ export default function FoodDetails() {
       name: `${item.name} (${selectedVariant})`,
       price: totalPrice / quantity,
       quantity,
+      availableQty: item.availableQty ?? 50,
       image: item.image,
       specialInstructions,
     };

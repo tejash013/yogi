@@ -1,54 +1,84 @@
-import { Card } from '@/components/ui';
+import { useEffect, useMemo, useState } from 'react';
+import { Card, EmptyState } from '@/components/ui';
 import { RewardCard } from '@/components/customer';
-
-const currentPoints = 1250;
-const nextTier = 2500;
-const tierProgress = (currentPoints / nextTier) * 100;
-
-const rewards = [
-  { points: 500, reward: '₹5 Off', label: 'Any order above ₹20' },
-  { points: 1000, reward: 'Free Dessert', label: 'Any dessert on the menu' },
-  { points: 2500, reward: '₹25 Off', label: 'Any order above ₹50' },
-  { points: 5000, reward: 'Free Meal', label: 'Any main course up to ₹25' },
-  { points: 10000, reward: '₹75 Off', label: 'Any order above ₹100' },
-];
-
-const history = [
-  { date: '2025-03-15', description: 'Order #ORD-001', points: 25 },
-  { date: '2025-03-14', description: 'Order #ORD-002', points: 35 },
-  { date: '2025-03-12', description: 'Order #ORD-003', points: 20 },
-  { date: '2025-03-10', description: 'Order #ORD-004', points: 15 },
-  { date: '2025-03-08', description: 'Reward Redeemed - ₹5 Off', points: -500 },
-];
+import { ordersApi } from '@/api';
 
 export default function Rewards() {
+  const [orders, setOrders] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    ordersApi.getUserOrders()
+      .then((res) => {
+        const list = Array.isArray(res.data?.data) ? res.data.data : [];
+        setOrders(list);
+      })
+      .catch(() => {})
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  const totalSpent = useMemo(() => {
+    return orders.reduce((sum, o) => sum + Number(o.total || 0), 0);
+  }, [orders]);
+
+  // Dynamic point balance: 1 point per ₹10 spent
+  const currentPoints = useMemo(() => {
+    return Math.floor(totalSpent / 10);
+  }, [totalSpent]);
+
+  const tier = currentPoints >= 2000 ? 'Platinum' : currentPoints >= 1000 ? 'Gold' : currentPoints >= 300 ? 'Silver' : 'Bronze';
+  const nextTierPoints = currentPoints >= 2000 ? 5000 : currentPoints >= 1000 ? 2000 : currentPoints >= 300 ? 1000 : 300;
+  const nextTierName = currentPoints >= 2000 ? 'VIP Elite' : currentPoints >= 1000 ? 'Platinum' : currentPoints >= 300 ? 'Gold' : 'Silver';
+  const tierProgress = Math.min(100, Math.round((currentPoints / nextTierPoints) * 100));
+
+  const rewards = [
+    { points: 50, reward: '₹50 Off', label: 'Applicable on orders above ₹300' },
+    { points: 100, reward: 'Free Beverage', label: 'Any specialty drink on the house' },
+    { points: 250, reward: '₹250 Off', label: 'Applicable on orders above ₹800' },
+    { points: 500, reward: 'Chef Special Combo', label: 'Free starter & dessert combo' },
+  ];
+
+  // Dynamic history from orders
+  const history = useMemo(() => {
+    return orders.map((o) => {
+      const pts = Math.max(1, Math.floor(Number(o.total || 0) / 10));
+      const orderNum = o.orderNumber || `ORD-${String(o._id || o.id).slice(-6).toUpperCase()}`;
+      const d = o.createdAt ? new Date(o.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium' }) : 'Recent';
+      return {
+        date: d,
+        description: `Order #${orderNum}`,
+        points: pts,
+      };
+    });
+  }, [orders]);
+
   return (
     <div className="space-y-6 pb-8">
-      <h1 className="text-xl font-bold text-neutral-900 dark:text-white">Rewards & Loyalty</h1>
+      <h1 className="text-xl font-bold text-neutral-900 dark:text-white">Rewards & Loyalty Program</h1>
 
       {/* Points Card */}
-      <Card className="overflow-hidden border-0 bg-gradient-to-br from-amber-500 via-amber-600 to-orange-600 text-white">
+      <Card className="overflow-hidden border-0 bg-gradient-to-br from-amber-500 via-amber-600 to-orange-600 text-white shadow-lg">
         <div className="relative">
           <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-white/10" />
           <div className="relative">
-            <p className="text-sm text-white/70">Your Points Balance</p>
-            <p className="mt-1 text-5xl font-bold">{currentPoints.toLocaleString()}</p>
-            <p className="mt-1 text-sm text-white/70">Earn 1 point for every ₹1 spent</p>
+            <p className="text-sm font-medium text-white/80">Your Points Balance</p>
+            <p className="mt-1 text-5xl font-extrabold">{isLoading ? '...' : currentPoints.toLocaleString()}</p>
+            <p className="mt-1 text-sm text-white/80">Earn 1 loyalty point for every ₹10 spent</p>
 
             {/* Tier Progress */}
             <div className="mt-6">
-              <div className="mb-1 flex items-center justify-between text-xs text-white/70">
-                <span>Silver</span>
-                <span>Gold</span>
+              <div className="mb-1 flex items-center justify-between text-xs font-semibold text-white/80">
+                <span>✦ Current Tier: {tier}</span>
+                <span>Next: {nextTierName}</span>
               </div>
-              <div className="h-2 overflow-hidden rounded-full bg-white/20">
+              <div className="h-2.5 overflow-hidden rounded-full bg-white/20">
                 <div
                   className="h-full rounded-full bg-white transition-all duration-500"
                   style={{ width: `${tierProgress}%` }}
                 />
               </div>
-              <p className="mt-1 text-xs text-white/70">
-                {(nextTier - currentPoints).toLocaleString()} points to reach Gold tier
+              <p className="mt-1.5 text-xs text-white/80">
+                {Math.max(0, nextTierPoints - currentPoints).toLocaleString()} points needed to reach {nextTierName} tier
               </p>
             </div>
           </div>
@@ -58,9 +88,9 @@ export default function Rewards() {
       {/* Available Rewards */}
       <section>
         <h2 className="mb-4 text-lg font-bold text-neutral-900 dark:text-white">
-          Available Rewards
+          Redeemable Rewards
         </h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
           {rewards.map((reward) => (
             <RewardCard
               key={reward.points}
@@ -73,19 +103,15 @@ export default function Rewards() {
 
       {/* How to Earn */}
       <Card>
-        <h3 className="mb-3 font-semibold text-neutral-900 dark:text-white">How to Earn Points</h3>
+        <h3 className="mb-3 font-semibold text-neutral-900 dark:text-white">Earning Guidelines</h3>
         <div className="space-y-3">
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-50 text-sm font-bold text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">1</div>
-            <p className="text-sm text-neutral-600 dark:text-neutral-400">Place an order - Earn 1 point per ₹1 spent</p>
+            <p className="text-sm text-neutral-600 dark:text-neutral-400">Dine-in or Online Order - Earn 1 pt per ₹10 spent automatically</p>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-50 text-sm font-bold text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">2</div>
-            <p className="text-sm text-neutral-600 dark:text-neutral-400">Write a review - Earn 50 bonus points</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-50 text-sm font-bold text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">3</div>
-            <p className="text-sm text-neutral-600 dark:text-neutral-400">Refer a friend - Earn 100 bonus points</p>
+            <p className="text-sm text-neutral-600 dark:text-neutral-400">Tier Promotions - Higher tiers unlock exclusive multiplier events</p>
           </div>
         </div>
       </Card>
@@ -93,25 +119,26 @@ export default function Rewards() {
       {/* History */}
       <section>
         <h2 className="mb-4 text-lg font-bold text-neutral-900 dark:text-white">Points History</h2>
-        <div className="space-y-3">
-          {history.map((entry, idx) => (
-            <Card key={idx}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-neutral-900 dark:text-white">{entry.description}</p>
-                  <p className="text-xs text-neutral-500">{entry.date}</p>
+        {history.length === 0 ? (
+          <EmptyState title="No points earned yet" description="Place your first order to start accumulating points!" />
+        ) : (
+          <div className="space-y-3">
+            {history.slice(0, 10).map((entry, idx) => (
+              <Card key={idx}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-neutral-900 dark:text-white">{entry.description}</p>
+                    <p className="text-xs text-neutral-500">{entry.date}</p>
+                  </div>
+                  <span className="font-bold text-sm text-emerald-600 dark:text-emerald-400">
+                    +{entry.points} pts
+                  </span>
                 </div>
-                <span className={`font-bold text-sm ${
-                  entry.points > 0 ? 'text-green-600' : 'text-red-500'
-                }`}>
-                  {entry.points > 0 ? '+' : ''}{entry.points} pts
-                </span>
-              </div>
-            </Card>
-          ))}
-        </div>
+              </Card>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );
 }
-

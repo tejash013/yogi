@@ -1,16 +1,25 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button, Card, Textarea } from '@/components/ui';
 import { Rating } from '@/components/customer';
+import { useAuthStore, useToastStore } from '@/store';
 
 export default function Feedback() {
+  const user = useAuthStore((s) => s.user);
+  const showToast = useToastStore((s) => s.showToast);
   const [step, setStep] = useState<'form' | 'thanks'>('form');
-  const [overallRating, setOverallRating] = useState(0);
-  const [foodRating, setFoodRating] = useState(0);
-  const [serviceRating, setServiceRating] = useState(0);
+  const [overallRating, setOverallRating] = useState(5);
+  const [foodRating, setFoodRating] = useState(5);
+  const [serviceRating, setServiceRating] = useState(5);
   const [subject, setSubject] = useState('');
   const [reviewText, setReviewText] = useState('');
   const [name, setName] = useState('');
   const [images, setImages] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (user?.firstName) {
+      setName(`${user.firstName} ${user.lastName || ''}`.trim());
+    }
+  }, [user]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -33,6 +42,7 @@ export default function Feedback() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    showToast('Feedback submitted successfully! Thank you.', 'success');
     setStep('thanks');
   };
 

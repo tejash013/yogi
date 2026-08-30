@@ -88,6 +88,13 @@ export const useAuthStore = create<AuthState>((set) => ({
         isLoading: false,
         error: null,
       });
+
+      useOrderSyncStore.getState().notifyOrderChange({
+        type: 'update',
+        orderId: 'auth-session',
+        status: 'pending',
+        at: new Date().toISOString(),
+      });
     } catch (error) {
       const apiMessage =
         typeof error === 'object' && error !== null && 'response' in error
@@ -139,6 +146,13 @@ export const useAuthStore = create<AuthState>((set) => ({
         isAuthenticated: true,
         isLoading: false,
         error: null,
+      });
+
+      useOrderSyncStore.getState().notifyOrderChange({
+        type: 'update',
+        orderId: 'auth-session',
+        status: 'pending',
+        at: new Date().toISOString(),
       });
     } catch (error) {
       const apiMessage =

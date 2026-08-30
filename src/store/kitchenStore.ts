@@ -23,15 +23,19 @@ interface KitchenState {
   notifications: KitchenNotificationShim[];
   headerStatus: 'online' | 'offline';
   activeOrderId: string | null;
+  isLoading: boolean;
+  lastUpdated: string | null;
+
+  // Actions
+  fetchOrders: () => Promise<void>;
+  onlineStatus: (status: 'online' | 'offline') => void;
+  setActiveOrder: (id: string | null) => void;
 
   // Filters (shared configuration)
   statusFilter: KitchenStatusFilter;
   searchQuery: string;
   tableFilter: string;
   orderTypeFilter: OrderTypeFilter;
-
-  onlineStatus: (status: 'online' | 'offline') => void;
-  setActiveOrder: (id: string | null) => void;
 
   acceptOrder: (id: string) => void;
   rejectOrder: (id: string) => void;
@@ -156,6 +160,23 @@ export const useKitchenStore = create<KitchenState>((set, get) => ({
   notifications: [],
   headerStatus: 'online',
   activeOrderId: null,
+  isLoading: false,
+  lastUpdated: null,
+
+  fetchOrders: async () => {
+    set({ isLoading: true });
+    try {
+      const response = await ordersApi.getAll({ page: 1, limit: 100 }).catch(() => ({ data: { data: [] } }));
+      const list = Array.isArray(response?.data?.data) ? response.data.data : [];
+      set({
+        orders: list.map(normalizeKitchenOrder),
+        isLoading: false,
+        lastUpdated: new Date().toISOString(),
+      });
+    } catch {
+      set({ isLoading: false });
+    }
+  },
 
   statusFilter: 'all',
   searchQuery: '',
@@ -175,6 +196,7 @@ export const useKitchenStore = create<KitchenState>((set, get) => ({
   setActiveOrder: (id) => set({ activeOrderId: id }),
 
   acceptOrder: async (id) => {
+    const order = get().orders.find((o) => o.id === id);
     try {
       await ordersApi.updateStatus(id, 'confirmed');
       set((state) => ({
@@ -184,7 +206,8 @@ export const useKitchenStore = create<KitchenState>((set, get) => ({
             : o
         ),
       }));
-      useToastStore.getState().showToast('Order accepted', 'success');
+      useOrderSyncStore.getState().notifyOrderChange({ type: 'update', orderId: id, status: 'confirmed', at: nowISO() });
+      useToastStore.getState().showToast(`Order #${order?.orderNumber ?? id} Confirmed!`, 'success');
     } catch {
       set((state) => ({
         orders: state.orders.map((o) =>
@@ -193,7 +216,8 @@ export const useKitchenStore = create<KitchenState>((set, get) => ({
             : o
         ),
       }));
-      useToastStore.getState().showToast('Order accepted locally', 'warning');
+      useOrderSyncStore.getState().notifyOrderChange({ type: 'update', orderId: id, status: 'confirmed', at: nowISO() });
+      useToastStore.getState().showToast(`Order #${order?.orderNumber ?? id} Confirmed locally`, 'info');
     }
   },
 
@@ -206,14 +230,16 @@ export const useKitchenStore = create<KitchenState>((set, get) => ({
           o.id === id ? { ...o, status: 'cancelled' } : o
         ),
       }));
-      useToastStore.getState().showToast(`Order ${order?.orderNumber ?? ''} rejected`, 'error');
+      useOrderSyncStore.getState().notifyOrderChange({ type: 'update', orderId: id, status: 'cancelled', at: nowISO() });
+      useToastStore.getState().showToast(`Order #${order?.orderNumber ?? id} rejected`, 'error');
     } catch {
       set((state) => ({
         orders: state.orders.map((o) =>
           o.id === id ? { ...o, status: 'cancelled' } : o
         ),
       }));
-      useToastStore.getState().showToast(`Order ${order?.orderNumber ?? ''} rejected locally`, 'error');
+      useOrderSyncStore.getState().notifyOrderChange({ type: 'update', orderId: id, status: 'cancelled', at: nowISO() });
+      useToastStore.getState().showToast(`Order #${order?.orderNumber ?? id} rejected locally`, 'error');
     }
   },
 

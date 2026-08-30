@@ -69,8 +69,13 @@ export default function CashierDashboard() {
         title="Cashier Dashboard"
         description="Overview of today's transactions"
         actions={
-          <Button onClick={() => navigate(ROUTES.CASHIER.BILLING)}>
-            New Bill
+          <Button
+            onClick={() => {
+              useCashierStore.getState().createNewBill();
+              navigate(ROUTES.CASHIER.BILLING);
+            }}
+          >
+            + New Bill
           </Button>
         }
       />

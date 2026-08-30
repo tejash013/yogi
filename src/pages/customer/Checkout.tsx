@@ -1,32 +1,68 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Card, Input } from '@/components/ui';
 import { ROUTES } from '@/constants';
-import { ordersApi } from '@/api';
+import { ordersApi, settingsApi } from '@/api';
 import { getApiErrorMessage } from '@/api/errors';
 import { useAuthStore, useCartStore, useOrderSyncStore } from '@/store';
 
 type DiningType = 'dine-in' | 'takeaway' | 'delivery';
 type PaymentMethod = 'card' | 'cash' | 'upi' | 'wallet';
 
-const DELIVERY_FEE = 2.99;
-const TAX_RATE = 0.08;
-
 export default function Checkout() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
+  const cartTableNumber = useCartStore((state) => state.tableNumber);
   const { items, subtotal, clearCart } = useCartStore();
   const [diningType, setDiningType] = useState<DiningType>('dine-in');
-  const [tableNumber, setTableNumber] = useState('');
+  const [tableNumber, setTableNumber] = useState(cartTableNumber ? String(cartTableNumber) : '');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
-  const [formData, setFormData] = useState({ name: '', email: '', phone: '', notes: '' });
+  const [showEditCustomer, setShowEditCustomer] = useState(false);
+  const [formData, setFormData] = useState({
+    name: user ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Customer' : '',
+    email: user?.email ?? '',
+    phone: user?.phone ?? '',
+    notes: '',
+  });
   const [useRewardPoints, setUseRewardPoints] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [taxPercent, setTaxPercent] = useState<number>(5);
+  const [standardDeliveryFee, setStandardDeliveryFee] = useState<number>(40);
 
-  const actualTax = subtotal * TAX_RATE;
-  const rewardDiscount = useRewardPoints ? Math.min(5, subtotal) : 0;
-  const finalTotal = Math.max(0, subtotal + actualTax + DELIVERY_FEE - rewardDiscount);
+  useEffect(() => {
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        name: prev.name || `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Customer',
+        email: prev.email || user.email || '',
+        phone: prev.phone || user.phone || '',
+      }));
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (cartTableNumber) {
+      setTableNumber(String(cartTableNumber));
+    }
+  }, [cartTableNumber]);
+
+  useEffect(() => {
+    settingsApi.get()
+      .then((res) => {
+        const s = res.data?.data;
+        if (s) {
+          if (typeof s.taxRate === 'number') setTaxPercent(s.taxRate);
+          if (typeof s.deliveryFee === 'number') setStandardDeliveryFee(s.deliveryFee);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const deliveryFee = diningType === 'delivery' ? standardDeliveryFee : 0;
+  const actualTax = subtotal * (taxPercent / 100);
+  const rewardDiscount = useRewardPoints ? Math.min(50, subtotal * 0.2) : 0;
+  const finalTotal = Math.max(0, subtotal + actualTax + deliveryFee - rewardDiscount);
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,6 +75,11 @@ export default function Checkout() {
 
     if (items.length === 0) {
       setSubmitError('Your cart is empty.');
+      return;
+    }
+
+    if (diningType === 'dine-in' && !tableNumber.trim()) {
+      setSubmitError('Please enter your Table Number for Dine-In order.');
       return;
     }
 
@@ -97,30 +138,33 @@ export default function Checkout() {
 
   return (
     <div className="space-y-6 pb-8">
-      <h1 className="text-xl font-bold text-neutral-900 dark:text-white">Checkout</h1>
+      <div>
+        <h1 className="text-2xl font-black text-neutral-900 dark:text-white">Order Checkout</h1>
+        <p className="text-xs text-neutral-500">Quickly confirm your order without repetitive forms</p>
+      </div>
 
       <form onSubmit={handlePlaceOrder}>
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2">
-            {/* Dining Type */}
+            {/* Dining Type & Table Number */}
             <Card>
-              <h3 className="mb-4 font-semibold text-neutral-900 dark:text-white">Dining Type</h3>
+              <h3 className="mb-3 font-bold text-neutral-900 dark:text-white">1. Select Dining Type</h3>
               <div className="grid grid-cols-3 gap-3">
                 {(['dine-in', 'takeaway', 'delivery'] as const).map((type) => (
                   <button
                     key={type}
                     type="button"
                     onClick={() => setDiningType(type)}
-                    className={`rounded-xl border-2 p-4 text-center transition-all ${
+                    className={`rounded-2xl border-2 p-3.5 text-center transition-all ${
                       diningType === type
                         ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                        : 'border-neutral-200 hover:border-neutral-300 dark:border-neutral-600'
+                        : 'border-neutral-200 hover:border-neutral-300 dark:border-neutral-700'
                     }`}
                   >
                     <span className="text-2xl">
                       {type === 'dine-in' ? '🍽️' : type === 'takeaway' ? '🛍️' : '🚚'}
                     </span>
-                    <p className={`mt-1 text-sm font-semibold ${
+                    <p className={`mt-1 text-xs font-bold ${
                       diningType === type ? 'text-primary-600' : 'text-neutral-600 dark:text-neutral-300'
                     }`}>
                       {type === 'dine-in' ? 'Dine In' : type === 'takeaway' ? 'Takeaway' : 'Delivery'}
@@ -130,63 +174,125 @@ export default function Checkout() {
               </div>
 
               {diningType === 'dine-in' && (
-                <div className="mt-4">
-                  <label className="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                    Table Number
+                <div className="mt-4 rounded-2xl bg-amber-50/60 p-4 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40">
+                  <label className="mb-1.5 flex items-center justify-between text-xs font-bold text-amber-900 dark:text-amber-300">
+                    <span>Table Number 🍽️ (Required for Dine-in)</span>
+                    <span className="text-[11px] font-normal text-amber-700 dark:text-amber-400">Enter your table #</span>
                   </label>
-                  <input
-                    type="number"
-                    value={tableNumber}
-                    onChange={(e) => setTableNumber(e.target.value)}
-                    placeholder="Enter table number"
-                    className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-600 dark:bg-neutral-800"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      min="1"
+                      max="99"
+                      value={tableNumber}
+                      onChange={(e) => setTableNumber(e.target.value)}
+                      placeholder="e.g. 5"
+                      required
+                      className="w-32 rounded-xl border border-amber-300 bg-white px-3 py-2 text-center text-lg font-black text-neutral-900 shadow-sm focus:border-primary-500 focus:outline-none dark:border-amber-700 dark:bg-neutral-800 dark:text-white"
+                    />
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {['1', '2', '3', '4', '5', '6', '7', '8'].map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => setTableNumber(t)}
+                          className={`rounded-lg px-2.5 py-1 text-xs font-bold transition ${
+                            tableNumber === t
+                              ? 'bg-amber-500 text-white'
+                              : 'bg-white text-neutral-700 hover:bg-amber-100 dark:bg-neutral-800 dark:text-neutral-200'
+                          }`}
+                        >
+                          Table {t}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
             </Card>
 
-            {/* Customer Details */}
+            {/* Customer Details - Friction Free */}
             <Card>
-              <h3 className="mb-4 font-semibold text-neutral-900 dark:text-white">Customer Details</h3>
-              <div className="space-y-4">
-                <Input
-                  label="Full Name"
-                  placeholder="John Doe"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  required
-                />
-                <div className="grid grid-cols-2 gap-4">
+              <h3 className="mb-3 font-bold text-neutral-900 dark:text-white">2. Customer Information</h3>
+              {user ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between rounded-xl bg-green-50 p-3.5 border border-green-200 dark:bg-green-950/30 dark:border-green-800/40">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-green-600 text-white text-xs font-bold">
+                        ✓
+                      </span>
+                      <div>
+                        <p className="text-sm font-bold text-green-900 dark:text-green-100">
+                          {formData.name || 'Registered Customer'}
+                        </p>
+                        <p className="text-xs text-green-700 dark:text-green-300">
+                          {formData.email} {formData.phone ? `· ${formData.phone}` : ''}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowEditCustomer(!showEditCustomer)}
+                      className="text-xs font-bold text-green-800 hover:underline dark:text-green-300"
+                    >
+                      {showEditCustomer ? 'Done' : 'Change Info'}
+                    </button>
+                  </div>
+
+                  {showEditCustomer && (
+                    <div className="grid grid-cols-2 gap-3 pt-2">
+                      <Input
+                        label="Full Name"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        required
+                      />
+                      <Input
+                        label="Phone Number"
+                        type="tel"
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
                   <Input
-                    label="Email"
-                    type="email"
-                    placeholder="john@example.com"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    label="Full Name"
+                    placeholder="e.g. John Doe"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     required
                   />
                   <Input
-                    label="Phone"
-                    type="tel"
-                    placeholder="+1-555-0000"
+                    label="Phone Number"
+                    placeholder="e.g. +91 9876543210"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    required
                   />
                 </div>
-                <Input
-                  label="Special Notes"
-                  placeholder="Any special requests..."
+              )}
+
+              {/* Special instructions */}
+              <div className="mt-4">
+                <label className="mb-1.5 block text-xs font-bold text-neutral-700 dark:text-neutral-300">
+                  Special Cooking Instructions / Description
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Less spicy, no onions, extra sauce, well cooked..."
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  className="w-full rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-xs text-neutral-900 placeholder-neutral-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
                 />
               </div>
             </Card>
 
             {/* Payment Method */}
             <Card>
-              <h3 className="mb-4 font-semibold text-neutral-900 dark:text-white">Payment Method</h3>
-              <div className="grid grid-cols-2 gap-3">
+              <h3 className="mb-3 font-bold text-neutral-900 dark:text-white">3. Payment Option</h3>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {([
                   { id: 'card' as const, label: 'Credit/Debit Card', icon: '💳' },
                   { id: 'cash' as const, label: 'Cash', icon: '💵' },
@@ -240,12 +346,12 @@ export default function Checkout() {
                   <span>₹{subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-neutral-500">Tax (8%)</span>
+                  <span className="text-neutral-500">GST / Tax ({taxPercent}%)</span>
                   <span>₹{actualTax.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-neutral-500">Delivery Fee</span>
-                  <span>₹{DELIVERY_FEE.toFixed(2)}</span>
+                  <span>{deliveryFee === 0 ? 'Free' : `₹${deliveryFee.toFixed(2)}`}</span>
                 </div>
 
                 {/* Reward Points */}
@@ -253,7 +359,7 @@ export default function Checkout() {
                   <div className="flex items-center gap-2">
                     <span className="text-lg">⭐</span>
                     <span className="text-xs text-amber-700 dark:text-amber-300">
-                      Use reward points (₹5 off)
+                      Use loyalty points (₹50 discount)
                     </span>
                   </div>
                   <button

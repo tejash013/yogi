@@ -2,14 +2,29 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Input } from '@/components/ui';
 import { ROUTES } from '@/constants';
+import { authApi } from '@/api';
+import { useToastStore } from '@/store';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const showToast = useToastStore((s) => s.showToast);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    if (!email.trim()) return;
+
+    setIsLoading(true);
+    try {
+      await authApi.forgotPassword(email.trim());
+      showToast('Password reset link sent to your email', 'success');
+      setSubmitted(true);
+    } catch (err: any) {
+      showToast(err?.response?.data?.message || 'Failed to send reset link', 'error');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (submitted) {
@@ -22,11 +37,11 @@ export default function ForgotPassword() {
         </div>
         <h2 className="text-xl font-bold text-neutral-900 dark:text-white">Check Your Email</h2>
         <p className="mt-2 text-sm text-neutral-500">
-          We've sent a password reset link to {email}
+          We've dispatched password recovery instructions to <span className="font-semibold text-neutral-800 dark:text-neutral-200">{email}</span>.
         </p>
         <Link
           to={ROUTES.AUTH.LOGIN}
-          className="mt-6 inline-block text-sm font-medium text-primary-500 hover:text-primary-600"
+          className="mt-6 inline-block text-sm font-semibold text-primary-600 hover:text-primary-700"
         >
           Back to login
         </Link>
@@ -41,7 +56,7 @@ export default function ForgotPassword() {
           Forgot Password
         </h1>
         <p className="mt-2 text-sm text-neutral-500">
-          Enter your email and we'll send you a reset link
+          Enter your registered email and we will send you a reset link
         </p>
       </div>
 
@@ -49,12 +64,12 @@ export default function ForgotPassword() {
         <Input
           label="Email"
           type="email"
-          placeholder="john@example.com"
+          placeholder="your.email@example.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-        <Button type="submit" fullWidth>
+        <Button type="submit" fullWidth isLoading={isLoading}>
           Send Reset Link
         </Button>
       </form>
@@ -71,4 +86,3 @@ export default function ForgotPassword() {
     </div>
   );
 }
-

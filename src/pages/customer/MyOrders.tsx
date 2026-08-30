@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui';
-import { OrderCard } from '@/components/customer';
+import { OrderCard, CustomerInvoiceModal } from '@/components/customer';
 import { ROUTES } from '@/constants';
 import { ordersApi } from '@/api';
-import { useOrderSyncStore } from '@/store';
+import { useCartStore, useOrderSyncStore, useToastStore } from '@/store';
 import type { Order } from '@/types';
 
 const normalizeOrder = (item: any): Order => ({
@@ -74,12 +74,27 @@ export default function MyOrders() {
     return matchesSearch && matchesFilter;
   });
 
+  const addItem = useCartStore((s) => s.addItem);
+  const showToast = useToastStore((s) => s.showToast);
+
   const handleRepeatOrder = (order: Order) => {
-    alert(`Repeating order ${order.orderNumber} - items added to cart!`);
+    order.items.forEach((item) => {
+      addItem({
+        menuItemId: item.menuItemId,
+        name: item.name,
+        price: item.unitPrice,
+        quantity: item.quantity,
+        image: '/images/placeholder.jpg',
+      });
+    });
+    showToast(`${order.items.length} items from #${order.orderNumber} added to cart!`, 'success');
+    navigate(ROUTES.CUSTOMER.CART);
   };
 
+  const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState<Order | null>(null);
+
   const handleInvoice = (order: Order) => {
-    alert(`Invoice for ${order.orderNumber} generated!`);
+    setSelectedInvoiceOrder(order);
   };
 
   if (orders.length === 0) {
@@ -184,6 +199,13 @@ export default function MyOrders() {
           ))}
         </div>
       )}
+
+      {/* Customer Invoice Modal */}
+      <CustomerInvoiceModal
+        order={selectedInvoiceOrder}
+        isOpen={Boolean(selectedInvoiceOrder)}
+        onClose={() => setSelectedInvoiceOrder(null)}
+      />
     </div>
   );
 }

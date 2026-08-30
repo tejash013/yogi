@@ -21,6 +21,10 @@ export default function KitchenDashboard() {
   const orders = useKitchenStore((s) => s.orders);
   const activeOrderId = useKitchenStore((s) => s.activeOrderId);
   const setActiveOrder = useKitchenStore((s) => s.setActiveOrder);
+  const acceptOrder = useKitchenStore((s) => s.acceptOrder);
+  const startPreparing = useKitchenStore((s) => s.startPreparing);
+  const markReady = useKitchenStore((s) => s.markReady);
+  const completeOrder = useKitchenStore((s) => s.completeOrder);
 
   const counts = useMemo(() => ({
     new: orders.filter((o) => o.status === 'new').length,
@@ -64,11 +68,25 @@ export default function KitchenDashboard() {
     { label: 'Avg Prep Time', value: `${avgPrep}m`, accent: 'info' as const },
   ];
 
+  const fetchOrders = useKitchenStore((s) => s.fetchOrders);
+  const isLoading = useKitchenStore((s) => s.isLoading);
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Kitchen Dashboard"
         description="Overview of kitchen operations and performance"
+        actions={
+          <button
+            type="button"
+            onClick={() => void fetchOrders()}
+            disabled={isLoading}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-300 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 shadow-sm transition hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200"
+          >
+            <span className={`inline-block h-2 w-2 rounded-full ${isLoading ? 'bg-amber-500 animate-ping' : 'bg-green-500'}`} />
+            {isLoading ? 'Syncing...' : 'Sync Orders'}
+          </button>
+        }
       />
 
       {/* Summary cards */}
@@ -90,29 +108,91 @@ export default function KitchenDashboard() {
             ) : (
               <div className="space-y-3">
                 {activeOrders.map((order) => (
-                  <button
+                  <div
                     key={order.id}
-                    onClick={() => setActiveOrder(order.id)}
-                    className="block w-full rounded-xl border border-neutral-200 p-4 text-left transition-colors hover:border-primary-300 dark:border-neutral-700 dark:hover:border-primary-700"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-neutral-200 p-4 transition-all hover:border-primary-300 hover:shadow-sm dark:border-neutral-700 dark:hover:border-primary-700 bg-white dark:bg-neutral-800/60"
                   >
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-neutral-900 dark:text-white">
+                    <div
+                      onClick={() => setActiveOrder(order.id)}
+                      className="cursor-pointer flex-1 min-w-0"
+                    >
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-extrabold text-neutral-900 dark:text-white">
                           #{order.orderNumber}
                         </span>
                         <OrderStatusBadge status={order.status} />
                         <PriorityBadge priority={order.priority} />
+                        <span className="text-xs text-neutral-400 ml-auto sm:ml-0">
+                          {getRelativeTime(order.createdAt)}
+                        </span>
                       </div>
-                      <span className="text-xs text-neutral-400">
-                        {getRelativeTime(order.createdAt)}
-                      </span>
+                      <div className="mt-1.5 text-xs text-neutral-600 dark:text-neutral-300 truncate">
+                        {order.customerName ? <span className="font-semibold text-neutral-800 dark:text-neutral-200">{order.customerName} · </span> : ''}
+                        {order.tableNumber ? `Table ${order.tableNumber} · ` : ''}
+                        <span className="capitalize">{order.orderType}</span> · {' '}
+                        {order.items.reduce((s, i) => s + i.quantity, 0)} items (
+                        {order.items.map((it) => `${it.quantity}x ${it.name}`).join(', ')})
+                      </div>
                     </div>
-                    <div className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-                      {order.tableNumber ? `Table ${order.tableNumber} · ` : ''}
-                      <span className="capitalize">{order.orderType}</span> · {' '}
-                      {order.items.reduce((s, i) => s + i.quantity, 0)} items
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      {order.status === 'new' && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            acceptOrder(order.id);
+                          }}
+                          className="rounded-xl bg-green-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-green-700 active:scale-95"
+                        >
+                          ✓ Confirm Order
+                        </button>
+                      )}
+                      {order.status === 'confirmed' && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startPreparing(order.id);
+                          }}
+                          className="rounded-xl bg-blue-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-700 active:scale-95"
+                        >
+                          🔥 Start Prep
+                        </button>
+                      )}
+                      {order.status === 'preparing' && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            markReady(order.id);
+                          }}
+                          className="rounded-xl bg-amber-500 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-amber-600 active:scale-95"
+                        >
+                          🔔 Ready
+                        </button>
+                      )}
+                      {order.status === 'ready' && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            completeOrder(order.id);
+                          }}
+                          className="rounded-xl bg-green-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-green-700 active:scale-95"
+                        >
+                          ✓ Complete
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setActiveOrder(order.id)}
+                        className="rounded-xl border border-neutral-200 bg-neutral-50 px-2.5 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200"
+                      >
+                        Details
+                      </button>
                     </div>
-                  </button>
+                  </div>
                 ))}
               </div>
             )}

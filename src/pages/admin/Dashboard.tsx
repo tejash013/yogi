@@ -1,55 +1,100 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Card, CardHeader, CardContent, Badge } from '@/components/ui';
 import { PageHeader } from '@/components/common';
+import { menuApi, ordersApi, tablesApi, usersApi } from '@/api';
 import { ROUTES } from '@/constants';
+import { useOrderSyncStore } from '@/store';
+import { formatCurrency } from '@/utils';
 
 type DashboardBadgeVariant = 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | 'neutral';
 
-const stats: Array<{ label: string; value: string; badge: string; variant: DashboardBadgeVariant }> = [
-  { label: 'Total Orders', value: '156', badge: '+12%', variant: 'primary' },
-  { label: 'Revenue', value: '₹4,892', badge: '+8%', variant: 'success' },
-  { label: 'Customers', value: '89', badge: '+5%', variant: 'info' },
-  { label: 'Active Tables', value: '12/20', badge: '60%', variant: 'secondary' },
-];
-
-const recentOrders = [
-  { order: 'ORD-001', table: 5, status: 'Preparing', total: 38.85 },
-  { order: 'ORD-002', table: 3, status: 'Completed', total: 41.41 },
-  { order: 'ORD-003', table: 8, status: 'Pending', total: 25.89 },
-  { order: 'ORD-004', table: 1, status: 'Ready', total: 52.25 },
-];
-
-const statusOptions = ['All', 'Pending', 'Preparing', 'Ready', 'Completed'] as const;
+const statusOptions = ['All', 'pending', 'preparing', 'ready', 'completed'] as const;
 
 export default function AdminDashboard() {
   const [selectedStatus, setSelectedStatus] = useState<typeof statusOptions[number]>('All');
+  const [orders, setOrders] = useState<any[]>([]);
+  const [tables, setTables] = useState<any[]>([]);
+  const [customerCount, setCustomerCount] = useState<number>(0);
+  const [menuCount, setMenuCount] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const syncVersion = useOrderSyncStore((state) => state.version);
 
-  const filteredOrders = useMemo(
-    () =>
-      selectedStatus === 'All'
-        ? recentOrders
-        : recentOrders.filter((order) => order.status === selectedStatus),
-    [selectedStatus]
-  );
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      setIsLoading(true);
+      try {
+        const [ordersRes, tablesRes, usersRes, menuRes] = await Promise.all([
+          ordersApi.getAll({ page: 1, limit: 100 }).catch(() => ({ data: { data: [] } })),
+          tablesApi.getAll().catch(() => ({ data: { data: [] } })),
+          usersApi.getAll({ limit: 100 }).catch(() => ({ data: { data: [] } })),
+          menuApi.getAll({ limit: 100 }).catch(() => ({ data: { data: [] } })),
+        ]);
 
-  const totalSales = useMemo(
-    () => filteredOrders.reduce((sum, order) => sum + order.total, 0),
-    [filteredOrders]
-  );
+        const rawOrders = Array.isArray(ordersRes?.data?.data) ? ordersRes.data.data : [];
+        const rawTables = Array.isArray(tablesRes?.data?.data) ? tablesRes.data.data : Array.isArray(tablesRes?.data) ? tablesRes.data : [];
+        const rawUsers = Array.isArray(usersRes?.data?.data) ? usersRes.data.data : [];
+        const rawMenu = Array.isArray(menuRes?.data?.data) ? menuRes.data.data : Array.isArray(menuRes?.data) ? menuRes.data : [];
+
+        setOrders(rawOrders);
+        setTables(rawTables);
+        setCustomerCount(rawUsers.filter((u: any) => u.role === 'customer' || !u.role).length || rawUsers.length);
+        setMenuCount(rawMenu.length);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void loadDashboardData();
+  }, [syncVersion]);
+
+  // Operational metrics
+  const totalRevenue = useMemo(() => {
+    return orders.filter((o) => o.paymentStatus === 'paid').reduce((sum, o) => sum + Number(o.total || 0), 0);
+  }, [orders]);
+
+  const activeTablesCount = useMemo(() => {
+    return tables.filter((t) => t.status === 'occupied' || t.status === 'reserved').length;
+  }, [tables]);
+
+  const pendingOrdersCount = useMemo(() => {
+    return orders.filter((o) => o.status === 'pending' || o.status === 'confirmed').length;
+  }, [orders]);
+
+  const stats: Array<{ label: string; value: string; badge: string; variant: DashboardBadgeVariant }> = useMemo(() => [
+    { label: 'Total Orders', value: String(orders.length), badge: `${orders.filter((o) => o.status === 'completed').length} done`, variant: 'primary' },
+    { label: 'Today Revenue', value: formatCurrency(totalRevenue), badge: 'Paid', variant: 'success' },
+    { label: 'Registered Customers', value: String(customerCount), badge: 'Active', variant: 'info' },
+    { label: 'Active Tables', value: `${activeTablesCount}/${Math.max(1, tables.length)}`, badge: `${tables.length > 0 ? Math.round((activeTablesCount / tables.length) * 100) : 0}%`, variant: 'secondary' },
+  ], [orders, totalRevenue, customerCount, activeTablesCount, tables]);
+
+  const filteredOrders = useMemo(() => {
+    if (selectedStatus === 'All') return orders;
+    return orders.filter((order) => String(order.status).toLowerCase() === selectedStatus.toLowerCase());
+  }, [orders, selectedStatus]);
+
+  const totalFilteredSales = useMemo(() => {
+    return filteredOrders.reduce((sum, order) => sum + Number(order.total || 0), 0);
+  }, [filteredOrders]);
+
+  const todayFormatted = new Date().toLocaleDateString('en-IN', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Manager overview" description="A focused view of today's restaurant operations." />
+      <PageHeader title="Manager overview" description="A focused real-time view of today's restaurant operations." />
 
       <div className="grid gap-6 xl:grid-cols-[1.8fr_1fr]">
         <Card className="overflow-hidden rounded-[30px] border-[#efe4d7] bg-[#fffdfb] shadow-[0_20px_60px_rgba(85,68,44,0.04)] dark:border-neutral-700 dark:bg-neutral-900">
           <div className="bg-[radial-gradient(circle_at_top,_rgba(226,181,110,0.25),_transparent_35%),linear-gradient(135deg,#201a17_0%,#171412_100%)] p-6 text-white sm:p-8">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-sm font-medium uppercase tracking-[0.2em] text-[#f0d7aa]">Friday, 22 August</p>
-                <h2 className="mt-2 text-3xl font-semibold tracking-tight">Service is moving well.</h2>
-                <p className="mt-2 max-w-xl text-sm text-neutral-300">Keep an eye on the rush, clear the kitchen queue, and make the next decision with confidence.</p>
+                <p className="text-sm font-medium uppercase tracking-[0.2em] text-[#f0d7aa]">{todayFormatted}</p>
+                <h2 className="mt-2 text-3xl font-semibold tracking-tight">Service is active and moving.</h2>
+                <p className="mt-2 max-w-xl text-sm text-neutral-300">Keep an eye on active tables, fulfill kitchen orders, and manage inventory seamlessly.</p>
               </div>
               <div className="flex flex-wrap gap-3">
                 <Link to={ROUTES.ADMIN.ORDERS} className="rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20">Open orders</Link>
@@ -63,7 +108,9 @@ export default function AdminDashboard() {
               <div key={item.label} className="rounded-[24px] border border-[#f0e4d7] bg-[#f9f5f1] p-5 dark:border-neutral-700 dark:bg-neutral-800">
                 <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">{item.label}</p>
                 <div className="mt-3 flex items-end justify-between gap-4">
-                  <p className="text-3xl font-semibold tracking-[-0.04em] text-neutral-900 dark:text-white">{item.value}</p>
+                  <p className="text-3xl font-semibold tracking-[-0.04em] text-neutral-900 dark:text-white">
+                    {isLoading ? '...' : item.value}
+                  </p>
                   <Badge variant={item.variant} size="sm">{item.badge}</Badge>
                 </div>
               </div>
@@ -80,31 +127,31 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent className="grid gap-4 p-6 pt-0">
             <div className="grid gap-4 sm:grid-cols-2">
-              {[
-                { label: 'Menu coverage', value: '94%', href: ROUTES.ADMIN.MENU_MANAGEMENT },
-                { label: 'Pending orders', value: '4', href: ROUTES.ADMIN.ORDERS },
-              ].map((item) => (
-                <Link key={item.label} to={item.href} className="rounded-[24px] border border-[#f0e4d7] bg-[#f9f5f1] p-4 transition hover:border-[#e0c18e] hover:bg-[#f5ecdf] dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800">
-                  <p className="text-sm text-neutral-500">{item.label}</p>
-                  <p className="mt-3 text-2xl font-semibold text-neutral-900 dark:text-white">{item.value}</p>
-                  <span className="mt-3 block text-xs font-semibold uppercase tracking-wider text-[#9c6931]">Open view</span>
-                </Link>
-              ))}
+              <Link to={ROUTES.ADMIN.MENU_MANAGEMENT} className="rounded-[24px] border border-[#f0e4d7] bg-[#f9f5f1] p-4 transition hover:border-[#e0c18e] hover:bg-[#f5ecdf] dark:border-neutral-700 dark:bg-neutral-800">
+                <p className="text-sm text-neutral-500">Menu Items</p>
+                <p className="mt-3 text-2xl font-semibold text-neutral-900 dark:text-white">{menuCount}</p>
+                <span className="mt-3 block text-xs font-semibold uppercase tracking-wider text-[#9c6931]">Manage Menu</span>
+              </Link>
+              <Link to={ROUTES.ADMIN.ORDERS} className="rounded-[24px] border border-[#f0e4d7] bg-[#f9f5f1] p-4 transition hover:border-[#e0c18e] hover:bg-[#f5ecdf] dark:border-neutral-700 dark:bg-neutral-800">
+                <p className="text-sm text-neutral-500">Pending Orders</p>
+                <p className="mt-3 text-2xl font-semibold text-neutral-900 dark:text-white">{pendingOrdersCount}</p>
+                <span className="mt-3 block text-xs font-semibold uppercase tracking-wider text-[#9c6931]">View Queue</span>
+              </Link>
             </div>
             <div className="rounded-[24px] border border-dashed border-[#eadcc7] bg-[#f9f5f1] p-5 dark:border-neutral-700 dark:bg-neutral-800">
-              <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Today's activity</p>
+              <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Live Activity Summary</p>
               <ul className="mt-4 space-y-3 text-sm text-neutral-700 dark:text-neutral-300">
                 <li className="flex items-center justify-between rounded-[18px] bg-white px-4 py-3 shadow-sm dark:bg-neutral-900">
-                  <span>Orders placed</span>
-                  <span className="font-semibold text-neutral-900 dark:text-white">42</span>
+                  <span>Total orders placed</span>
+                  <span className="font-semibold text-neutral-900 dark:text-white">{orders.length}</span>
                 </li>
                 <li className="flex items-center justify-between rounded-[18px] bg-white px-4 py-3 shadow-sm dark:bg-neutral-900">
-                  <span>Tables served</span>
-                  <span className="font-semibold text-neutral-900 dark:text-white">18</span>
+                  <span>Active floor tables</span>
+                  <span className="font-semibold text-neutral-900 dark:text-white">{activeTablesCount}</span>
                 </li>
                 <li className="flex items-center justify-between rounded-[18px] bg-white px-4 py-3 shadow-sm dark:bg-neutral-900">
-                  <span>New reservations</span>
-                  <span className="font-semibold text-neutral-900 dark:text-white">6</span>
+                  <span>Registered accounts</span>
+                  <span className="font-semibold text-neutral-900 dark:text-white">{customerCount}</span>
                 </li>
               </ul>
             </div>
@@ -137,29 +184,36 @@ export default function AdminDashboard() {
         <CardContent className="space-y-4 p-6">
           <div className="rounded-[22px] border border-[#f0e4d7] bg-[#f9f5f1] p-4 dark:border-neutral-700 dark:bg-neutral-800">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">Filtered order total</p>
-              <p className="text-lg font-semibold text-neutral-900 dark:text-white">₹{totalSales.toFixed(2)}</p>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">Filtered volume ({filteredOrders.length} orders)</p>
+              <p className="text-lg font-semibold text-neutral-900 dark:text-white">{formatCurrency(totalFilteredSales)}</p>
             </div>
           </div>
           {filteredOrders.length === 0 ? (
             <p className="rounded-[22px] border border-dashed border-[#eadcc7] bg-[#f9f5f1] p-6 text-center text-sm text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400">No orders match the selected filter.</p>
           ) : (
-            filteredOrders.map((order) => (
-              <div key={order.order} className="flex flex-col gap-3 rounded-[22px] border border-[#f0e4d7] bg-[#f9f5f1] p-4 dark:border-neutral-700 dark:bg-neutral-800 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="font-semibold text-neutral-900 dark:text-white">{order.order}</p>
-                  <p className="text-sm text-neutral-500 dark:text-neutral-400">Table {order.table}</p>
+            filteredOrders.slice(0, 8).map((order) => {
+              const orderNum = order.orderNumber || `ORD-${String(order._id || order.id).slice(-6).toUpperCase()}`;
+              const tableNum = order.table || order.tableNumber || '—';
+              const statusStr = String(order.status || 'pending');
+              const amount = Number(order.total || 0);
+              return (
+                <div key={order._id || order.id} className="flex flex-col gap-3 rounded-[22px] border border-[#f0e4d7] bg-[#f9f5f1] p-4 dark:border-neutral-700 dark:bg-neutral-800 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="font-semibold text-neutral-900 dark:text-white">{orderNum}</p>
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400">Table {tableNum} • {order.orderType || 'dine-in'}</p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 text-sm">
+                    <Badge variant={statusStr === 'completed' ? 'success' : statusStr === 'pending' ? 'warning' : 'primary'} size="sm">
+                      {statusStr}
+                    </Badge>
+                    <span className="font-semibold text-neutral-900 dark:text-white">{formatCurrency(amount)}</span>
+                  </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-2 text-sm">
-                  <Badge variant={order.status === 'Completed' ? 'success' : order.status === 'Pending' ? 'warning' : 'primary'} size="sm">{order.status}</Badge>
-                  <span className="font-semibold text-neutral-900 dark:text-white">₹{order.total.toFixed(2)}</span>
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
         </CardContent>
       </Card>
     </div>
   );
 }
-

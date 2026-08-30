@@ -1,7 +1,6 @@
 import type { Invoice } from '@/types/cashier';
 import { PAYMENT_METHOD_LABELS } from '@/types/cashier';
-import { formatINR } from '@/store';
-import { restaurantInfo } from '@/data/cashierData';
+import { formatINR, useCashierStore } from '@/store';
 
 interface Props {
   invoice: Invoice;
@@ -12,6 +11,7 @@ interface Props {
  * Uses a fixed narrow width and monospace numbers.
  */
 export default function ReceiptView({ invoice }: Props) {
+  const restaurantInfo = useCashierStore((s) => s.restaurantInfo);
   const dateStr = new Date(invoice.issuedAt).toLocaleString('en-IN', {
     dateStyle: 'short',
     timeStyle: 'short',

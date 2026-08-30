@@ -96,8 +96,11 @@ export const ordersApi = {
   getUserOrders: () =>
     apiClient.get<ApiResponse<Order[]>>('/api/orders/my-orders'),
 
-  create: (order: Partial<Order> | { userId: string; items: Array<{ menuItem: string; quantity: number }>; orderType?: 'dine-in' | 'takeaway' | 'delivery'; paymentStatus?: 'pending' | 'paid' | 'failed' | 'refunded'; notes?: string; }) =>
+  create: (order: Partial<Order> | { userId?: string; items?: Array<{ menuItem: string; quantity: number }>; orderType?: 'dine-in' | 'takeaway' | 'delivery'; paymentStatus?: 'pending' | 'paid' | 'failed' | 'refunded'; notes?: string; }) =>
     apiClient.post<ApiResponse<Order>>('/api/orders', order),
+
+  update: (id: string, data: any) =>
+    apiClient.put<ApiResponse<Order>>(`/api/orders/${id}`, data),
 
   updateStatus: (id: string, status: Order['status']) =>
     apiClient.patch<ApiResponse<Order>>(`/api/orders/${id}/status`, { status }),
@@ -150,6 +153,12 @@ export const usersApi = {
   getAll: (params?: PaginationParams) =>
     apiClient.get<PaginatedResponse<User>>('/api/users', { params }),
 
+  getProfile: () =>
+    apiClient.get<ApiResponse<User>>('/api/users/profile'),
+
+  updateProfile: (payload: { firstName?: string; lastName?: string; phone?: string }) =>
+    apiClient.patch<ApiResponse<User>>('/api/users/profile', payload),
+
   updateAccess: (id: string, payload: { role?: User['role']; status?: User['status']; branch?: string }) =>
     apiClient.patch<ApiResponse<User>>(`/api/users/${id}/access`, payload),
 };
@@ -179,6 +188,16 @@ export const invoicesApi = {
 
   getById: (id: string) =>
     apiClient.get<ApiResponse<Invoice>>(`/api/invoices/${id}`),
+
+  create: (payload: { orderId: string; paymentMethod: string }, idempotencyKey?: string) =>
+    apiClient.post<ApiResponse<Invoice>>('/api/invoices', payload, {
+      headers: {
+        'Idempotency-Key': idempotencyKey || `idemp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      },
+    }),
+
+  updateStatus: (id: string, payload: { status: string; transactionId?: string }) =>
+    apiClient.patch<ApiResponse<Invoice>>(`/api/invoices/${id}/status`, payload),
 };
 
 // Offers & Coupons API

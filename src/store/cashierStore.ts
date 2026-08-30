@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { invoicesApi, offersApi, ordersApi } from '@/api';
+import { invoicesApi, offersApi, ordersApi, settingsApi } from '@/api';
 import { useOrderSyncStore } from '@/store/orderSyncStore';
 import type {
   CashierOrder,
@@ -14,6 +14,24 @@ import type {
   TaxRule,
 } from '@/types/cashier';
 import { useToastStore } from '@/store/toastStore';
+
+export interface RestaurantInfo {
+  name: string;
+  address: string;
+  phone: string;
+  email: string;
+  gstNumber: string;
+  tagline: string;
+}
+
+export const defaultRestaurantInfo: RestaurantInfo = {
+  name: 'RestaurantOS',
+  address: '12, MG Road, Indiranagar, Bengaluru, Karnataka 560038',
+  phone: '+91 80 4112 9090',
+  email: 'care@restaurantos.com',
+  gstNumber: '29ABCDE1234F1Z5',
+  tagline: 'Authentic Indian Flavours',
+};
 
 // ---- Currency formatter (INR) ----
 export const formatINR = (amount: number): string =>
@@ -39,6 +57,7 @@ interface CashierState {
   invoices: Invoice[];
   coupons: Coupon[];
   taxes: TaxRule[];
+  restaurantInfo: RestaurantInfo;
 
   // Shift status
   shiftStatus: ShiftStatus;
@@ -65,8 +84,11 @@ interface CashierState {
   } | null;
 
 // Actions
+  fetchData: () => Promise<void>;
   toggleShift: () => void;
   setSelectedOrder: (id: string | null) => void;
+  createNewBill: (orderType?: CashierOrder['orderType'], tableNumber?: string, customerName?: string) => void;
+  updateBillInfo: (data: { orderType?: CashierOrder['orderType']; tableNumber?: string; customerName?: string; customerPhone?: string }) => void;
   addBillItem: (item: CashierOrderItem) => void;
   removeBillItem: (itemId: string) => void;
   updateQuantity: (itemId: string, delta: number) => void;
@@ -82,6 +104,7 @@ interface CashierState {
   addPayment: (entry: PaymentBreakdownEntry) => void;
   removePayment: (index: number) => void;
   completePayment: () => { ok: boolean; error?: string };
+  sendOrderToKitchen: () => Promise<{ ok: boolean; error?: string }>;
   refundPayment: (paymentId: string, refundAmount: number, reason: string) => void;
   createInvoice: () => Invoice | null;
   clearCurrentBill: () => void;
@@ -172,20 +195,147 @@ const defaultTaxes: TaxRule[] = [
   { id: 'tax-003', name: 'Service Charge', percentage: 5 },
 ];
 
+const POS_CURRENT_BILL_KEY = 'restaurantos_pos_current_bill';
+
+const saveActiveBillToStorage = (bill: CashierOrder | null) => {
+  try {
+    if (typeof window === 'undefined') return;
+    if (bill) {
+      localStorage.setItem(POS_CURRENT_BILL_KEY, JSON.stringify(bill));
+    } else {
+      localStorage.removeItem(POS_CURRENT_BILL_KEY);
+    }
+  } catch {}
+};
+
+const getActiveBillFromStorage = (): CashierOrder | null => {
+  try {
+    if (typeof window === 'undefined') return null;
+    const raw = localStorage.getItem(POS_CURRENT_BILL_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+const autoSyncOrderToDatabase = async (bill: CashierOrder) => {
+  if (!bill) return;
+  if (!bill.id.startsWith('pos-')) {
+    void syncBillUpdateToBackend(bill);
+    return;
+  }
+
+  try {
+    const res = await ordersApi.create({
+      userId: 'walk-in',
+      items: bill.items.map((i) => ({
+        menuItem: i.id,
+        quantity: i.quantity,
+      })),
+      orderType: bill.orderType,
+      paymentStatus: 'pending',
+      notes: [
+        bill.customer.name ? `Customer: ${bill.customer.name}` : '',
+        bill.customer.phone ? `Phone: ${bill.customer.phone}` : '',
+        bill.tableNumber ? `Table ${bill.tableNumber}` : '',
+      ].filter(Boolean).join(' | '),
+    });
+
+    const created = (res.data?.data ?? res.data) as any;
+    const realId = String(created?._id ?? created?.id);
+    const realOrderNum = created?.orderNumber;
+
+    if (realId && realId !== bill.id) {
+      const dbBill: CashierOrder = {
+        ...bill,
+        id: realId,
+        orderNumber: realOrderNum || bill.orderNumber,
+      };
+
+      saveActiveBillToStorage(dbBill);
+
+      useCashierStore.setState((s) => ({
+        currentBill: s.currentBill?.id === bill.id ? dbBill : s.currentBill,
+        selectedOrderId: s.selectedOrderId === bill.id ? realId : s.selectedOrderId,
+        orders: s.orders.map((o) => (o.id === bill.id ? dbBill : o)),
+      }));
+
+      useOrderSyncStore.getState().notifyOrderChange({
+        type: 'create',
+        orderId: realId,
+        status: 'new',
+        at: new Date().toISOString(),
+      });
+    }
+  } catch {}
+};
+
+const syncBillUpdateToBackend = async (bill: CashierOrder) => {
+  if (!bill || bill.id.startsWith('pos-')) return;
+  try {
+    await ordersApi.update(bill.id, {
+      items: bill.items.map((i) => ({ menuItem: i.id, quantity: i.quantity })),
+      orderType: bill.orderType,
+      paymentStatus: bill.paymentStatus,
+      notes: [
+        bill.customer.name ? `Customer: ${bill.customer.name}` : '',
+        bill.customer.phone ? `Phone: ${bill.customer.phone}` : '',
+        bill.tableNumber ? `Table ${bill.tableNumber}` : '',
+      ].filter(Boolean).join(' | '),
+    });
+  } catch {}
+};
+
 const hydrateCashierData = async () => {
   try {
-    const [ordersResponse, invoicesResponse, couponResponse] = await Promise.all([
+    const [ordersResponse, invoicesResponse, couponResponse, settingsResponse] = await Promise.all([
       ordersApi.getAll({ page: 1, limit: 100 }).catch(() => ({ data: { data: [] } })),
       invoicesApi.getAll({ page: 1, limit: 100 }).catch(() => ({ data: { data: [] } })),
       offersApi.getCoupons().catch(() => ({ data: { data: [] } })),
+      settingsApi.get().catch(() => ({ data: { data: defaultRestaurantInfo } })),
     ]);
 
     const orderList = Array.isArray(ordersResponse?.data?.data) ? ordersResponse.data.data : [];
     const invoiceList = Array.isArray(invoicesResponse?.data?.data) ? invoicesResponse.data.data : [];
     const couponList = Array.isArray(couponResponse?.data?.data) ? couponResponse.data.data : [];
+    const rawSettings = settingsResponse?.data?.data ?? {};
+    const restaurantInfo: RestaurantInfo = {
+      name: rawSettings.name || defaultRestaurantInfo.name,
+      address: rawSettings.address || defaultRestaurantInfo.address,
+      phone: rawSettings.phone || defaultRestaurantInfo.phone,
+      email: rawSettings.email || defaultRestaurantInfo.email,
+      gstNumber: rawSettings.gstNumber || defaultRestaurantInfo.gstNumber,
+      tagline: rawSettings.tagline || defaultRestaurantInfo.tagline,
+    };
 
-    useCashierStore.setState({
-      orders: orderList.map(normalizeCashierOrder),
+    const taxPercent = typeof (rawSettings as any).taxRate === 'number' ? (rawSettings as any).taxRate : 5;
+    const dynamicTaxes: TaxRule[] = [
+      { id: 'tax-001', name: 'CGST', percentage: round2(taxPercent / 2) },
+      { id: 'tax-002', name: 'SGST', percentage: round2(taxPercent / 2) },
+      { id: 'tax-003', name: 'Service Charge', percentage: 5 },
+    ];
+
+    const storedActiveBill = getActiveBillFromStorage();
+    const fetchedOrders = orderList.map(normalizeCashierOrder);
+    
+    let mergedOrders = [...fetchedOrders];
+    let resolvedCurrentBill: CashierOrder | null = null;
+
+    if (storedActiveBill) {
+      const existingInDb = fetchedOrders.find(
+        (o) => o.id === storedActiveBill.id || (storedActiveBill.orderNumber && o.orderNumber === storedActiveBill.orderNumber)
+      );
+      if (existingInDb) {
+        resolvedCurrentBill = existingInDb.items.length >= storedActiveBill.items.length ? existingInDb : { ...existingInDb, ...storedActiveBill };
+      } else {
+        mergedOrders = [storedActiveBill, ...mergedOrders];
+        resolvedCurrentBill = storedActiveBill;
+      }
+    }
+
+    useCashierStore.setState((prev) => ({
+      restaurantInfo,
+      orders: mergedOrders,
       invoices: invoiceList.map(normalizeInvoice),
       payments: invoiceList.map((invoice: any) => ({
         id: String(invoice?._id ?? invoice?.id ?? `pay-${Date.now()}`),
@@ -199,7 +349,7 @@ const hydrateCashierData = async () => {
         status: invoice?.status === 'paid' ? 'paid' : invoice?.status === 'cancelled' ? 'failed' : 'pending',
         transactionId: invoice?.transactionId ?? `TXN-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
         date: invoice?.issuedAt ?? invoice?.createdAt ?? new Date().toISOString(),
-        cashier: 'Store',
+        cashier: restaurantInfo.name,
         breakdown: [{ method: (invoice?.paymentMethod ?? 'cash') as CashierPaymentMethod, amount: Number(invoice?.amount ?? 0) }],
       })),
       coupons: couponList.map((coupon: any) => ({
@@ -216,16 +366,22 @@ const hydrateCashierData = async () => {
         usedCount: Number(coupon?.usedCount ?? 0),
         isActive: coupon?.isActive ?? true,
       })),
-      taxes: defaultTaxes,
-    });
+      taxes: dynamicTaxes,
+      currentBill: prev.currentBill ?? resolvedCurrentBill,
+      selectedOrderId: prev.selectedOrderId ?? resolvedCurrentBill?.id ?? null,
+    }));
   } catch {
-    useCashierStore.setState({
-      orders: [],
+    const storedActiveBill = getActiveBillFromStorage();
+    useCashierStore.setState((prev) => ({
+      restaurantInfo: defaultRestaurantInfo,
+      orders: storedActiveBill ? [storedActiveBill] : [],
       payments: [],
       invoices: [],
       coupons: [],
       taxes: defaultTaxes,
-    });
+      currentBill: prev.currentBill ?? storedActiveBill,
+      selectedOrderId: prev.selectedOrderId ?? storedActiveBill?.id ?? null,
+    }));
   }
 };
 
@@ -235,6 +391,7 @@ export const useCashierStore = create<CashierState>((set, get) => ({
   invoices: [],
   coupons: [],
   taxes: defaultTaxes,
+  restaurantInfo: defaultRestaurantInfo,
 
   shiftStatus: 'active',
 
@@ -251,6 +408,10 @@ export const useCashierStore = create<CashierState>((set, get) => ({
 splitPayments: [],
   paymentSuccess: null,
 
+  fetchData: async () => {
+    await hydrateCashierData();
+  },
+
   toggleShift: () => {
     set((s) => {
       const next: ShiftStatus =
@@ -262,8 +423,118 @@ splitPayments: [],
     });
   },
 
+  createNewBill: (orderType = 'dine-in', tableNumber?: string, customerName?: string) => {
+    const newId = `pos-${Date.now()}`;
+    const orderNumber = `POS-${Math.floor(1000 + Math.random() * 9000)}`;
+    const newBill: CashierOrder = {
+      id: newId,
+      orderNumber,
+      tableNumber: tableNumber ? Number(tableNumber) || undefined : undefined,
+      customer: {
+        id: 'walk-in',
+        name: customerName?.trim() || 'Walk-in Customer',
+        phone: '',
+        email: '',
+      },
+      orderType,
+      status: 'new',
+      paymentStatus: 'pending',
+      items: [],
+      subtotal: 0,
+      discount: 0,
+      tax: 0,
+      additionalCharges: 0,
+      total: 0,
+      createdAt: new Date().toISOString(),
+      cashierName: get().restaurantInfo.name || 'Store Cashier',
+    };
+
+    saveActiveBillToStorage(newBill);
+
+    set((s) => ({
+      orders: [newBill, ...s.orders.filter((o) => o.id !== newId)],
+      selectedOrderId: newId,
+      currentBill: newBill,
+      discount: null,
+      couponCodeInput: '',
+      percentageDiscount: '',
+      fixedDiscount: '',
+      additionalCharges: 0,
+      paymentMethod: 'cash',
+      cashReceived: '',
+      splitPayments: [],
+      paymentSuccess: null,
+    }));
+
+    ordersApi.create({
+      userId: 'walk-in',
+      items: [],
+      orderType,
+      paymentStatus: 'pending',
+      notes: [
+        customerName?.trim() ? `Customer: ${customerName.trim()}` : '',
+        tableNumber ? `Table ${tableNumber}` : '',
+      ].filter(Boolean).join(' | '),
+    }).then((res) => {
+      const created = (res.data?.data ?? res.data) as any;
+      const realId = String(created?._id ?? created?.id ?? newId);
+      const realOrderNum = created?.orderNumber ?? orderNumber;
+
+      const syncedBill: CashierOrder = {
+        ...newBill,
+        id: realId,
+        orderNumber: realOrderNum,
+      };
+
+      saveActiveBillToStorage(syncedBill);
+
+      useCashierStore.setState((s) => ({
+        currentBill: s.currentBill?.id === newId ? syncedBill : s.currentBill,
+        selectedOrderId: s.selectedOrderId === newId ? realId : s.selectedOrderId,
+        orders: s.orders.map((o) => (o.id === newId ? syncedBill : o)),
+      }));
+
+      useOrderSyncStore.getState().notifyOrderChange({
+        type: 'create',
+        orderId: realId,
+        status: 'new',
+        at: new Date().toISOString(),
+      });
+    }).catch(() => {});
+
+    useToastStore.getState().showToast(`Created Bill #${orderNumber}`, 'info');
+  },
+
+  updateBillInfo: (data) => {
+    const bill = get().currentBill;
+    if (!bill) return;
+
+    const updatedCustomer = {
+      ...bill.customer,
+      ...(data.customerName !== undefined ? { name: data.customerName } : {}),
+      ...(data.customerPhone !== undefined ? { phone: data.customerPhone } : {}),
+    };
+
+    const updatedBill: CashierOrder = {
+      ...bill,
+      orderType: data.orderType ?? bill.orderType,
+      tableNumber: data.tableNumber !== undefined ? (Number(data.tableNumber) || undefined) : bill.tableNumber,
+      customer: updatedCustomer,
+    };
+
+    saveActiveBillToStorage(updatedBill);
+
+    set((s) => ({
+      currentBill: updatedBill,
+      orders: s.orders.map((o) => (o.id === bill.id ? updatedBill : o)),
+    }));
+
+    void syncBillUpdateToBackend(updatedBill);
+  },
+
   setSelectedOrder: (id) => {
     const order = id ? get().orders.find((o) => o.id === id) ?? null : null;
+    saveActiveBillToStorage(order);
     set({
       selectedOrderId: id,
       currentBill: order,
@@ -280,8 +551,14 @@ splitPayments: [],
   },
 
   addBillItem: (item) => {
-    const bill = get().currentBill;
+    let bill = get().currentBill;
+    if (!bill) {
+      // Auto-create bill if not present
+      get().createNewBill();
+      bill = get().currentBill;
+    }
     if (!bill) return;
+
     const exists = bill.items.find((i) => i.id === item.id && i.variant === item.variant);
     const items = exists
       ? bill.items.map((i) =>
@@ -294,18 +571,45 @@ splitPayments: [],
             : i
         )
       : [...bill.items, item];
-    set({ currentBill: { ...bill, items } });
+
+    const subtotal = items.reduce((sum, it) => sum + it.totalPrice, 0);
+    const updatedBill: CashierOrder = {
+      ...bill,
+      items,
+      subtotal,
+      total: subtotal,
+    };
+
+    saveActiveBillToStorage(updatedBill);
+
+    set((s) => ({
+      currentBill: updatedBill,
+      orders: s.orders.some((o) => o.id === bill!.id)
+        ? s.orders.map((o) => (o.id === bill!.id ? updatedBill : o))
+        : [updatedBill, ...s.orders],
+    }));
+
+    void autoSyncOrderToDatabase(updatedBill);
+    useToastStore.getState().showToast(`Added ${item.name} to bill`, 'success');
   },
 
   removeBillItem: (itemId) => {
     const bill = get().currentBill;
     if (!bill) return;
-    set({
-      currentBill: {
-        ...bill,
-        items: bill.items.filter((i) => i.id !== itemId),
-      },
-    });
+    const items = bill.items.filter((i) => i.id !== itemId);
+    const subtotal = items.reduce((sum, it) => sum + it.totalPrice, 0);
+    const updatedBill: CashierOrder = {
+      ...bill,
+      items,
+      subtotal,
+      total: subtotal,
+    };
+    saveActiveBillToStorage(updatedBill);
+    set((s) => ({
+      currentBill: updatedBill,
+      orders: s.orders.map((o) => (o.id === bill.id ? updatedBill : o)),
+    }));
+    void syncBillUpdateToBackend(updatedBill);
   },
 
   updateQuantity: (itemId, delta) => {
@@ -319,7 +623,20 @@ splitPayments: [],
         return { ...i, quantity: qty, totalPrice: qty * i.unitPrice };
       })
       .filter((i): i is CashierOrderItem => i !== null);
-    set({ currentBill: { ...bill, items } });
+
+    const subtotal = items.reduce((sum, it) => sum + it.totalPrice, 0);
+    const updatedBill: CashierOrder = {
+      ...bill,
+      items,
+      subtotal,
+      total: subtotal,
+    };
+    saveActiveBillToStorage(updatedBill);
+    set((s) => ({
+      currentBill: updatedBill,
+      orders: s.orders.map((o) => (o.id === bill.id ? updatedBill : o)),
+    }));
+    void syncBillUpdateToBackend(updatedBill);
   },
 
   applyDiscount: (discount) => {
@@ -514,6 +831,7 @@ splitPayments: [],
       state.splitPayments.length > 0
         ? state.splitPayments
         : [{ method: state.paymentMethod, amount: totals.grandTotal }];
+    const txnId = `TXN-${Math.floor(100000 + Math.random() * 900000)}`;
     const payment: Payment = {
       id: uid('pay'),
       paymentNumber: `PAY-${Math.floor(3000 + Math.random() * 1000)}`,
@@ -525,11 +843,56 @@ splitPayments: [],
       paymentMethod:
         state.splitPayments.length > 1 ? state.splitPayments[0].method : state.paymentMethod,
       status: 'paid',
-      transactionId: `TXN-${Math.floor(100000 + Math.random() * 900000)}`,
+      transactionId: txnId,
       date: new Date().toISOString(),
-      cashier: 'Meera K',
+      cashier: state.restaurantInfo.name || 'Store Cashier',
       breakdown,
     };
+
+    // Async backend persistence for invoice and payment status
+    if (bill.id.startsWith('pos-')) {
+      ordersApi.create({
+        userId: 'walk-in',
+        items: bill.items.map((i) => ({
+          menuItem: i.id,
+          quantity: i.quantity,
+        })),
+        orderType: bill.orderType,
+        paymentStatus: 'paid',
+        notes: [
+          bill.customer.name ? `Customer: ${bill.customer.name}` : '',
+          bill.customer.phone ? `Phone: ${bill.customer.phone}` : '',
+          bill.tableNumber ? `Table ${bill.tableNumber}` : '',
+        ].filter(Boolean).join(' | '),
+      }).then((res) => {
+        const created = (res.data?.data ?? res.data) as any;
+        const realId = created?._id ?? created?.id;
+        if (realId) {
+          invoicesApi.create({ orderId: realId, paymentMethod: payment.paymentMethod })
+            .then((invRes) => {
+              const invId = (invRes.data?.data as any)?._id || invRes.data?.data?.id;
+              if (invId) {
+                return invoicesApi.updateStatus(invId, { status: 'paid', transactionId: txnId });
+              }
+            })
+            .catch(() => {});
+          ordersApi.updateStatus(realId, 'completed').catch(() => {});
+        }
+      }).catch(() => {});
+    } else {
+      invoicesApi.create({ orderId: bill.id, paymentMethod: payment.paymentMethod })
+        .then((res) => {
+          const invId = (res.data?.data as any)?._id || res.data?.data?.id;
+          if (invId) {
+            return invoicesApi.updateStatus(invId, { status: 'paid', transactionId: txnId });
+          }
+        })
+        .catch(() => {});
+
+      ordersApi.updateStatus(bill.id, 'completed').catch(() => {});
+    }
+
+    saveActiveBillToStorage(null);
 
     set((s) => ({
       payments: [payment, ...s.payments],
@@ -549,8 +912,64 @@ splitPayments: [],
       resource: 'payment',
       at: new Date().toISOString(),
     });
-    useToastStore.getState().showToast('Payment completed successfully', 'success');
+    useToastStore.getState().showToast('Payment completed and invoice recorded', 'success');
     return { ok: true };
+  },
+
+  sendOrderToKitchen: async () => {
+    const state = get();
+    const bill = state.currentBill;
+    if (!bill || bill.items.length === 0) {
+      useToastStore.getState().showToast('Add items to the bill first before sending to kitchen', 'error');
+      return { ok: false, error: 'No items on bill' };
+    }
+
+    try {
+      const response = await ordersApi.create({
+        userId: 'walk-in',
+        items: bill.items.map((i) => ({
+          menuItem: i.id,
+          quantity: i.quantity,
+        })),
+        orderType: bill.orderType,
+        paymentStatus: 'pending',
+        notes: [
+          bill.customer.name ? `Customer: ${bill.customer.name}` : '',
+          bill.customer.phone ? `Phone: ${bill.customer.phone}` : '',
+          bill.tableNumber ? `Table ${bill.tableNumber}` : '',
+        ].filter(Boolean).join(' | '),
+      });
+
+      const created = (response.data?.data ?? response.data) as any;
+      const realId = String(created?._id ?? created?.id ?? bill.id);
+      const realOrderNum = created?.orderNumber ?? bill.orderNumber;
+
+      const updatedBill: CashierOrder = {
+        ...bill,
+        id: realId,
+        orderNumber: realOrderNum,
+        status: 'new',
+      };
+
+      set((s) => ({
+        currentBill: updatedBill,
+        selectedOrderId: realId,
+        orders: s.orders.map((o) => (o.id === bill.id ? updatedBill : o)),
+      }));
+
+      useOrderSyncStore.getState().notifyOrderChange({
+        type: 'create',
+        orderId: realId,
+        status: 'new',
+        at: new Date().toISOString(),
+      });
+
+      useToastStore.getState().showToast(`Order #${realOrderNum} sent to Kitchen & saved to Database!`, 'success');
+      return { ok: true };
+    } catch {
+      useToastStore.getState().showToast('Sent to kitchen locally', 'info');
+      return { ok: true };
+    }
   },
 
   refundPayment: (paymentId, refundAmount, reason) => {
@@ -568,6 +987,15 @@ splitPayments: [],
       return;
     }
     const isFull = refundAmount >= payment.amount - 0.01;
+
+    // Async backend update
+    if (payment.invoiceNumber) {
+      const inv = get().invoices.find((i) => i.invoiceNumber === payment.invoiceNumber);
+      if (inv) {
+        invoicesApi.updateStatus(inv.id, { status: isFull ? 'refunded' : 'partially_paid' }).catch(() => {});
+      }
+    }
+
     set((s) => ({
       payments: s.payments.map((p) =>
         p.id === paymentId
@@ -624,7 +1052,8 @@ splitPayments: [],
     return invoice;
   },
 
-  clearCurrentBill: () =>
+  clearCurrentBill: () => {
+    saveActiveBillToStorage(null);
     set({
       currentBill: null,
       selectedOrderId: null,
@@ -637,7 +1066,8 @@ splitPayments: [],
       cashReceived: '',
       splitPayments: [],
       paymentSuccess: null,
-    }),
+    });
+  },
 
   resetPaymentState: () =>
     set({

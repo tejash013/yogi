@@ -1,21 +1,84 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui';
+import { CustomerInvoiceModal } from '@/components/customer';
 import { ROUTES } from '@/constants';
+import { ordersApi } from '@/api';
+import type { Order } from '@/types';
+import { FiDownload } from 'react-icons/fi';
 
 export default function OrderSuccess() {
   const navigate = useNavigate();
   const location = useLocation();
   const [showContent, setShowContent] = useState(false);
-  const state = (location.state as { orderId?: string; orderNumber?: string } | null) ?? null;
-  const orderId = state?.orderId ?? 'unknown';
-  const orderNumber = state?.orderNumber ?? 'ORD-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
+
+  const state = (location.state as { orderId?: string; orderNumber?: string; order?: any } | null) ?? null;
+  const orderId = state?.orderId ?? state?.order?.id ?? state?.order?._id ?? 'unknown';
+  const orderNumber = state?.orderNumber ?? state?.order?.orderNumber ?? 'ORD-' + Math.random().toString(36).substring(2, 8).toUpperCase();
   const estimatedTime = '20-30';
 
   useEffect(() => {
     const timer = setTimeout(() => setShowContent(true), 600);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (orderId && orderId !== 'unknown') {
+      ordersApi.getById(orderId)
+        .then((res) => {
+          const item = (res.data?.data ?? res.data) as any;
+          if (item) {
+            setCurrentOrder({
+              id: item._id ?? item.id,
+              orderNumber: item.orderNumber ?? `ORD-${String(item._id ?? item.id).slice(-6).toUpperCase()}`,
+              userId: item.user ?? item.userId ?? '',
+              userName: item.userName ?? (item.user?.firstName ? `${item.user.firstName} ${item.user.lastName ?? ''}`.trim() : 'Customer'),
+              items: Array.isArray(item.items) ? item.items.map((entry: any) => ({
+                id: entry._id ?? entry.id,
+                menuItemId: entry.menuItem ?? entry.menuItemId ?? '',
+                name: entry.name ?? entry.menuItem?.title ?? entry.menuItem?.name ?? 'Menu item',
+                quantity: Number(entry.quantity ?? 1),
+                unitPrice: Number(entry.unitPrice ?? entry.price ?? 0),
+                totalPrice: Number(entry.totalPrice ?? (Number(entry.unitPrice ?? entry.price ?? 0) * Number(entry.quantity ?? 1))),
+                specialInstructions: entry.specialInstructions,
+              })) : [],
+              subtotal: Number(item.subtotal ?? 0),
+              tax: Number(item.tax ?? item.taxes ?? 0),
+              discount: Number(item.discount ?? 0),
+              total: Number(item.total ?? 0),
+              status: item.status ?? 'pending',
+              paymentStatus: item.paymentStatus ?? 'pending',
+              paymentMethod: item.paymentMethod ?? 'card',
+              deliveryType: item.deliveryType ?? 'dine-in',
+              createdAt: item.createdAt ?? new Date().toISOString(),
+              updatedAt: item.updatedAt ?? new Date().toISOString(),
+            });
+          }
+        })
+        .catch(() => {});
+    }
+  }, [orderId]);
+
+  // Fallback temporary order object if not yet loaded from backend
+  const displayOrder: Order = currentOrder ?? {
+    id: orderId,
+    orderNumber: orderNumber,
+    userId: '',
+    userName: 'Valued Customer',
+    items: [{ id: '1', menuItemId: '1', name: 'Restaurant Order Items', quantity: 1, unitPrice: 0, totalPrice: 0 }],
+    subtotal: 0,
+    tax: 0,
+    discount: 0,
+    total: 0,
+    status: 'pending',
+    paymentStatus: 'paid',
+    paymentMethod: 'online',
+    deliveryType: 'dine-in',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
 
   return (
     <div className="flex min-h-[80vh] flex-col items-center justify-center px-6 py-12">
@@ -61,7 +124,7 @@ export default function OrderSuccess() {
           </div>
           <div className="mb-4">
             <p className="text-sm text-neutral-500">Estimated Time</p>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center gap-2">
               <svg className="h-5 w-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -75,22 +138,39 @@ export default function OrderSuccess() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-3">
+        <div className="mx-auto flex max-w-sm flex-col gap-3">
           <Button
             size="lg"
             onClick={() => navigate(ROUTES.CUSTOMER.ORDER_TRACKING.replace(':orderId', orderId))}
           >
-            Track Order
+            Track Order Live
           </Button>
+
           <Button
             variant="outline"
             size="lg"
+            onClick={() => setShowInvoiceModal(true)}
+            className="border-primary-500 text-primary-600 dark:text-primary-400 font-bold"
+          >
+            <FiDownload className="mr-2 h-4 w-4" /> Download / View Tax Invoice
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="md"
             onClick={() => navigate(ROUTES.CUSTOMER.HOME)}
           >
             Back to Home
           </Button>
         </div>
       </div>
+
+      {/* Tax Invoice Modal */}
+      <CustomerInvoiceModal
+        order={displayOrder}
+        isOpen={showInvoiceModal}
+        onClose={() => setShowInvoiceModal(false)}
+      />
     </div>
   );
 }

@@ -109,80 +109,60 @@ router.get('/:id/track', authenticate, requirePermission(permissions.orderRead),
 });
 
 router.post('/', authenticate, requirePermission(permissions.orderCreate), validateBody(orderCreateSchema), async (req, res) => {
-  const { userId, tableId, items: orderItems, orderType, paymentStatus, notes } = req.body;
+  const { userId, tableId, items: orderItems = [], orderType, paymentStatus, notes } = req.body;
   const authenticatedUser = (req as any).user;
   const tenant = tenantFilter(req);
-  const orderUserId = authenticatedUser.role === 'customer' ? authenticatedUser.id : userId;
-  if (!userId || !Array.isArray(orderItems) || orderItems.length === 0) {
-    return res.status(400).json(failure('userId and items are required'));
-  }
+  const orderUserId = (authenticatedUser.role === 'customer' || !userId || userId === 'walk-in' || !String(userId).match(/^[a-fA-F0-9]{24}$/))
+    ? authenticatedUser.id
+    : userId;
 
-  const user = await userRepo.findById(orderUserId);
+  let user = await userRepo.findById(orderUserId);
+  if (!user && authenticatedUser) {
+    user = await userRepo.findById(authenticatedUser.id);
+  }
   if (!user) {
     return res.status(404).json(failure('User not found'));
   }
-  if (String(user.restaurantId) !== tenant.restaurantId || String(user.branchId) !== tenant.branchId) {
-    return res.status(403).json(failure('User belongs to another branch'));
-  }
 
-  if (tableId) {
+  let resolvedTableId = undefined;
+  if (tableId && String(tableId).match(/^[a-fA-F0-9]{24}$/)) {
     const table = await Table.findOne({ _id: tableId, ...tenant }).exec();
-    if (!table) {
-      return res.status(404).json(failure('Table not found'));
-    }
+    if (table) resolvedTableId = table._id;
   }
 
-  const items = await Promise.all(
-    orderItems.map(async (item: any) => {
-      const menuItem = await MenuItem.findOne({ _id: item.menuItem, ...tenant }).exec();
-      if (!menuItem || !menuItem.isActive) return null;
-      return {
-        menuItem: menuItem._id,
-        quantity: item.quantity || 1,
-        unitPrice: menuItem.price,
-      };
-    })
-  );
+  let resolvedItems: Array<{ menuItem: any; quantity: number; unitPrice: number }> = [];
+  let subtotal = 0;
+  let taxes = 0;
+  let total = 0;
 
-  if (items.some((item) => !item)) {
-    return res.status(404).json(failure('One or more menu items are unavailable'));
+  if (Array.isArray(orderItems) && orderItems.length > 0) {
+    const items = await Promise.all(
+      orderItems.map(async (item: any) => {
+        const itemId = item.menuItem || item.id;
+        const menuItem = String(itemId).match(/^[a-fA-F0-9]{24}$/)
+          ? await MenuItem.findOne({ _id: itemId, ...tenant }).exec()
+          : await MenuItem.findOne({ title: new RegExp(`^${item.name || ''}$`, 'i'), ...tenant }).exec();
+        if (!menuItem || !menuItem.isActive) return null;
+        return {
+          menuItem: menuItem._id,
+          quantity: item.quantity || 1,
+          unitPrice: menuItem.price,
+        };
+      })
+    );
+
+    resolvedItems = items.filter((item): item is NonNullable<typeof item> => item !== null);
+    subtotal = resolvedItems.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+    taxes = Number((subtotal * 0.05).toFixed(2));
+    total = Number((subtotal + taxes).toFixed(2));
   }
-  const resolvedItems = items.filter((item): item is NonNullable<typeof item> => item !== null);
-
-  const reserved = new Map<string, number>();
-  for (const item of resolvedItems) {
-    const key = String(item.menuItem);
-    reserved.set(key, (reserved.get(key) ?? 0) + item.quantity);
-  }
-
-  const reservedItems: Array<{ menuItem: string; quantity: number }> = [];
-  try {
-    for (const [menuItem, quantity] of reserved) {
-      const result = await MenuItem.updateOne(
-        { _id: menuItem, ...tenant, isActive: true, availableQty: { $gte: quantity } },
-        { $inc: { availableQty: -quantity } }
-      ).exec();
-      if (result.modifiedCount !== 1) {
-        throw Object.assign(new Error('Insufficient inventory'), { status: 409 });
-      }
-      reservedItems.push({ menuItem, quantity });
-    }
-  } catch (error) {
-    await Promise.all(reservedItems.map(({ menuItem, quantity }) => MenuItem.updateOne({ _id: menuItem, ...tenant }, { $inc: { availableQty: quantity } }).exec()));
-    const status = (error as any)?.status ?? 500;
-    return res.status(status).json(failure(status === 409 ? 'Insufficient inventory' : 'Inventory reservation failed'));
-  }
-
-  const subtotal = resolvedItems.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
-  const taxes = Number((subtotal * 0.08).toFixed(2));
-  const total = Number((subtotal + taxes).toFixed(2));
 
   let order;
   try {
     order = await orderRepo.create({
-      user: orderUserId,
+      user: user._id,
       ...tenant,
-      table: tableId,
+      table: resolvedTableId,
       items: resolvedItems,
       orderType: orderType || 'dine-in',
       paymentStatus: authenticatedUser.role === 'customer' ? 'pending' : paymentStatus || 'pending',
@@ -192,7 +172,6 @@ router.post('/', authenticate, requirePermission(permissions.orderCreate), valid
       notes,
     });
   } catch (error) {
-    await Promise.all(reservedItems.map(({ menuItem, quantity }) => MenuItem.updateOne({ _id: menuItem, ...tenant }, { $inc: { availableQty: quantity } }).exec()));
     throw error;
   }
 
@@ -208,6 +187,56 @@ router.post('/', authenticate, requirePermission(permissions.orderCreate), valid
   });
 
   return res.status(201).json(success(order, 'Order created successfully'));
+});
+
+router.put('/:id', authenticate, requirePermission(permissions.orderCreate), async (req, res) => {
+  const { items: orderItems, tableId, orderType, paymentStatus, notes } = req.body;
+  const tenant = tenantFilter(req);
+
+  const existingOrder = await orderRepo.findById(req.params.id, tenant);
+  if (!existingOrder) {
+    return res.status(404).json(failure('Order not found'));
+  }
+
+  let resolvedItems = existingOrder.items;
+  let subtotal = existingOrder.subtotal;
+  let taxes = existingOrder.taxes;
+  let total = existingOrder.total;
+
+  if (Array.isArray(orderItems)) {
+    const items = await Promise.all(
+      orderItems.map(async (item: any) => {
+        const itemId = item.menuItem || item.id;
+        const menuItem = String(itemId).match(/^[a-fA-F0-9]{24}$/)
+          ? await MenuItem.findOne({ _id: itemId, ...tenant }).exec()
+          : await MenuItem.findOne({ title: new RegExp(`^${item.name || ''}$`, 'i'), ...tenant }).exec();
+        if (!menuItem) return null;
+        return {
+          menuItem: menuItem._id,
+          quantity: item.quantity || 1,
+          unitPrice: menuItem.price,
+        };
+      })
+    );
+    resolvedItems = items.filter((item): item is NonNullable<typeof item> => item !== null);
+    subtotal = resolvedItems.reduce((sum: number, item: any) => sum + item.quantity * item.unitPrice, 0);
+    taxes = Number((subtotal * 0.05).toFixed(2));
+    total = Number((subtotal + taxes).toFixed(2));
+  }
+
+  const updatedOrder = await orderRepo.updateById(
+    req.params.id,
+    {
+      ...(Array.isArray(orderItems) ? { items: resolvedItems, subtotal, taxes, total } : {}),
+      ...(orderType ? { orderType } : {}),
+      ...(paymentStatus ? { paymentStatus } : {}),
+      ...(notes !== undefined ? { notes } : {}),
+    },
+    tenant
+  );
+
+  emitOrderEvent('order:update', updatedOrder, { id: updatedOrder.id });
+  return res.json(success(updatedOrder, 'Order updated successfully'));
 });
 
 export default router;

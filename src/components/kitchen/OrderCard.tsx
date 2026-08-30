@@ -45,42 +45,57 @@ export default function OrderCard({ order, onOpen }: Props) {
             <Button
               size="sm"
               variant="primary"
-              className="w-full"
+              className="w-full !bg-green-600 hover:!bg-green-700 font-bold text-white shadow-sm"
               onClick={() => acceptOrder(order.id)}
             >
-              Accept Order
+              ✓ Confirm Order
             </Button>
             <Button
               size="sm"
               variant="danger"
-              className="w-full"
+              className="w-full font-semibold"
               onClick={() => rejectOrder(order.id)}
             >
-              Reject
+              ✕ Reject
             </Button>
           </div>
         );
       case 'confirmed':
         return (
           <div className="mt-3">
-            <Button size="sm" variant="secondary" className="w-full" onClick={() => startPreparing(order.id)}>
-              Start Preparing
+            <Button
+              size="sm"
+              variant="primary"
+              className="w-full !bg-blue-600 hover:!bg-blue-700 font-bold text-white shadow-sm"
+              onClick={() => startPreparing(order.id)}
+            >
+              🔥 Start Preparing
             </Button>
           </div>
         );
       case 'preparing':
         return (
           <div className="mt-3">
-            <Button size="sm" variant="primary" className="w-full" onClick={() => markReady(order.id)}>
-              Mark Ready
+            <Button
+              size="sm"
+              variant="primary"
+              className="w-full !bg-amber-500 hover:!bg-amber-600 font-bold text-white shadow-sm"
+              onClick={() => markReady(order.id)}
+            >
+              🔔 Mark Ready for Pickup
             </Button>
           </div>
         );
       case 'ready':
         return (
           <div className="mt-3">
-<Button size="sm" variant="primary" className="w-full" onClick={() => completeOrder(order.id)}>
-              Complete
+            <Button
+              size="sm"
+              variant="primary"
+              className="w-full !bg-green-600 hover:!bg-green-700 font-bold text-white shadow-sm"
+              onClick={() => completeOrder(order.id)}
+            >
+              ✓ Complete Order
             </Button>
           </div>
         );

@@ -26,6 +26,8 @@ const calculateTotals = (items: CartItem[]) => {
   return { subtotal, tax, total: subtotal + tax };
 };
 
+const storedTable = typeof window !== 'undefined' ? localStorage.getItem('restaurantos-table-number') : null;
+
 export const useCartStore = create<CartState>((set) => ({
   items: [],
   subtotal: 0,
@@ -33,18 +35,21 @@ export const useCartStore = create<CartState>((set) => ({
   discount: 0,
   total: 0,
   deliveryType: 'dine-in',
-  tableNumber: undefined,
+  tableNumber: storedTable ? Number(storedTable) || undefined : undefined,
   deliveryAddress: undefined,
   specialInstructions: undefined,
 
   addItem: (item: CartItem) =>
     set((state) => {
       const existingItem = state.items.find((i) => i.menuItemId === item.menuItemId);
-      const maxAvailable = item.availableQty ?? Number.MAX_SAFE_INTEGER;
+      // If availableQty is defined and > 0, respect it; otherwise allow up to 99
+      const maxAvailable = typeof item.availableQty === 'number' && item.availableQty > 0
+        ? item.availableQty
+        : 99;
       const nextQuantity = (existingItem?.quantity ?? 0) + item.quantity;
 
       if (nextQuantity > maxAvailable) {
-        useToastStore.getState().showToast(`Only ${maxAvailable} left in stock for ${item.name}.`, 'error');
+        useToastStore.getState().showToast(`Only ${maxAvailable} available in stock for ${item.name}.`, 'error');
         return state;
       }
 
@@ -56,7 +61,11 @@ export const useCartStore = create<CartState>((set) => ({
       if (existingIndex >= 0) {
         newItems = state.items.map((i, index) =>
           index === existingIndex
-            ? { ...i, quantity: i.quantity + item.quantity }
+            ? {
+                ...i,
+                quantity: i.quantity + item.quantity,
+                specialInstructions: item.specialInstructions || i.specialInstructions,
+              }
             : i
         );
       } else {
@@ -64,6 +73,7 @@ export const useCartStore = create<CartState>((set) => ({
       }
 
       const totals = calculateTotals(newItems);
+      useToastStore.getState().showToast(`Added ${item.name} to cart!`, 'success');
       return { items: newItems, ...totals };
     }),
 
@@ -113,8 +123,13 @@ export const useCartStore = create<CartState>((set) => ({
   setDeliveryType: (deliveryType: Cart['deliveryType']) =>
     set({ deliveryType }),
 
-  setTableNumber: (tableNumber: number | undefined) =>
-    set({ tableNumber }),
+  setTableNumber: (tableNumber: number | undefined) => {
+    if (typeof window !== 'undefined') {
+      if (tableNumber) localStorage.setItem('restaurantos-table-number', String(tableNumber));
+      else localStorage.removeItem('restaurantos-table-number');
+    }
+    set({ tableNumber });
+  },
 
   setDeliveryAddress: (deliveryAddress: string | undefined) =>
     set({ deliveryAddress }),

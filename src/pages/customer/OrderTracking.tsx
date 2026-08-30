@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button, Card, Badge } from '@/components/ui';
-import { Timeline } from '@/components/customer';
+import { Timeline, CustomerInvoiceModal } from '@/components/customer';
 import { ROUTES, ORDER_STATUS_LABELS } from '@/constants';
 import { ordersApi } from '@/api';
 import { useOrderSyncStore } from '@/store';
 import { formatCurrency, formatTime } from '@/utils';
 import type { Order, OrderItem, OrderStatus } from '@/types';
+import { FiDownload } from 'react-icons/fi';
 
 const normalizeOrder = (item: any): Order => ({
   id: item._id ?? item.id,
@@ -49,6 +50,7 @@ function buildTimelineSteps(status: OrderStatus) {
 export default function OrderTracking() {
   const { orderId } = useParams();
   const [orders, setOrders] = useState<Order[]>([]);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const orderSyncVersion = useOrderSyncStore((state) => state.version);
 
   useEffect(() => {
@@ -243,24 +245,43 @@ export default function OrderTracking() {
       </Card>
 
       {/* Actions */}
-      <div className="flex gap-3">
-        <Link to={ROUTES.CUSTOMER.FEEDBACK} className="flex-1">
-          <Button variant="outline" fullWidth>
-            <svg className="mr-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3l14 9-14 9V3z" />
-            </svg>
-            Give Feedback
-          </Button>
-        </Link>
-        <Link to={ROUTES.CUSTOMER.MENU} className="flex-1">
-          <Button fullWidth>
-            <svg className="mr-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Order More
-          </Button>
-        </Link>
+      <div className="space-y-3">
+        <Button
+          variant="outline"
+          fullWidth
+          size="lg"
+          onClick={() => setShowInvoiceModal(true)}
+          className="border-primary-500 text-primary-600 dark:text-primary-400 font-bold"
+        >
+          <FiDownload className="mr-2 h-4 w-4" /> Download / Print Tax Invoice
+        </Button>
+
+        <div className="flex gap-3">
+          <Link to={ROUTES.CUSTOMER.FEEDBACK} className="flex-1">
+            <Button variant="outline" fullWidth>
+              <svg className="mr-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3l14 9-14 9V3z" />
+              </svg>
+              Give Feedback
+            </Button>
+          </Link>
+          <Link to={ROUTES.CUSTOMER.MENU} className="flex-1">
+            <Button fullWidth>
+              <svg className="mr-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Order More
+            </Button>
+          </Link>
+        </div>
       </div>
+
+      {/* Invoice Modal */}
+      <CustomerInvoiceModal
+        order={order}
+        isOpen={showInvoiceModal}
+        onClose={() => setShowInvoiceModal(false)}
+      />
     </div>
   );
 }

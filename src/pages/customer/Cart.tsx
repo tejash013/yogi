@@ -14,6 +14,10 @@ const { items, subtotal, removeItem, updateQuantity, clearCart } = useCartStore(
   const [couponApplied, setCouponApplied] = useState(false);
   const [couponDiscount, setCouponDiscount] = useState(0);
 
+  const tableNumber = useCartStore((s) => s.tableNumber);
+  const setTableNumber = useCartStore((s) => s.setTableNumber);
+  const [instructions, setInstructions] = useState('');
+
   const applyCoupon = () => {
     if (couponCode.toUpperCase() === 'FIRST10') {
       setCouponApplied(true);
@@ -136,10 +140,28 @@ const { items, subtotal, removeItem, updateQuantity, clearCart } = useCartStore(
               )}
             </div>
 
+            {/* Table Number */}
+            <div className="mb-3 rounded-xl bg-amber-50 p-2.5 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40">
+              <label className="mb-1 block text-xs font-bold text-amber-900 dark:text-amber-300">
+                Table Number 🍽️
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="99"
+                placeholder="Enter Table #"
+                value={tableNumber ?? ''}
+                onChange={(e) => setTableNumber(Number(e.target.value) || undefined)}
+                className="w-full rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-sm font-bold text-neutral-900 focus:border-primary-500 focus:outline-none dark:border-amber-700 dark:bg-neutral-800 dark:text-white"
+              />
+            </div>
+
             {/* Special Instructions */}
             <input
               type="text"
-              placeholder="Special delivery instructions..."
+              placeholder="Cooking instructions (e.g. less spicy)..."
+              value={instructions}
+              onChange={(e) => setInstructions(e.target.value)}
               className="mb-4 w-full rounded-xl border border-neutral-200 bg-white px-3.5 py-2 text-sm text-neutral-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
             />
 

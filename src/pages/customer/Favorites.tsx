@@ -6,6 +6,8 @@ import { ROUTES } from '@/constants';
 import { menuApi } from '@/api';
 import type { MenuItem } from '@/types';
 
+const FAVORITES_STORAGE_KEY = 'yogi_favorites';
+
 const normalizeMenuItem = (item: any): MenuItem => ({
   id: String(item._id ?? item.id ?? ''),
   name: item.title ?? item.name,
@@ -31,20 +33,28 @@ const normalizeMenuItem = (item: any): MenuItem => ({
 });
 
 export default function Favorites() {
-  const [favorites, setFavorites] = useState<string[]>([]);
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem(FAVORITES_STORAGE_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const loadFavorites = async () => {
+      setIsLoading(true);
       try {
         const response = await menuApi.getAll({ page: 1, limit: 100 }).catch(() => ({ data: { data: [] } }));
         const items = Array.isArray(response?.data?.data) ? response.data.data : [];
-        const seededFavorites = (items as any[]).slice(0, 3).map((item) => item._id ?? item.id);
         setMenuItems(items.map(normalizeMenuItem));
-        setFavorites(seededFavorites);
       } catch {
         setMenuItems([]);
-        setFavorites([]);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -54,10 +64,16 @@ export default function Favorites() {
   const favoriteItems = menuItems.filter((item) => favorites.includes(item.id));
 
   const toggleFavorite = (id: string) => {
-    setFavorites((prev) => prev.filter((fid) => fid !== id));
+    setFavorites((prev) => {
+      const next = prev.includes(id) ? prev.filter((fid) => fid !== id) : [...prev, id];
+      try {
+        localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
   };
 
-  if (favoriteItems.length === 0) {
+  if (!isLoading && favoriteItems.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16">
         <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/20">
@@ -65,8 +81,8 @@ export default function Favorites() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
           </svg>
         </div>
-        <h2 className="mb-2 text-xl font-bold text-neutral-900 dark:text-white">No favorites yet</h2>
-        <p className="mb-6 text-sm text-neutral-500">Save your favorite dishes for quick access</p>
+        <h2 className="mb-2 text-xl font-bold text-neutral-900 dark:text-white">No favorites saved yet</h2>
+        <p className="mb-6 text-sm text-neutral-500">Tap the heart icon on any dish in our menu to save it here.</p>
         <Link to={ROUTES.CUSTOMER.MENU}>
           <Button size="lg">Browse Menu</Button>
         </Link>
@@ -95,4 +111,3 @@ export default function Favorites() {
     </div>
   );
 }
-

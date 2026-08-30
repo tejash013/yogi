@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui';
 import { ROUTES } from '@/constants';
-import { useCartStore, useToastStore } from '@/store';
-import type { MenuItem, CartItem } from '@/types';
+import type { MenuItem } from '@/types';
+import QuickOrderModal from './QuickOrderModal';
 
 interface FoodCardProps {
   item: MenuItem;
@@ -12,28 +12,12 @@ interface FoodCardProps {
 }
 
 export default function FoodCard({ item, onFavoriteToggle, isFavorite }: FoodCardProps) {
-  const addItem = useCartStore((s) => s.addItem);
   const [imgError, setImgError] = useState(false);
-  const [added, setAdded] = useState(false);
+  const [showOrderModal, setShowOrderModal] = useState(false);
 
-  const handleAddToCart = () => {
-    const currentQty = useCartStore.getState().items.find((entry) => entry.menuItemId === item.id)?.quantity ?? 0;
-    if (currentQty + 1 > (item.availableQty ?? Number.MAX_SAFE_INTEGER)) {
-      useToastStore.getState().showToast(`Only ${item.availableQty ?? 0} left in stock for ${item.name}.`, 'error');
-      return;
-    }
-
-    const cartItem: CartItem = {
-      menuItemId: item.id,
-      name: item.name,
-      price: item.discountPrice || item.price,
-      quantity: 1,
-      availableQty: item.availableQty,
-      image: item.image,
-    };
-    addItem(cartItem);
-    setAdded(true);
-    setTimeout(() => setAdded(false), 1000);
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowOrderModal(true);
   };
 
   return (
@@ -155,20 +139,20 @@ export default function FoodCard({ item, onFavoriteToggle, isFavorite }: FoodCar
         <Button
           size="sm"
           onClick={handleAddToCart}
-          className={added ? '!bg-green-500 text-white' : 'shadow-sm hover:shadow-md'}
+          className="shadow-sm hover:shadow-md"
         >
-          {added ? (
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-          ) : (
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-          )}
-          {added ? 'Added' : 'Add'}
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Add
         </Button>
       </div>
+
+      <QuickOrderModal
+        item={item}
+        isOpen={showOrderModal}
+        onClose={() => setShowOrderModal(false)}
+      />
     </div>
   );
 }

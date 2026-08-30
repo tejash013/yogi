@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import User from '../models/User.js';
 import { authenticate, requireRole } from '../middleware/auth.js';
 import { validateBody, validateParams, validateQuery } from '../middleware/validate.js';
@@ -19,9 +20,32 @@ function publicUser(user: any) {
   return value;
 }
 
-router.use(authenticate, requireRole(['owner', 'manager', 'platformAdmin']));
+const profileUpdateSchema = z.object({
+  firstName: z.string().trim().min(1).optional(),
+  lastName: z.string().trim().min(1).optional(),
+  phone: z.string().trim().min(7).optional(),
+}).strict();
 
-router.get('/', validateQuery(userQuerySchema), async (req, res) => {
+// Self profile endpoints for all authenticated users
+router.get('/profile', authenticate, async (req: any, res) => {
+  const user = await User.findById(req.user.id).select('-password -resetToken -resetTokenExpires').exec();
+  if (!user) return res.status(404).json(failure('User not found'));
+  return res.json(success(publicUser(user), 'Profile loaded'));
+});
+
+router.patch('/profile', authenticate, validateBody(profileUpdateSchema), async (req: any, res) => {
+  const user = await User.findByIdAndUpdate(
+    req.user.id,
+    { $set: req.body },
+    { new: true, runValidators: true },
+  ).select('-password -resetToken -resetTokenExpires').exec();
+
+  if (!user) return res.status(404).json(failure('User not found'));
+  return res.json(success(publicUser(user), 'Profile updated successfully'));
+});
+
+// Admin-only user management routes
+router.get('/', authenticate, requireRole(['owner', 'manager', 'platformAdmin']), validateQuery(userQuerySchema), async (req, res) => {
   const page = Number(req.query.page ?? 1);
   const limit = Number(req.query.limit ?? 20);
   const q = String(req.query.q ?? '').trim();
@@ -44,7 +68,7 @@ router.get('/', validateQuery(userQuerySchema), async (req, res) => {
   return res.json(paginated(users, total, page, limit, 'Users loaded'));
 });
 
-router.patch('/:id/access', validateParams(idParamSchema), validateBody(userAccessUpdateSchema), async (req: any, res) => {
+router.patch('/:id/access', authenticate, requireRole(['owner', 'manager', 'platformAdmin']), validateParams(idParamSchema), validateBody(userAccessUpdateSchema), async (req: any, res) => {
   const target = await User.findOne({ _id: req.params.id, ...tenantFilter(req) }).exec();
   if (!target) return res.status(404).json(failure('User not found'));
 

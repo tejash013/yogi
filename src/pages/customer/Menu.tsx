@@ -44,7 +44,7 @@ export default function Menu() {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('recommended');
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 50]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 2000]);
   const [showVegOnly, setShowVegOnly] = useState(false);
   const [showNonVegOnly, setShowNonVegOnly] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -230,10 +230,11 @@ export default function Menu() {
           <input
             type="range"
             min={0}
-            max={50}
+            max={2000}
+            step={50}
             value={priceRange[1]}
             onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
-            className="h-1.5 w-20 accent-primary-500 cursor-pointer"
+            className="h-1.5 w-24 accent-primary-500 cursor-pointer"
           />
           <span className="text-xs font-extrabold text-primary-500">₹{priceRange[1]}</span>
         </div>

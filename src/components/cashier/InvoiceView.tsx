@@ -1,8 +1,7 @@
 import { Button, Modal } from '@/components/ui';
 import type { Invoice } from '@/types/cashier';
 import { ORDER_TYPE_LABELS, PAYMENT_METHOD_LABELS } from '@/types/cashier';
-import { formatINR } from '@/store';
-import { restaurantInfo } from '@/data/cashierData';
+import { formatINR, useCashierStore } from '@/store';
 
 interface Props {
   invoice: Invoice | null;
@@ -11,6 +10,7 @@ interface Props {
 }
 
 export default function InvoiceView({ invoice, onClose, onPrint }: Props) {
+  const restaurantInfo = useCashierStore((s) => s.restaurantInfo);
   if (!invoice) return null;
 
   const dateStr = new Date(invoice.issuedAt).toLocaleString('en-IN', {

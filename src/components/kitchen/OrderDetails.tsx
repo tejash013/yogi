@@ -31,8 +31,18 @@ const priorityOptions = [
  */
 export default function OrderDetails({ order, onClose }: Props) {
   const updatePriority = useKitchenStore((s) => s.updatePriority);
+  const acceptOrder = useKitchenStore((s) => s.acceptOrder);
+  const startPreparing = useKitchenStore((s) => s.startPreparing);
+  const markReady = useKitchenStore((s) => s.markReady);
+  const completeOrder = useKitchenStore((s) => s.completeOrder);
+  const rejectOrder = useKitchenStore((s) => s.rejectOrder);
 
   if (!order) return null;
+
+  const handleAction = (action: () => void) => {
+    action();
+    onClose();
+  };
 
   return (
     <Modal isOpen={!!order} onClose={onClose} title={`Order #${order.orderNumber}`} size="lg">
@@ -98,8 +108,8 @@ export default function OrderDetails({ order, onClose }: Props) {
         )}
 
         {/* Priority change */}
-        <div className="border-t border-neutral-200 pt-4 dark:border-neutral-700">
-          <label className="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+        <div className="border-t border-neutral-200 pt-3 dark:border-neutral-700">
+          <label className="mb-1.5 block text-xs font-medium text-neutral-700 dark:text-neutral-300">
             Change Priority
           </label>
           <Select
@@ -109,12 +119,60 @@ export default function OrderDetails({ order, onClose }: Props) {
           />
         </div>
 
-        <div className="flex justify-end">
+        {/* Status Actions in Footer */}
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-neutral-200 pt-4 dark:border-neutral-700">
+          <div className="flex items-center gap-2">
+            {order.status === 'new' && (
+              <>
+                <Button
+                  variant="primary"
+                  className="!bg-green-600 hover:!bg-green-700 font-bold"
+                  onClick={() => handleAction(() => acceptOrder(order.id))}
+                >
+                  ✓ Confirm Order
+                </Button>
+                <Button
+                  variant="danger"
+                  onClick={() => handleAction(() => rejectOrder(order.id))}
+                >
+                  ✕ Reject
+                </Button>
+              </>
+            )}
+            {order.status === 'confirmed' && (
+              <Button
+                variant="primary"
+                className="!bg-blue-600 hover:!bg-blue-700 font-bold"
+                onClick={() => handleAction(() => startPreparing(order.id))}
+              >
+                🔥 Start Preparing
+              </Button>
+            )}
+            {order.status === 'preparing' && (
+              <Button
+                variant="primary"
+                className="!bg-amber-500 hover:!bg-amber-600 font-bold"
+                onClick={() => handleAction(() => markReady(order.id))}
+              >
+                🔔 Mark Ready for Pickup
+              </Button>
+            )}
+            {order.status === 'ready' && (
+              <Button
+                variant="primary"
+                className="!bg-green-600 hover:!bg-green-700 font-bold"
+                onClick={() => handleAction(() => completeOrder(order.id))}
+              >
+                ✓ Complete / Served
+              </Button>
+            )}
+          </div>
+
           <Button variant="outline" onClick={onClose}>
             Close
           </Button>
         </div>
       </div>
-</Modal>
+    </Modal>
   );
 }
