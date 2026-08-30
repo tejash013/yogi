@@ -145,26 +145,26 @@ const { items, subtotal, removeItem, updateQuantity, clearCart } = useCartStore(
             <div className="space-y-2.5">
               <div className="flex justify-between text-sm">
                 <span className="text-neutral-500 dark:text-neutral-400">Subtotal</span>
-                <span className="font-semibold text-neutral-800 dark:text-neutral-200">${subtotal.toFixed(2)}</span>
+                <span className="font-semibold text-neutral-800 dark:text-neutral-200">₹{subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-neutral-500 dark:text-neutral-400">Tax (8%)</span>
-                <span className="font-semibold text-neutral-800 dark:text-neutral-200">${actualTax.toFixed(2)}</span>
+                <span className="font-semibold text-neutral-800 dark:text-neutral-200">₹{actualTax.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-neutral-500 dark:text-neutral-400">Delivery Fee</span>
-                <span className="font-semibold text-neutral-800 dark:text-neutral-200">${DELIVERY_FEE.toFixed(2)}</span>
+                <span className="font-semibold text-neutral-800 dark:text-neutral-200">₹{DELIVERY_FEE.toFixed(2)}</span>
               </div>
               {couponApplied && (
                 <div className="flex justify-between text-sm">
                   <span className="text-green-500 font-semibold">Discount</span>
-                  <span className="font-bold text-green-500">-${couponDiscount.toFixed(2)}</span>
+                  <span className="font-bold text-green-500">-₹{couponDiscount.toFixed(2)}</span>
                 </div>
               )}
               <hr className="border-neutral-100 dark:border-neutral-800" />
               <div className="flex justify-between items-center">
                 <span className="font-bold text-neutral-900 dark:text-white">Total</span>
-                <span className="text-2xl font-extrabold text-primary-500">${finalTotal.toFixed(2)}</span>
+                <span className="text-2xl font-extrabold text-primary-500">₹{finalTotal.toFixed(2)}</span>
               </div>
             </div>
 

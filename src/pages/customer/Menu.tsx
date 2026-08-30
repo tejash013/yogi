@@ -234,7 +234,7 @@ export default function Menu() {
             onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
             className="h-1.5 w-20 accent-primary-500 cursor-pointer"
           />
-          <span className="text-xs font-extrabold text-primary-500">${priceRange[1]}</span>
+          <span className="text-xs font-extrabold text-primary-500">₹{priceRange[1]}</span>
         </div>
 
 

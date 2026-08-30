@@ -4,7 +4,7 @@ import { PageHeader } from '@/components/common';
 const analyticsHighlights = [
   { label: 'Repeat Customers', value: '67%', badge: 'Up 4%' },
   { label: 'Online Orders', value: '58%', badge: 'Up 9%' },
-  { label: 'Average Spend', value: '$38.40', badge: 'Up 6%' },
+  { label: 'Average Spend', value: '₹38.40', badge: 'Up 6%' },
 ];
 
 const popularItems = [
@@ -63,7 +63,7 @@ export default function Analytics() {
                     <p className="font-semibold text-neutral-900 dark:text-white">{item.name}</p>
                     <p className="text-sm text-neutral-500 dark:text-neutral-400">{item.orders} orders</p>
                   </div>
-                  <span className="text-sm font-semibold text-neutral-900 dark:text-white">${item.revenue.toFixed(2)}</span>
+                  <span className="text-sm font-semibold text-neutral-900 dark:text-white">₹{item.revenue.toFixed(2)}</span>
                 </div>
               </div>
             ))}

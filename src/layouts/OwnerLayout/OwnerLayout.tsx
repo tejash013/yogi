@@ -139,7 +139,7 @@ export default function OwnerLayout() {
                 <div className="grid grid-cols-3 gap-2">
                   <div className="rounded-2xl bg-neutral-50 p-3 text-center dark:bg-neutral-800">
                     <p className="text-xs text-neutral-500">Revenue</p>
-                    <p className="mt-1 text-lg font-semibold text-neutral-900 dark:text-white">$48.2K</p>
+                    <p className="mt-1 text-lg font-semibold text-neutral-900 dark:text-white">₹48.2K</p>
                   </div>
                   <div className="rounded-2xl bg-neutral-50 p-3 text-center dark:bg-neutral-800">
                     <p className="text-xs text-neutral-500">Reports</p>
@@ -150,16 +150,6 @@ export default function OwnerLayout() {
                     <p className="mt-1 text-lg font-semibold text-neutral-900 dark:text-white">26%</p>
                   </div>
                 </div>
-                <button
-                  onClick={handleLogout}
-                  className="inline-flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600 shadow-sm transition hover:bg-red-500 hover:text-white dark:border-red-900/30 dark:bg-red-950/30 dark:text-red-400 dark:hover:bg-red-600 dark:hover:text-white"
-                  title="Logout from owner panel"
-                >
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                  </svg>
-                  <span>Logout</span>
-                </button>
               </div>
             </div>
           </div>

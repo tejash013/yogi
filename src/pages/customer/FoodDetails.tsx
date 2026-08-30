@@ -220,13 +220,13 @@ export default function FoodDetails() {
             {item.discountPrice ? (
               <div className="flex items-center gap-2">
                 <span className="text-3xl font-extrabold text-primary-500">
-                  ${item.discountPrice.toFixed(2)}
+                  ₹{item.discountPrice.toFixed(2)}
                 </span>
-                <span className="text-lg text-neutral-400 line-through dark:text-neutral-500">${item.price.toFixed(2)}</span>
+                <span className="text-lg text-neutral-400 line-through dark:text-neutral-500">₹{item.price.toFixed(2)}</span>
               </div>
             ) : (
               <span className="text-3xl font-extrabold text-primary-500">
-                ${item.price.toFixed(2)}
+                ₹{item.price.toFixed(2)}
               </span>
             )}
           </div>
@@ -247,7 +247,7 @@ export default function FoodDetails() {
                 >
                   <p className="text-sm font-semibold">{v.label}</p>
                   <p className="text-xs text-neutral-400 dark:text-neutral-500">
-                    {v.price === 0 ? 'Standard' : `+$${v.price.toFixed(2)}`}
+                    {v.price === 0 ? 'Standard' : `+₹${v.price.toFixed(2)}`}
                   </p>
                 </button>
               ))}
