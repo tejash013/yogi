@@ -183,6 +183,9 @@ export async function seedDatabase() {
       _id: DEFAULT_RESTAURANT_ID,
       name: 'Yogi Grand Restaurant & Lounge',
       slug: 'yogi-grand',
+      address: '101 Culinary Blvd, Downtown Hub',
+      latitude: 19.0760,
+      longitude: 72.8777,
       isActive: true,
     });
     await Branch.create({
@@ -191,6 +194,8 @@ export async function seedDatabase() {
       name: 'Main Dining Hall (Downtown)',
       slug: 'downtown-main',
       address: '101 Culinary Blvd, City Center',
+      latitude: 19.0760,
+      longitude: 72.8777,
       isActive: true,
     });
     await Branch.create({
@@ -198,11 +203,16 @@ export async function seedDatabase() {
       name: 'Express Food Court (Uptown)',
       slug: 'uptown-express',
       address: '45 Uptown Mall, Food Court L2',
+      latitude: 19.1136,
+      longitude: 72.8697,
       isActive: true,
     });
     const r2 = await Restaurant.create({
       name: 'Yogi Cloud Kitchens & Bistro',
       slug: 'yogi-bistro',
+      address: 'Terminal 1 Plaza, Airport Rd',
+      latitude: 19.0896,
+      longitude: 72.8656,
       isActive: true,
     });
     await Branch.create({
@@ -210,6 +220,17 @@ export async function seedDatabase() {
       name: 'Airport Road Bistro',
       slug: 'airport-bistro',
       address: 'Terminal 1 Plaza, Airport Rd',
+      latitude: 19.0896,
+      longitude: 72.8656,
+      isActive: true,
+    });
+    await Branch.create({
+      restaurantId: r2._id,
+      name: 'Sea Breeze Coastal Dine',
+      slug: 'coastal-breeze',
+      address: '88 Promenade View, Beach Rd',
+      latitude: 19.0988,
+      longitude: 72.8267,
       isActive: true,
     });
   }

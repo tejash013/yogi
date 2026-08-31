@@ -5,6 +5,8 @@ const branchSchema = new Schema({
   name: { type: String, required: true, trim: true },
   slug: { type: String, required: true, trim: true, lowercase: true },
   address: { type: String, trim: true },
+  latitude: { type: Number },
+  longitude: { type: Number },
   isActive: { type: Boolean, default: true },
 }, { timestamps: true });
 

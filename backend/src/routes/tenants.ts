@@ -8,9 +8,21 @@ import { validateBody, validateParams } from '../middleware/validate.js';
 import { idParamSchema } from '../validation/schemas.js';
 import { tenantFilter } from '../utils/tenant.js';
 
-const router = Router();
-const restaurantSchema = z.object({ name: z.string().trim().min(1), slug: z.string().trim().min(1).regex(/^[a-z0-9-]+$/) }).strict();
-const branchSchema = z.object({ name: z.string().trim().min(1), slug: z.string().trim().min(1).regex(/^[a-z0-9-]+$/), address: z.string().trim().optional() }).strict();
+const restaurantSchema = z.object({
+  name: z.string().trim().min(1),
+  slug: z.string().trim().min(1).regex(/^[a-z0-9-]+$/),
+  address: z.string().trim().optional(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
+}).strict();
+
+const branchSchema = z.object({
+  name: z.string().trim().min(1),
+  slug: z.string().trim().min(1).regex(/^[a-z0-9-]+$/),
+  address: z.string().trim().optional(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
+}).strict();
 
 // GET /api/tenants/current - Get current tenant (restaurant & branch) details
 router.get('/current', optionalAuth, async (req: any, res) => {

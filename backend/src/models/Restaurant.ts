@@ -6,6 +6,8 @@ const restaurantSchema = new Schema({
   email: { type: String, trim: true, lowercase: true },
   phone: { type: String, trim: true },
   address: { type: String, trim: true },
+  latitude: { type: Number },
+  longitude: { type: Number },
   gstNumber: { type: String, trim: true },
   tagline: { type: String, trim: true },
   currency: { type: String, default: 'INR' },

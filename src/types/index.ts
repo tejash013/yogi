@@ -22,6 +22,10 @@ export interface Restaurant {
   _id: string;
   name: string;
   slug: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  distanceKm?: number;
   isActive: boolean;
 }
 
@@ -31,6 +35,9 @@ export interface Branch {
   name: string;
   slug: string;
   address?: string;
+  latitude?: number;
+  longitude?: number;
+  distanceKm?: number;
   isActive: boolean;
 }
 

@@ -4,7 +4,7 @@ import { FoodCard, CategoryCard, OfferBanner } from '@/components/customer';
 import { TenantSelector } from '@/components/common';
 import { ROUTES } from '@/constants';
 import { categoriesApi, menuApi, offersApi } from '@/api';
-import { useOrderSyncStore } from '@/store';
+import { useOrderSyncStore, useTenantStore } from '@/store';
 import type { MenuItem, Category, Offer } from '@/types';
 
 const normalizeMenuItem = (item: any): MenuItem => ({
@@ -226,6 +226,119 @@ export default function CustomerHome() {
           </div>
         </div>
       </div>
+
+      {/* Nearby Restaurants & Branches Proximity Section */}
+      <section className="rounded-3xl border border-neutral-200/80 bg-gradient-to-b from-white to-neutral-50/80 p-5 shadow-sm dark:border-neutral-800 dark:from-neutral-900 dark:to-neutral-950">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                GPS Location Powered
+              </span>
+            </div>
+            <h2 className="text-lg font-bold tracking-tight text-neutral-900 dark:text-white sm:text-xl">
+              Nearby Branches & Outlets 📍
+            </h2>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">
+              Select your nearest branch for fastest table seating & hot delivery
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void useTenantStore.getState().requestUserLocation()}
+              disabled={useTenantStore((s) => s.isLocating)}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 transition-all hover:bg-emerald-100 dark:border-emerald-500/20 dark:bg-emerald-950/40 dark:text-emerald-300"
+            >
+              {useTenantStore((s) => s.isLocating) ? (
+                <>
+                  <span className="h-3 w-3 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+                  <span>Detecting GPS...</span>
+                </>
+              ) : useTenantStore((s) => s.userLocation) ? (
+                <>
+                  <span>🎯 GPS Active</span>
+                  <span className="text-[10px] opacity-75">(Refresh)</span>
+                </>
+              ) : (
+                <>
+                  <span>🎯 Use My Location</span>
+                </>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => useTenantStore.getState().setModalOpen(true)}
+              className="rounded-xl border border-neutral-200 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200"
+            >
+              View All Locations
+            </button>
+          </div>
+        </div>
+
+        {/* Branch Cards */}
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {useTenantStore((s) => s.availableBranches).slice(0, 3).map((br, index) => {
+            const isSelected = br._id === useTenantStore.getState().branchId;
+            const userLoc = useTenantStore((s) => s.userLocation);
+            const isClosest = index === 0 && userLoc && br.distanceKm !== undefined;
+            return (
+              <div
+                key={br._id}
+                onClick={() => useTenantStore.getState().switchBranch(br._id)}
+                className={`group cursor-pointer rounded-2xl border p-4 transition-all ${
+                  isSelected
+                    ? 'border-emerald-500 bg-emerald-50/50 shadow-sm dark:border-emerald-500/60 dark:bg-emerald-950/20'
+                    : 'border-neutral-200/80 bg-white hover:border-neutral-300 hover:shadow-sm dark:border-neutral-800 dark:bg-neutral-850 dark:hover:border-neutral-700'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className={`h-2 w-2 rounded-full ${isSelected ? 'bg-emerald-500' : 'bg-neutral-400'}`} />
+                      <h4 className="font-bold text-neutral-900 dark:text-white text-sm">{br.name}</h4>
+                    </div>
+                    <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+                      📍 {br.address || 'Dining Hall & Takeaway Counter'}
+                    </p>
+                  </div>
+                  {isSelected ? (
+                    <span className="shrink-0 rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-bold text-white">
+                      Active
+                    </span>
+                  ) : (
+                    <span className="shrink-0 rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-medium text-neutral-600 group-hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300">
+                      Select
+                    </span>
+                  )}
+                </div>
+
+                <div className="mt-3 flex items-center justify-between pt-2 border-t border-neutral-100 dark:border-neutral-800/80">
+                  <div className="flex items-center gap-1.5">
+                    {br.distanceKm !== undefined ? (
+                      <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                        📍 {br.distanceKm < 1 ? `${Math.round(br.distanceKm * 1000)}m` : `${br.distanceKm.toFixed(1)} km`}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-neutral-400">City Center Area</span>
+                    )}
+                    {isClosest && (
+                      <span className="rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
+                        ⭐ Nearest
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[11px] font-semibold text-primary-600 dark:text-primary-400">
+                    {isSelected ? 'Currently Browsing' : 'Switch Branch →'}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       {/* Offers Banner */}
       <section>
