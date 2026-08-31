@@ -5,7 +5,11 @@ let mongoServer;
 
 before(async function () {
   this.timeout(60000);
-  mongoServer = await MongoMemoryServer.create();
+  mongoServer = await MongoMemoryServer.create({
+    instance: {
+      launchTimeout: 60000,
+    },
+  });
   const uri = mongoServer.getUri();
   process.env.MONGODB_URI = uri;
   await mongoose.connect(uri, { dbName: 'test' });
