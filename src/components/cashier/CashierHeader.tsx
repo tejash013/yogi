@@ -3,6 +3,7 @@ import { FiBell, FiMenu } from 'react-icons/fi';
 import { cn } from '@/utils';
 import { useAuthStore, useCashierStore } from '@/store';
 import Logo from '@/components/common/Logo';
+import TenantSelector from '@/components/common/TenantSelector';
 
 interface Props {
   onMenuClick: () => void;
@@ -64,6 +65,8 @@ export default function CashierHeader({ onMenuClick }: Props) {
 
         {/* Right */}
         <div className="flex items-center gap-2">
+          <TenantSelector variant="pill" className="hidden sm:flex" />
+
           {/* Shift status */}
           <button
             onClick={toggleShift}

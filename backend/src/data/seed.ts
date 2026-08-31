@@ -2,6 +2,8 @@ import Category from '../models/Category.js';
 import MenuItem from '../models/MenuItem.js';
 import Offer from '../models/Offer.js';
 import Table from '../models/Table.js';
+import Restaurant from '../models/Restaurant.js';
+import Branch from '../models/Branch.js';
 import { DEFAULT_BRANCH_ID, DEFAULT_RESTAURANT_ID } from '../utils/tenant.js';
 
 const tenant = {
@@ -173,6 +175,44 @@ export async function seedDatabase() {
     { $or: [{ offerType: { $ne: 'coupon' }, code: { $exists: true } }, { offerType: 'coupon', code: { $in: [null, ''] } }] },
     { $unset: { code: '' } }
   ).catch(() => undefined);
+
+  // Seed default SaaS Restaurants and Branches
+  const restaurantCount = await Restaurant.countDocuments().exec();
+  if (restaurantCount === 0) {
+    const r1 = await Restaurant.create({
+      _id: DEFAULT_RESTAURANT_ID,
+      name: 'Yogi Grand Restaurant & Lounge',
+      slug: 'yogi-grand',
+      isActive: true,
+    });
+    await Branch.create({
+      _id: DEFAULT_BRANCH_ID,
+      restaurantId: r1._id,
+      name: 'Main Dining Hall (Downtown)',
+      slug: 'downtown-main',
+      address: '101 Culinary Blvd, City Center',
+      isActive: true,
+    });
+    await Branch.create({
+      restaurantId: r1._id,
+      name: 'Express Food Court (Uptown)',
+      slug: 'uptown-express',
+      address: '45 Uptown Mall, Food Court L2',
+      isActive: true,
+    });
+    const r2 = await Restaurant.create({
+      name: 'Yogi Cloud Kitchens & Bistro',
+      slug: 'yogi-bistro',
+      isActive: true,
+    });
+    await Branch.create({
+      restaurantId: r2._id,
+      name: 'Airport Road Bistro',
+      slug: 'airport-bistro',
+      address: 'Terminal 1 Plaza, Airport Rd',
+      isActive: true,
+    });
+  }
 
   const categoryCount = await Category.countDocuments({ ...tenant, isActive: true }).exec();
   if (categoryCount === 0) {

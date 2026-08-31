@@ -45,6 +45,8 @@ export const authApi = {
 };
 
 export const tenantsApi = {
+  getCurrent: () =>
+    apiClient.get<ApiResponse<{ restaurantId: string; branchId: string; restaurant: Restaurant; branch: Branch }>>('/api/tenants/current'),
   getRestaurants: () => apiClient.get<ApiResponse<Restaurant[]>>('/api/tenants/restaurants'),
   getBranches: (restaurantId: string) => apiClient.get<ApiResponse<Branch[]>>(`/api/tenants/restaurants/${restaurantId}/branches`),
   createRestaurant: (payload: { name: string; slug: string }) => apiClient.post<ApiResponse<Restaurant>>('/api/tenants/restaurants', payload),

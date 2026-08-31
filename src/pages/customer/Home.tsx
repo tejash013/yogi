@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FoodCard, CategoryCard, OfferBanner } from '@/components/customer';
+import { TenantSelector } from '@/components/common';
 import { ROUTES } from '@/constants';
 import { categoriesApi, menuApi, offersApi } from '@/api';
 import { useOrderSyncStore } from '@/store';
@@ -180,6 +181,9 @@ export default function CustomerHome() {
 
   return (
     <div className="space-y-8">
+      {/* SaaS Location & Branch Context Banner */}
+      <TenantSelector variant="banner" showDetails={true} />
+
       {/* Search Bar */}
       <form onSubmit={handleSearchSubmit} className="relative">
         <svg className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-400 dark:text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">

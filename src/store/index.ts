@@ -1,4 +1,5 @@
 export { useAuthStore } from './authStore';
+export { useTenantStore, DEFAULT_RESTAURANT_ID, DEFAULT_BRANCH_ID } from './tenantStore';
 export { useCartStore } from './cartStore';
 export { useThemeStore } from './themeStore';
 export { useNotificationStore } from './notificationStore';

@@ -3,6 +3,7 @@ import { cn } from '@/utils';
 import { useAuthStore, useKitchenStore } from '@/store';
 import NotificationPanel from './NotificationPanel';
 import Logo from '@/components/common/Logo';
+import TenantSelector from '@/components/common/TenantSelector';
 
 interface Props {
   onMenuClick: () => void;
@@ -69,6 +70,8 @@ export default function KitchenHeader({ onMenuClick }: Props) {
 
         {/* Right: notifications + profile + status */}
         <div className="flex items-center gap-2">
+          <TenantSelector variant="pill" className="hidden sm:flex" />
+
           {/* Online/Offline toggle */}
           <button
             onClick={() => onlineStatus(headerStatus === 'online' ? 'offline' : 'online')}

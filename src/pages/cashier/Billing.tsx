@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, EmptyState, Button, Input } from '@/components/ui';
-import { PageHeader } from '@/components/common';
+import { PageHeader, TenantSelector } from '@/components/common';
 import {
   BillItem,
   BillSummary,
@@ -134,12 +134,13 @@ export default function Billing() {
   });
 
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader
         title="POS Billing & Invoicing"
         description="Create walk-in bills or settle customer orders"
         actions={
           <div className="flex items-center gap-2">
+            <TenantSelector variant="pill" />
             <Button variant="primary" onClick={handleNewBill}>
               <FiPlus className="mr-1.5 h-4 w-4" /> New POS Bill
             </Button>
@@ -151,6 +152,8 @@ export default function Billing() {
           </div>
         }
       />
+
+      <TenantSelector variant="banner" showDetails={true} />
 
       <div className="grid gap-6 lg:grid-cols-12">
         {/* Left column (Tabs for Active Orders vs Menu Catalog) */}

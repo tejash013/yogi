@@ -39,17 +39,28 @@ function redirectToLoginIfNeeded() {
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('restaurantos-token');
+    const payload = token ? readTokenPayload(token) : null;
     if (token && !isPublicAuthRequest(config.url)) {
       config.headers.Authorization = `Bearer ${token}`;
-
-      const payload = readTokenPayload(token);
-      if (payload?.restaurantId) {
-        config.headers['x-restaurant-id'] = payload.restaurantId;
-      }
-      if (payload?.branchId) {
-        config.headers['x-branch-id'] = payload.branchId;
-      }
     }
+
+    // Always attach active SaaS Tenant Context (Restaurant ID & Branch ID)
+    const activeRestaurantId =
+      localStorage.getItem('restaurantos-restaurant-id') ||
+      payload?.restaurantId ||
+      '000000000000000000000001';
+    const activeBranchId =
+      localStorage.getItem('restaurantos-branch-id') ||
+      payload?.branchId ||
+      '000000000000000000000002';
+
+    if (activeRestaurantId) {
+      config.headers['x-restaurant-id'] = activeRestaurantId;
+    }
+    if (activeBranchId) {
+      config.headers['x-branch-id'] = activeBranchId;
+    }
+
     return config;
   },
   (error: AxiosError) => {

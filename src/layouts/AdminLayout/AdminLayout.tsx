@@ -3,6 +3,7 @@ import { Link, Outlet, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/common/Navbar';
 import Sidebar, { type SidebarItem } from '@/components/common/Sidebar';
 import Logo from '@/components/common/Logo';
+import TenantSelector from '@/components/common/TenantSelector';
 import { ROUTES } from '@/constants';
 import { useAuthStore, useOrderSyncStore } from '@/store';
 import { ordersApi } from '@/api';
@@ -158,6 +159,8 @@ export default function AdminLayout() {
           <div className="flex items-center gap-2">
             {/* Desktop user profile + logout */}
             <div className="hidden items-center gap-2 md:flex">
+              <TenantSelector variant="pill" />
+
               <div className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-2.5 py-1.5 dark:border-neutral-700 dark:bg-neutral-800">
                 <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-500 text-xs font-bold text-white">
                   {getUserInitials()}
@@ -204,6 +207,8 @@ export default function AdminLayout() {
         />
         <main className="flex-1 bg-neutral-100 p-4 sm:p-6 lg:ml-64 lg:p-8 dark:bg-neutral-950">
           <div className="mx-auto w-full max-w-7xl">
+            <TenantSelector variant="banner" className="mb-6" />
+
             <div className="mb-6 hidden rounded-[1.75rem] border border-neutral-200 bg-white/90 p-5 shadow-soft backdrop-blur dark:border-neutral-700 dark:bg-neutral-900/90 lg:flex lg:items-center lg:justify-between">
               <div className="flex items-center gap-4">
                 <Logo size="sm" showText={true} />

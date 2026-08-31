@@ -3,6 +3,7 @@ import { Outlet, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/common/Navbar';
 import Sidebar, { type SidebarItem } from '@/components/common/Sidebar';
 import Footer from '@/components/common/Footer';
+import TenantSelector from '@/components/common/TenantSelector';
 import { ROUTES } from '@/constants';
 import { useAuthStore } from '@/store';
 
@@ -100,6 +101,8 @@ export default function OwnerLayout() {
           <div className="flex items-center gap-2">
             {/* Desktop user profile + logout */}
             <div className="hidden items-center gap-2 md:flex">
+              <TenantSelector variant="pill" />
+
               <div className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-2.5 py-1.5 dark:border-neutral-700 dark:bg-neutral-800">
                 <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-500 text-xs font-bold text-white">
                   {getUserInitials()}
@@ -146,6 +149,8 @@ export default function OwnerLayout() {
           onClose={() => setIsSidebarOpen(false)}
         />
         <main className="flex-1 p-4 sm:p-6 lg:ml-72 lg:p-8">
+          <TenantSelector variant="banner" showDetails={true} className="mb-6" />
+
           <div className="mb-6 rounded-[2rem] border border-neutral-200 bg-white/90 p-6 shadow-soft dark:border-neutral-700 dark:bg-neutral-900/90">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
