@@ -1,7 +1,8 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Button, Card, CardContent, Table, Badge, Search } from '@/components/ui';
-import { PageHeader } from '@/components/common';
+import { PageHeader, TenantSelector } from '@/components/common';
 import { inventoryApi } from '@/api';
+import { useTenantStore } from '@/store';
 import type { Column } from '@/components/ui';
 import type { InventoryItem } from '@/types';
 
@@ -24,6 +25,7 @@ const columns: Column<InventoryRow>[] = [
 ];
 
 export default function Inventory() {
+  const { branchId, currentBranch } = useTenantStore();
   const [items, setItems] = useState<InventoryRow[]>([]);
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -62,7 +64,7 @@ export default function Inventory() {
 
   useEffect(() => {
     void fetchInventory();
-  }, [search]);
+  }, [search, branchId]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -95,10 +97,11 @@ export default function Inventory() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Inventory"
-        description="Track your inventory levels and avoid stockouts"
+        title="Stock & Inventory"
+        description={`Track inventory levels, ingredients, and alerts for ${currentBranch?.name || 'Main Hall'}`}
         actions={
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="flex flex-wrap items-center gap-3">
+            <TenantSelector variant="pill" />
             <Search
               placeholder="Search inventory..."
               value={search}

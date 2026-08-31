@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Card, Badge } from '@/components/ui';
-import { PageHeader } from '@/components/common';
+import { PageHeader, TenantSelector } from '@/components/common';
 import { employeesApi, inventoryApi, reportsApi } from '@/api';
 import { formatCurrency } from '@/utils';
+import { useTenantStore } from '@/store';
 
 export default function Expenses() {
+  const { branchId, currentBranch } = useTenantStore();
   const [report, setReport] = useState<any>({});
   const [inventory, setInventory] = useState<any[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
@@ -32,7 +34,7 @@ export default function Expenses() {
     };
 
     void loadExpenses();
-  }, []);
+  }, [branchId]);
 
   // Compute live expense items
   const inventoryCost = useMemo(() => {
@@ -75,7 +77,11 @@ export default function Expenses() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Expenses Audit" description="Monitor inventory procurement, payroll, and operational tax costs" />
+      <PageHeader
+        title="Expenses & Cost Audit"
+        description={`Monitor inventory procurement, payroll, and tax costs for ${currentBranch?.name || 'All Locations'}`}
+        actions={<TenantSelector variant="pill" />}
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {categories.map((item) => (

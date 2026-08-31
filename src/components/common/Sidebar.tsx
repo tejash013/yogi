@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store';
 import { ROUTES } from '@/constants';
 import { cn } from '@/utils';
+import TenantSelector from './TenantSelector';
 
 export interface SidebarItem {
   label: string;
@@ -71,6 +72,7 @@ export default function Sidebar({ items, isOpen, onClose, variant = 'default' }:
         )}
       >
         <nav className="flex-1 overflow-y-auto px-3 py-4">
+          <TenantSelector variant="card" className="mb-3" />
           <ul className="space-y-1">
             {items.map((item) => {
               const hasChildren = item.children && item.children.length > 0;

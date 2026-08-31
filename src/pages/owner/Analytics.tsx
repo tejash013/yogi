@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Card, Badge, EmptyState } from '@/components/ui';
-import { PageHeader } from '@/components/common';
+import { PageHeader, TenantSelector } from '@/components/common';
 import { ordersApi, reportsApi } from '@/api';
 import { formatCurrency } from '@/utils';
+import { useTenantStore } from '@/store';
 
 export default function Analytics() {
+  const { branchId, currentBranch } = useTenantStore();
   const [salesReport, setSalesReport] = useState<any>({});
   const [orders, setOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,7 +31,7 @@ export default function Analytics() {
     };
 
     void loadAnalytics();
-  }, []);
+  }, [branchId]);
 
   const totalOrders = orders.length;
   const onlineOrders = orders.filter((o) => o.orderType === 'delivery' || o.orderType === 'takeaway').length;
@@ -97,7 +99,11 @@ export default function Analytics() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Analytics" description="Detailed business intelligence and operational performance" />
+      <PageHeader
+        title="Business Analytics & KPIs"
+        description={`Detailed intelligence, retention, and channel performance for ${currentBranch?.name || 'All Locations'}`}
+        actions={<TenantSelector variant="pill" />}
+      />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <Card className="overflow-hidden">

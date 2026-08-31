@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button, Card } from '@/components/ui';
-import { PageHeader } from '@/components/common';
+import { PageHeader, TenantSelector } from '@/components/common';
 import RestaurantFloorView, { type TableItem } from '@/components/common/RestaurantFloorView';
 import { tablesApi } from '@/api';
+import { useTenantStore } from '@/store';
 
 type TableRow = TableItem;
 
@@ -22,6 +23,7 @@ const statusConfig: Record<string, { variant: 'success' | 'warning' | 'error' | 
 };
 
 export default function Tables() {
+  const { branchId, currentBranch, currentRestaurant } = useTenantStore();
   const [tables, setTables] = useState<TableRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'floor' | 'cards'>('floor');
@@ -55,6 +57,10 @@ export default function Tables() {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    void loadTables();
+  }, [branchId]);
 
   const handleStatusUpdate = async (tableId: string, nextStatus: TableRow['status']) => {
     if (tableId.startsWith('virtual-')) return;
@@ -119,10 +125,11 @@ export default function Tables() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Tables"
-        description="Manage the restaurant floor and live occupancy."
+        title="Dining Tables & Floor Plan"
+        description={`Manage floor layout, reservations, and live occupancy for ${currentBranch?.name || 'Downtown Hall'}`}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <TenantSelector variant="pill" />
             <div className="flex rounded-2xl border border-neutral-200 bg-white p-1 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
               <button
                 type="button"

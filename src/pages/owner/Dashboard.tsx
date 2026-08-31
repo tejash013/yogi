@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Card, Button, Badge } from '@/components/ui';
-import { PageHeader } from '@/components/common';
+import { PageHeader, TenantSelector } from '@/components/common';
 import { ordersApi, reportsApi, usersApi } from '@/api';
 import { ROUTES } from '@/constants';
 import { formatCurrency } from '@/utils';
+import { useTenantStore } from '@/store';
 
 type PeriodFilter = 'today' | 'month' | 'year';
 
 export default function OwnerDashboard() {
   const navigate = useNavigate();
+  const { branchId, currentBranch, currentRestaurant } = useTenantStore();
   const [period, setPeriod] = useState<PeriodFilter>('month');
   const [salesData, setSalesData] = useState<any>({});
   const [revenueData, setRevenueData] = useState<any>({});
@@ -57,7 +59,7 @@ export default function OwnerDashboard() {
     };
 
     void fetchData();
-  }, [period]);
+  }, [period, branchId]);
 
   const totalRevenue = Number(revenueData?.totalRevenue ?? salesData?.totalSales ?? 0);
   const totalOrders = Number(salesData?.totalOrders ?? orderList.length ?? 0);
@@ -77,9 +79,10 @@ export default function OwnerDashboard() {
     <div className="space-y-6">
       <PageHeader
         title="Owner Dashboard"
-        description="High-level overview of your business performance"
+        description={`Executive performance analytics for ${currentRestaurant?.name || 'Restaurant'} · ${currentBranch?.name || 'All Locations'}`}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <TenantSelector variant="pill" />
             <Button
               variant={period === 'today' ? 'primary' : 'outline'}
               size="sm"

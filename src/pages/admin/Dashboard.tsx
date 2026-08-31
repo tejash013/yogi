@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Card, CardHeader, CardContent, Badge } from '@/components/ui';
-import { PageHeader } from '@/components/common';
+import { PageHeader, TenantSelector } from '@/components/common';
 import { menuApi, ordersApi, tablesApi, usersApi } from '@/api';
 import { ROUTES } from '@/constants';
-import { useOrderSyncStore } from '@/store';
+import { useOrderSyncStore, useTenantStore } from '@/store';
 import { formatCurrency } from '@/utils';
 
 type DashboardBadgeVariant = 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | 'neutral';
@@ -12,6 +12,7 @@ type DashboardBadgeVariant = 'primary' | 'secondary' | 'success' | 'warning' | '
 const statusOptions = ['All', 'pending', 'preparing', 'ready', 'completed'] as const;
 
 export default function AdminDashboard() {
+  const { branchId, currentBranch, currentRestaurant } = useTenantStore();
   const [selectedStatus, setSelectedStatus] = useState<typeof statusOptions[number]>('All');
   const [orders, setOrders] = useState<any[]>([]);
   const [tables, setTables] = useState<any[]>([]);
@@ -46,7 +47,7 @@ export default function AdminDashboard() {
     };
 
     void loadDashboardData();
-  }, [syncVersion]);
+  }, [syncVersion, branchId]);
 
   // Operational metrics
   const totalRevenue = useMemo(() => {
@@ -85,7 +86,11 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Manager overview" description="A focused real-time view of today's restaurant operations." />
+      <PageHeader
+        title="Manager Overview"
+        description={`Real-time operations for ${currentRestaurant?.name || 'Restaurant'} · ${currentBranch?.name || 'Main Branch'}`}
+        actions={<TenantSelector variant="pill" />}
+      />
 
       <div className="grid gap-6 xl:grid-cols-[1.8fr_1fr]">
         <Card className="overflow-hidden rounded-[30px] border-[#efe4d7] bg-[#fffdfb] shadow-[0_20px_60px_rgba(85,68,44,0.04)] dark:border-neutral-700 dark:bg-neutral-900">

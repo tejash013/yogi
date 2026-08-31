@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Card, CardHeader, CardContent, Button, Badge } from '@/components/ui';
-import { PageHeader } from '@/components/common';
+import { PageHeader, TenantSelector } from '@/components/common';
 import { reportsApi } from '@/api';
-import { useOrderSyncStore } from '@/store';
+import { useOrderSyncStore, useTenantStore } from '@/store';
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('en-IN', {
@@ -12,6 +12,7 @@ const formatCurrency = (value: number) =>
   }).format(value || 0);
 
 export default function AdminReports() {
+  const { branchId, currentBranch } = useTenantStore();
   const [sales, setSales] = useState<any>({});
   const [revenue, setRevenue] = useState<any>({});
   const [expenses, setExpenses] = useState<any>({});
@@ -41,7 +42,7 @@ export default function AdminReports() {
     };
 
     void loadReports();
-  }, [refreshCount, syncVersion]);
+  }, [refreshCount, syncVersion, branchId]);
 
   const summary = useMemo(
     () => [
@@ -58,16 +59,21 @@ export default function AdminReports() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Reports"
-        description="Generate and view reports"
-        actions={<Button onClick={() => {
-          useOrderSyncStore.getState().notifyResourceChange({
-            type: 'update',
-            resource: 'report',
-            at: new Date().toISOString(),
-          });
-          setRefreshCount((count) => count + 1);
-        }} className="rounded-full bg-[#171412] text-white hover:bg-[#2a241f] dark:bg-[#f3d7a2] dark:text-[#171412]">Generate Report</Button>}
+        title="Performance Reports"
+        description={`Sales, revenue, and profit analytics for ${currentBranch?.name || 'Main Dining Hall'}`}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <TenantSelector variant="pill" />
+            <Button onClick={() => {
+              useOrderSyncStore.getState().notifyResourceChange({
+                type: 'update',
+                resource: 'report',
+                at: new Date().toISOString(),
+              });
+              setRefreshCount((count) => count + 1);
+            }} className="rounded-full bg-[#171412] text-white hover:bg-[#2a241f] dark:bg-[#f3d7a2] dark:text-[#171412]">Generate Report</Button>
+          </div>
+        }
       />
 
       {isLoading ? (

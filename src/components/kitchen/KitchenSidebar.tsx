@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/utils';
 import { ROUTES } from '@/constants';
 import { useAuthStore, useKitchenStore } from '@/store';
+import TenantSelector from '@/components/common/TenantSelector';
 
 const navItems = [
   {
@@ -94,6 +95,7 @@ export default function KitchenSidebar({ isOpen, onClose }: Props) {
         )}
       >
         <nav className="flex-1 overflow-y-auto px-3 py-4">
+          <TenantSelector variant="card" className="mb-3" />
           <ul className="space-y-1">
             {navItems.map((item) => {
               const isActive = location.pathname === item.href;

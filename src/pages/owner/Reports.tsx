@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Card, Button, Badge, Modal } from '@/components/ui';
-import { PageHeader } from '@/components/common';
+import { PageHeader, TenantSelector } from '@/components/common';
 import { reportsApi } from '@/api';
 import { formatCurrency } from '@/utils';
+import { useTenantStore } from '@/store';
 
 interface ReportSummary {
   type: 'sales' | 'revenue' | 'expenses' | 'summary';
@@ -13,6 +14,7 @@ interface ReportSummary {
 }
 
 export default function OwnerReports() {
+  const { branchId, currentBranch } = useTenantStore();
   const [salesData, setSalesData] = useState<any>({});
   const [revenueData, setRevenueData] = useState<any>({});
   const [expensesData, setExpensesData] = useState<any>({});
@@ -41,7 +43,7 @@ export default function OwnerReports() {
 
   useEffect(() => {
     void fetchReports();
-  }, []);
+  }, [branchId]);
 
   const nowFormatted = new Date().toLocaleDateString('en-IN', { dateStyle: 'medium' });
 
@@ -79,12 +81,15 @@ export default function OwnerReports() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Business Reports"
-        description="Generate, inspect, and export comprehensive business audits"
+        title="Business Reports & Audits"
+        description={`Generate, inspect, and export audits for ${currentBranch?.name || 'All Locations'}`}
         actions={
-          <Button onClick={fetchReports} isLoading={isLoading}>
-            Generate New Report
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <TenantSelector variant="pill" />
+            <Button onClick={fetchReports} isLoading={isLoading}>
+              Generate New Report
+            </Button>
+          </div>
         }
       />
 

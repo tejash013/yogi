@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Card, CardHeader, CardContent, Badge, Table, Button, Search } from '@/components/ui';
-import { PageHeader } from '@/components/common';
+import { PageHeader, TenantSelector } from '@/components/common';
 import { ordersApi } from '@/api';
-import { useOrderSyncStore } from '@/store';
+import { useOrderSyncStore, useTenantStore } from '@/store';
 import type { Column } from '@/components/ui';
 
 interface OrderRow {
@@ -46,6 +46,7 @@ const columns: Column<OrderRow>[] = [
 ];
 
 export default function AdminOrders() {
+  const { branchId, currentBranch } = useTenantStore();
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('All');
   const [search, setSearch] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -89,7 +90,7 @@ export default function AdminOrders() {
     };
 
     void loadOrders();
-  }, [orderSyncVersion]);
+  }, [orderSyncVersion, branchId]);
 
   const filteredOrders = useMemo(
     () =>
@@ -111,10 +112,11 @@ export default function AdminOrders() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Orders"
-        description="Track live order progress and manage kitchen flow"
+        title="Live Orders"
+        description={`Track orders, dine-in tables, and status for ${currentBranch?.name || 'Main Hall'}`}
         actions={
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="flex flex-wrap items-center gap-3">
+            <TenantSelector variant="pill" />
             <Search placeholder="Search orders..." value={search} onChange={(e) => setSearch(e.target.value)} onClear={() => setSearch('')} />
             <Button
               variant="outline"

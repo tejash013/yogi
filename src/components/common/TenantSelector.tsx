@@ -53,6 +53,30 @@ export default function TenantSelector({
         <span className="text-amber-800 dark:text-amber-300">{branchName}</span>
       </div>
     );
+  if (variant === 'card') {
+    return (
+      <div className={`rounded-2xl border border-neutral-200/80 bg-neutral-50/90 p-3 dark:border-neutral-700/80 dark:bg-neutral-800/80 ${className}`}>
+        <div className="flex items-center justify-between gap-1">
+          <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            Active Branch
+          </span>
+          <button
+            type="button"
+            onClick={() => setModalOpen(true)}
+            className="rounded-lg bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-600 hover:bg-amber-500/20 dark:text-amber-300"
+          >
+            Switch
+          </button>
+        </div>
+        <p className="mt-1.5 truncate text-xs font-bold text-neutral-900 dark:text-white">
+          {restaurantName}
+        </p>
+        <p className="truncate text-[11px] text-neutral-500 dark:text-neutral-400">
+          📍 {branchName}
+        </p>
+      </div>
+    );
   }
 
   if (variant === 'banner') {

@@ -1,14 +1,15 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Card } from '@/components/ui';
-import { PageHeader } from '@/components/common';
+import { PageHeader, TenantSelector } from '@/components/common';
 import RestaurantFloorView, { type TableItem } from '@/components/common/RestaurantFloorView';
 import { tablesApi } from '@/api';
 import { ROUTES } from '@/constants';
-import { useCartStore } from '@/store';
+import { useCartStore, useTenantStore } from '@/store';
 
 export default function CustomerTables() {
   const navigate = useNavigate();
+  const { branchId, currentBranch } = useTenantStore();
   const activeTableNumber = useCartStore((s) => s.tableNumber);
   const setTableNumber = useCartStore((s) => s.setTableNumber);
 
@@ -53,7 +54,7 @@ export default function CustomerTables() {
       void loadTables();
     }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [branchId]);
 
   const handleSelectTable = (table: TableItem) => {
     setTableNumber(table.number);
@@ -87,9 +88,10 @@ export default function CustomerTables() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <PageHeader
           title="Dining Room & Table Selection"
-          description="Explore our ambient dining room, choose where you want to sit, and place orders directly to your table."
+          description={`Explore seating and live tables at ${currentBranch?.name || 'Downtown Hall'}`}
         />
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <TenantSelector variant="pill" />
           <div className="flex rounded-2xl border border-neutral-200 bg-white p-1 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
             <button
               type="button"

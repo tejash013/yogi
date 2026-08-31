@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { FoodCard, LoadingSkeleton } from '@/components/customer';
+import { TenantSelector } from '@/components/common';
 import { categoriesApi, menuApi } from '@/api';
-import { useOrderSyncStore } from '@/store';
+import { useOrderSyncStore, useTenantStore } from '@/store';
 import type { MenuItem, Category } from '@/types';
 
 const FAVORITES_STORAGE_KEY = 'yogi_favorites';
@@ -44,6 +45,7 @@ const normalizeCategory = (item: any): Category => ({
 });
 
 export default function Menu() {
+  const { branchId, currentBranch } = useTenantStore();
   const [searchParams] = useSearchParams();
   const [search, setSearch] = useState(searchParams.get('q') || searchParams.get('search') || '');
   const [selectedCategory, setSelectedCategory] = useState<string>(searchParams.get('category') || 'all');
@@ -83,7 +85,7 @@ export default function Menu() {
     };
 
     void loadData();
-  }, [syncVersion]);
+  }, [syncVersion, branchId]);
 
   let filtered = [...menuItems];
 
@@ -116,14 +118,14 @@ export default function Menu() {
   );
 
   switch (sortBy) {
-    case 'price-low':
+    case 'price-asc':
       filtered.sort((a, b) => (a.discountPrice || a.price) - (b.discountPrice || b.price));
       break;
-    case 'price-high':
+    case 'price-desc':
       filtered.sort((a, b) => (b.discountPrice || b.price) - (a.discountPrice || a.price));
       break;
     case 'rating':
-      filtered.sort((a, b) => b.rating - a.rating);
+      filtered.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
       break;
     case 'popular':
       filtered.sort((a, b) => (b.isPopular ? 1 : 0) - (a.isPopular ? 1 : 0));
@@ -148,6 +150,17 @@ export default function Menu() {
 
   return (
     <div className="space-y-6">
+      {/* Menu Header with Branch Context */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">Our Menu</h1>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">
+            Freshly prepared dishes available at {currentBranch?.name || 'Main Dining Hall'}
+          </p>
+        </div>
+        <TenantSelector variant="pill" />
+      </div>
+
       {/* Header with Search */}
       <div className="relative">
         <svg className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-400 dark:text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">

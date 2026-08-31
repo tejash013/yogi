@@ -1,7 +1,8 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Button, Card, CardContent, Table, Badge, Search } from '@/components/ui';
-import { PageHeader } from '@/components/common';
+import { PageHeader, TenantSelector } from '@/components/common';
 import { employeesApi } from '@/api';
+import { useTenantStore } from '@/store';
 import type { Column } from '@/components/ui';
 import type { Employee, UserRole } from '@/types';
 
@@ -27,6 +28,7 @@ const columns: Column<EmployeeRow>[] = [
 ];
 
 export default function Employees() {
+  const { branchId, currentBranch } = useTenantStore();
   const [employees, setEmployees] = useState<EmployeeRow[]>([]);
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -63,7 +65,7 @@ export default function Employees() {
 
   useEffect(() => {
     void fetchEmployees();
-  }, [search]);
+  }, [search, branchId]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -96,10 +98,11 @@ export default function Employees() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Employees"
-        description="Manage your staff and track payroll status"
+        title="Staff & Team"
+        description={`Manage team members and shifts for ${currentBranch?.name || 'Main Hall'}`}
         actions={
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="flex flex-wrap items-center gap-3">
+            <TenantSelector variant="pill" />
             <Search
               placeholder="Search employees..."
               value={search}

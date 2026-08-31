@@ -11,6 +11,7 @@ import {
 import { cn } from '@/utils';
 import { ROUTES } from '@/constants';
 import { useCashierStore, formatINR } from '@/store';
+import TenantSelector from '@/components/common/TenantSelector';
 
 interface Props {
   isOpen: boolean;
@@ -86,6 +87,7 @@ const counters = useMemo(() => {
         )}
       >
         <nav className="flex-1 overflow-y-auto px-3 py-4">
+          <TenantSelector variant="card" className="mb-3" />
           <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wide text-neutral-400">
             Cashier
           </p>

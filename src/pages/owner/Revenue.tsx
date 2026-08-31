@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Card, Badge } from '@/components/ui';
-import { PageHeader } from '@/components/common';
+import { PageHeader, TenantSelector } from '@/components/common';
 import { ordersApi, reportsApi } from '@/api';
 import { formatCurrency } from '@/utils';
+import { useTenantStore } from '@/store';
 
 export default function Revenue() {
+  const { branchId, currentBranch } = useTenantStore();
   const [revenueData, setRevenueData] = useState<any>({});
   const [orders, setOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,7 +31,7 @@ export default function Revenue() {
     };
 
     void loadRevenue();
-  }, []);
+  }, [branchId]);
 
   const totalRevenue = Number(revenueData?.totalRevenue ?? orders.filter((o) => o.paymentStatus === 'paid').reduce((s, o) => s + Number(o.total || 0), 0));
 
@@ -111,7 +113,11 @@ export default function Revenue() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Revenue Analysis" description="Track revenue streams, billing volumes, and financial flow" />
+      <PageHeader
+        title="Revenue Analysis"
+        description={`Track revenue streams, billing volumes, and financial flow for ${currentBranch?.name || 'All Locations'}`}
+        actions={<TenantSelector variant="pill" />}
+      />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {streams.map((item) => (
