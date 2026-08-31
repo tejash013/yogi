@@ -3,13 +3,14 @@ import { Link } from 'react-router-dom';
 import { Button, Card } from '@/components/ui';
 import { QuantitySelector } from '@/components/customer';
 import { ROUTES } from '@/constants';
+import { offersApi } from '@/api';
 import { useCartStore } from '@/store';
 
 const TAX_RATE = 0.08;
 const DELIVERY_FEE = 2.99;
 
 export default function Cart() {
-const { items, subtotal, removeItem, updateQuantity, clearCart } = useCartStore();
+  const { items, subtotal, removeItem, updateQuantity, clearCart } = useCartStore();
   const [couponCode, setCouponCode] = useState('');
   const [couponApplied, setCouponApplied] = useState(false);
   const [couponDiscount, setCouponDiscount] = useState(0);
@@ -18,11 +19,29 @@ const { items, subtotal, removeItem, updateQuantity, clearCart } = useCartStore(
   const setTableNumber = useCartStore((s) => s.setTableNumber);
   const [instructions, setInstructions] = useState('');
 
-  const applyCoupon = () => {
-    if (couponCode.toUpperCase() === 'FIRST10') {
+  const applyCoupon = async () => {
+    const code = couponCode.trim();
+    if (!code) return;
+
+    try {
+      const response = await offersApi.validateCoupon(code);
+      const coupon = response?.data?.data;
+      if (coupon) {
+        const discountVal = coupon.discountType === 'percentage'
+          ? (subtotal * (Number(coupon.discountValue || 0) / 100))
+          : Number(coupon.discountValue || 0);
+        setCouponApplied(true);
+        setCouponDiscount(discountVal);
+        return;
+      }
+    } catch {
+      // Check fallback codes
+    }
+
+    if (code.toUpperCase() === 'FIRST10') {
       setCouponApplied(true);
       setCouponDiscount(10);
-    } else if (couponCode.toUpperCase() === 'WELCOME20') {
+    } else if (code.toUpperCase() === 'WELCOME20') {
       setCouponApplied(true);
       setCouponDiscount(subtotal * 0.2);
     } else {

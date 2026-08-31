@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { FoodCard, LoadingSkeleton } from '@/components/customer';
 import { categoriesApi, menuApi } from '@/api';
 import { useOrderSyncStore } from '@/store';
@@ -41,8 +42,9 @@ const normalizeCategory = (item: any): Category => ({
 });
 
 export default function Menu() {
-  const [search, setSearch] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [searchParams] = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get('q') || searchParams.get('search') || '');
+  const [selectedCategory, setSelectedCategory] = useState<string>(searchParams.get('category') || 'all');
   const [sortBy, setSortBy] = useState<string>('recommended');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 2000]);
   const [showVegOnly, setShowVegOnly] = useState(false);
