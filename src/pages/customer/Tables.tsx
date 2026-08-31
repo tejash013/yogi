@@ -49,6 +49,10 @@ export default function CustomerTables() {
 
   useEffect(() => {
     void loadTables();
+    const interval = setInterval(() => {
+      void loadTables();
+    }, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleSelectTable = (table: TableItem) => {

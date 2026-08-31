@@ -39,6 +39,31 @@ export const authenticate: RequestHandler = async (req: any, _res, next) => {
   }
 };
 
+export const optionalAuth: RequestHandler = async (req: any, _res, next) => {
+  try {
+    const auth = req.headers.authorization as string | undefined;
+    if (!auth || !auth.startsWith('Bearer ')) {
+      return next();
+    }
+    const token = auth.split(' ')[1];
+    const payload = verifyAccessToken(token);
+    const user = await userRepo.findById(String(payload.id));
+    if (user && isSupportedRole(user.role) && user.status === 'active' && payload.tokenVersion === user.tokenVersion) {
+      req.user = {
+        id: String(user._id),
+        role: user.role,
+        email: user.email,
+        tokenVersion: user.tokenVersion,
+        restaurantId: String(user.restaurantId),
+        branchId: String(user.branchId),
+      };
+    }
+  } catch {
+    // Ignore invalid token and continue as guest
+  }
+  return next();
+};
+
 function resStatusUnauthorized(next: any) {
   const err: any = new Error('Unauthorized');
   err.status = 401;

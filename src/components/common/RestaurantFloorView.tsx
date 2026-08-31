@@ -115,8 +115,15 @@ export default function RestaurantFloorView({
     setReservationSuccess(false);
   };
 
-  const handleSitAndOrder = (table: TableItem) => {
+  const handleSitAndOrder = async (table: TableItem) => {
     setStoreTableNumber(table.number);
+    if (!table.id.startsWith('virtual-')) {
+      try {
+        await tablesApi.updateStatus(table.id, 'occupied');
+      } catch (err) {
+        console.error('Failed to update table occupancy in database', err);
+      }
+    }
     if (onSelectTable) onSelectTable(table);
     setActiveModalTable(null);
     navigate(ROUTES.CUSTOMER.MENU);
@@ -127,10 +134,11 @@ export default function RestaurantFloorView({
     if (!activeModalTable) return;
     setIsUpdatingStatus(true);
     try {
+      if (!activeModalTable.id.startsWith('virtual-')) {
+        await tablesApi.reserve(activeModalTable.id);
+      }
       if (onStatusChange && !activeModalTable.id.startsWith('virtual-')) {
         await onStatusChange(activeModalTable.id, 'reserved');
-      } else if (!activeModalTable.id.startsWith('virtual-')) {
-        await tablesApi.updateStatus(activeModalTable.id, 'reserved');
       }
       setReservationSuccess(true);
     } catch {

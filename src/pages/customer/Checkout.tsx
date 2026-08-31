@@ -62,18 +62,27 @@ export default function Checkout() {
   }, []);
 
   useEffect(() => {
-    tablesApi.getAll({ status: 'available' })
+    tablesApi.getAll()
       .then((res) => {
         const list = Array.isArray(res.data?.data) ? res.data.data : [];
-        setTables(list
-          .filter((table: any) => table.status === 'available')
-          .map((table: any) => ({
-            id: String(table._id ?? table.id),
-            label: String(table.label ?? table.number ?? 'Table'),
-          })));
+        const mapped = list.map((table: any) => ({
+          id: String(table._id ?? table.id),
+          label: String(table.label ?? `Table ${table.number ?? ''}`),
+          status: String(table.status ?? 'available'),
+          number: Number.parseInt(String(table.label ?? table.number).replace(/\D/g, ''), 10),
+        }));
+        setTables(mapped);
+
+        if (cartTableNumber) {
+          const match = mapped.find((t: any) => t.number === cartTableNumber || t.label.includes(String(cartTableNumber)));
+          if (match) {
+            setTableId(match.id);
+            setTableNumber(String(cartTableNumber));
+          }
+        }
       })
       .catch(() => setTables([]));
-  }, []);
+  }, [cartTableNumber]);
 
   const deliveryFee = diningType === 'delivery' ? standardDeliveryFee : 0;
   const actualTax = subtotal * (taxPercent / 100);

@@ -72,6 +72,39 @@ router.patch('/:id/status', authenticate, requirePermission(permissions.orderSta
     return res.status(404).json(failure('Order not found'));
   }
 
+  // If order was attached to a table and has finished, update table status in database
+  if (order.table && (status === 'completed' || status === 'cancelled')) {
+    const tableId = order.table._id ?? order.table;
+    const activeOrders = await orderRepo.findPaginated(
+      {
+        table: tableId,
+        status: { $in: ['pending', 'confirmed', 'preparing', 'ready', 'served'] },
+        _id: { $ne: order._id },
+        ...tenantFilter(req),
+      },
+      1,
+      1
+    );
+
+    if (!activeOrders || activeOrders.total === 0) {
+      const nextStatus = status === 'completed' ? 'cleaning' : 'available';
+      const updatedTable = await Table.findOneAndUpdate(
+        { _id: tableId, ...tenantFilter(req) },
+        { status: nextStatus },
+        { new: true }
+      ).exec();
+
+      if (updatedTable) {
+        try {
+          const io = getIO();
+          io.emit('table:status:update', { tableId: updatedTable._id, status: updatedTable.status, label: updatedTable.label });
+        } catch {
+          // Socket is optional
+        }
+      }
+    }
+  }
+
   emitOrderEvent('order:status:update', order, { id: order.id, status: order.status });
   await recordAudit({
     actor: (req as any).user.id,
@@ -129,9 +162,31 @@ router.post('/', authenticate, requirePermission(permissions.orderCreate), valid
   }
 
   let resolvedTableId = undefined;
-  if (tableId && String(tableId).match(/^[a-fA-F0-9]{24}$/)) {
-    const table = await Table.findOne({ _id: tableId, ...tenant }).exec();
-    if (table) resolvedTableId = table._id;
+  if (tableId) {
+    let table = null;
+    if (String(tableId).match(/^[a-fA-F0-9]{24}$/)) {
+      table = await Table.findOne({ _id: tableId, ...tenant }).exec();
+    }
+    if (!table) {
+      const num = Number.parseInt(String(tableId).replace(/\D/g, ''), 10);
+      table = await Table.findOne({
+        $or: [
+          { label: new RegExp(`^(Table\\s*)?${tableId}$`, 'i') },
+          ...(Number.isFinite(num) ? [{ label: new RegExp(`^(Table\\s*)?${num}$`, 'i') }] : []),
+        ],
+        ...tenant,
+      }).exec();
+    }
+    if (table) {
+      resolvedTableId = table._id;
+      await Table.updateOne({ _id: table._id }, { status: 'occupied' }).exec();
+      try {
+        const io = getIO();
+        io.emit('table:status:update', { tableId: table._id, status: 'occupied', label: table.label });
+      } catch {
+        // Socket is optional
+      }
+    }
   }
 
   let resolvedItems: Array<{ menuItem: any; quantity: number; unitPrice: number }> = [];

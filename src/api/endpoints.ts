@@ -139,6 +139,9 @@ export const tablesApi = {
 
   updateStatus: (id: string, status: Table['status']) =>
     apiClient.patch<ApiResponse<Table>>(`/api/tables/${id}/status`, { status }),
+
+  reserve: (id: string) =>
+    apiClient.post<ApiResponse<Table>>(`/api/tables/${id}/reserve`),
 };
 
 // Employees API
