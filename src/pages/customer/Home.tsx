@@ -63,6 +63,15 @@ export default function CustomerHome() {
   const offerScrollRef = useRef<HTMLDivElement>(null);
   const [activeOfferIndex, setActiveOfferIndex] = useState(0);
 
+  // Top-level Tenant & Location Hooks
+  const branchId = useTenantStore((s) => s.branchId);
+  const availableBranches = useTenantStore((s) => s.availableBranches);
+  const userLocation = useTenantStore((s) => s.userLocation);
+  const isLocating = useTenantStore((s) => s.isLocating);
+  const requestUserLocation = useTenantStore((s) => s.requestUserLocation);
+  const setModalOpen = useTenantStore((s) => s.setModalOpen);
+  const switchBranch = useTenantStore((s) => s.switchBranch);
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -248,16 +257,16 @@ export default function CustomerHome() {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => void useTenantStore.getState().requestUserLocation()}
-              disabled={useTenantStore((s) => s.isLocating)}
+              onClick={() => void requestUserLocation()}
+              disabled={isLocating}
               className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 transition-all hover:bg-emerald-100 dark:border-emerald-500/20 dark:bg-emerald-950/40 dark:text-emerald-300"
             >
-              {useTenantStore((s) => s.isLocating) ? (
+              {isLocating ? (
                 <>
                   <span className="h-3 w-3 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
                   <span>Detecting GPS...</span>
                 </>
-              ) : useTenantStore((s) => s.userLocation) ? (
+              ) : userLocation ? (
                 <>
                   <span>🎯 GPS Active</span>
                   <span className="text-[10px] opacity-75">(Refresh)</span>
@@ -270,7 +279,7 @@ export default function CustomerHome() {
             </button>
             <button
               type="button"
-              onClick={() => useTenantStore.getState().setModalOpen(true)}
+              onClick={() => setModalOpen(true)}
               className="rounded-xl border border-neutral-200 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200"
             >
               View All Locations
@@ -280,14 +289,13 @@ export default function CustomerHome() {
 
         {/* Branch Cards */}
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {useTenantStore((s) => s.availableBranches).slice(0, 3).map((br, index) => {
-            const isSelected = br._id === useTenantStore.getState().branchId;
-            const userLoc = useTenantStore((s) => s.userLocation);
-            const isClosest = index === 0 && userLoc && br.distanceKm !== undefined;
+          {availableBranches.slice(0, 3).map((br, index) => {
+            const isSelected = br._id === branchId;
+            const isClosest = index === 0 && userLocation && br.distanceKm !== undefined;
             return (
               <div
                 key={br._id}
-                onClick={() => useTenantStore.getState().switchBranch(br._id)}
+                onClick={() => switchBranch(br._id)}
                 className={`group cursor-pointer rounded-2xl border p-4 transition-all ${
                   isSelected
                     ? 'border-emerald-500 bg-emerald-50/50 shadow-sm dark:border-emerald-500/60 dark:bg-emerald-950/20'
