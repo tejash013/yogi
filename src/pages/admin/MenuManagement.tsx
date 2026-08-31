@@ -100,13 +100,17 @@ export default function MenuManagement() {
       if (!form.title || !form.category) {
         throw new Error('Menu name and category are required.');
       }
+      const availableQty = Number(form.availableQty);
+      if (!Number.isInteger(availableQty) || availableQty < 0) {
+        throw new Error('Availability quantity must be a whole number of zero or more.');
+      }
 
       const payload = {
         title: form.title,
         description: form.description || 'New menu item',
         category: form.category,
         price: Number(form.price || 0),
-        availableQty: Number(form.availableQty || 10),
+        availableQty,
         image: form.image || undefined,
         tags: form.tags ? form.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : [],
         isPopular: form.isPopular,
@@ -185,6 +189,7 @@ export default function MenuManagement() {
       ),
     },
     { key: 'category', header: 'Category' },
+    { key: 'availableQty', header: 'Available Qty', render: (item) => `${item.availableQty} available` },
     { key: 'price', header: 'Price', render: (item) => `₹${item.price.toFixed(2)}` },
     {
       key: 'status',
@@ -235,7 +240,7 @@ export default function MenuManagement() {
                 <input type="number" min="0" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900" required />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-200">Available stock</label>
+                <label className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-200">Availability quantity</label>
                 <input type="number" min="0" step="1" value={form.availableQty} onChange={(e) => setForm({ ...form, availableQty: e.target.value })} className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900" required />
               </div>
               <div className="md:col-span-2">
