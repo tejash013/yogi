@@ -50,13 +50,17 @@ async function persistRefreshToken(userId: any, token: string) {
 }
 
 const nameRegex = /^[A-Za-z][A-Za-z\s'\-]{0,}$/;
-const phoneRegex = /^\+[1-9][0-9]{7,14}$/;
+const phoneRegex = /^\+?[1-9][0-9\s-]{6,14}$/;
 const localPartHasLetter = (email: string) => {
   const parts = email.split('@');
   return parts.length === 2 && /[A-Za-z]/.test(parts[0]);
 };
 
-const loginSchema = z.object({ email: z.string().email().refine(localPartHasLetter, { message: 'Invalid email' }), password: z.string().min(1) });
+const loginSchema = z.object({
+  email: z.string().email().refine(localPartHasLetter, { message: 'Invalid email' }).optional(),
+  phone: z.string().regex(phoneRegex, { message: 'Invalid phone number' }).optional(),
+  password: z.string().min(1),
+}).strict().refine((data) => Boolean(data.email || data.phone), { message: 'Email or phone is required' });
 const registerSchema = z.object({
   email: z.string().email().refine(localPartHasLetter, { message: 'Invalid email' }),
   password: z.string().min(8).max(72).regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d])/, { message: 'Password must include uppercase, lowercase, number and symbol' }),
@@ -73,13 +77,13 @@ const resetSchema = z.object({ email: z.string().email().refine(localPartHasLett
 const verifyOtpSchema = z.object({ email: z.string().email().refine(localPartHasLetter, { message: 'Invalid email' }), otp: z.string().min(1) });
 
 router.post('/login', validateBody(loginSchema), async (req, res) => {
-  const { email, password } = req.body;
+  const { email, phone, password } = req.body;
 
-  if (!email || !password) {
-    return res.status(400).json(failure('Email and password are required'));
+  if ((!email && !phone) || !password) {
+    return res.status(400).json(failure('Email or phone and password are required'));
   }
 
-  const user = await userRepo.findByEmail(email);
+  const user = email ? await userRepo.findByEmail(email) : await userRepo.findByPhone(phone);
   const passwordValid = user && user.password ? verifyPassword(password, user.password) : false;
   if (!user || !user.password || !passwordValid || !isSupportedRole(user.role)) {
     return res.status(401).json(failure('Invalid credentials'));

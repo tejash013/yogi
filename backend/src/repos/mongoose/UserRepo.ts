@@ -6,6 +6,10 @@ class UserRepo implements IUserRepo {
     return User.findOne({ email }).exec();
   }
 
+  async findByPhone(phone: string) {
+    return User.findOne({ phone }).exec();
+  }
+
   async create(data: any) {
     const u = new User(data);
     await u.save();

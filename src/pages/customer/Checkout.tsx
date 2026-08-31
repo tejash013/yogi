@@ -62,7 +62,7 @@ export default function Checkout() {
   }, []);
 
   useEffect(() => {
-    tablesApi.getAll()
+    tablesApi.getAll({ status: 'available' })
       .then((res) => {
         const list = Array.isArray(res.data?.data) ? res.data.data : [];
         setTables(list

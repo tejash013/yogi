@@ -59,13 +59,19 @@ export default function Login() {
     clearError();
     if (!validate()) return;
 
-    const loginEmail = loginMethod === 'email' ? email : `${mobile}@mobile.demo`;
-    await login({ email: loginEmail, password });
+    if (loginMethod === 'email') {
+      await login({ email, password });
+    } else {
+      const normalizedMobile = mobile.replace(/\D/g, '');
+      await login({ phone: `+${normalizedMobile}`, password });
+    }
 
     const { isAuthenticated } = useAuthStore.getState();
     if (isAuthenticated) {
       const role = useAuthStore.getState().user?.role;
-      if (role === 'owner') {
+      if (role === 'platformAdmin') {
+        navigate(ROUTES.WORKSPACE);
+      } else if (role === 'owner') {
         navigate(ROUTES.OWNER.DASHBOARD);
       } else if (role === 'manager') {
         navigate(ROUTES.ADMIN.DASHBOARD);

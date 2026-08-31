@@ -276,7 +276,8 @@ export interface Offer {
 
 // Auth Types
 export interface LoginCredentials {
-  email: string;
+  email?: string;
+  phone?: string;
   password: string;
 }
 
