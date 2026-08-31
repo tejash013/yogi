@@ -8,34 +8,25 @@ import type { Column } from '@/components/ui';
 type MenuItemRow = {
   id?: string;
   title: string;
+  description: string;
   category: string;
+  categoryId: string;
   price: number;
+  availableQty: number;
+  image: string;
+  tags: string[];
+  isPopular: boolean;
+  isRecommended: boolean;
   status: string;
   rating: number;
 };
-
-
-const columns: Column<MenuItemRow>[] = [
-  { key: 'title', header: 'Name' },
-  { key: 'category', header: 'Category' },
-  { key: 'price', header: 'Price', render: (item) => `₹${item.price.toFixed(2)}` },
-  {
-    key: 'status',
-    header: 'Status',
-    render: (item) => (
-      <Badge variant={item.status === 'Available' ? 'success' : 'error'} size="sm">
-        {item.status}
-      </Badge>
-    ),
-  },
-  { key: 'rating', header: 'Rating' },
-];
 
 export default function MenuManagement() {
   const [search, setSearch] = useState('');
   const [items, setItems] = useState<MenuItemRow[]>([]);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | undefined>();
   const syncVersion = useOrderSyncStore((state) => state.version);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
@@ -61,8 +52,15 @@ export default function MenuManagement() {
       const nextItems = (menuResponse.data.data ?? []).map((item: any) => ({
         id: item._id ?? item.id,
         title: item.title ?? item.name,
+        description: item.description ?? '',
         category: item.categoryName ?? item.category?.name ?? 'General',
+        categoryId: item.category?._id ?? item.categoryId ?? item.category ?? '',
         price: Number(item.price ?? 0),
+        availableQty: Number(item.availableQty ?? 0),
+        image: item.image ?? '',
+        tags: Array.isArray(item.tags) ? item.tags : [],
+        isPopular: Boolean(item.isPopular),
+        isRecommended: Boolean(item.isRecommended),
         status: item.isActive === false ? 'Out of Stock' : 'Available',
         rating: Number(item.rating ?? 4.5),
       }));
@@ -103,7 +101,7 @@ export default function MenuManagement() {
         throw new Error('Menu name and category are required.');
       }
 
-      await menuApi.create({
+      const payload = {
         title: form.title,
         description: form.description || 'New menu item',
         category: form.category,
@@ -113,7 +111,13 @@ export default function MenuManagement() {
         tags: form.tags ? form.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : [],
         isPopular: form.isPopular,
         isRecommended: form.isRecommended,
-      });
+      };
+
+      if (editingId) {
+        await menuApi.update(editingId, payload);
+      } else {
+        await menuApi.create(payload);
+      }
 
       useOrderSyncStore.getState().notifyResourceChange({
         type: 'create',
@@ -122,6 +126,7 @@ export default function MenuManagement() {
       });
 
       setForm({ title: '', description: '', category: '', price: '0', availableQty: '10', image: '', tags: '', isPopular: false, isRecommended: false });
+      setEditingId(undefined);
       setShowForm(false);
       await loadData();
     } catch (submitError) {
@@ -131,6 +136,65 @@ export default function MenuManagement() {
     }
   };
 
+  const resetForm = () => {
+    setForm({ title: '', description: '', category: '', price: '0', availableQty: '10', image: '', tags: '', isPopular: false, isRecommended: false });
+    setEditingId(undefined);
+    setShowForm(false);
+  };
+
+  const editItem = (item: MenuItemRow) => {
+    setForm({
+      title: item.title,
+      description: item.description,
+      category: item.categoryId,
+      price: String(item.price),
+      availableQty: String(item.availableQty),
+      image: item.image,
+      tags: item.tags.join(', '),
+      isPopular: item.isPopular,
+      isRecommended: item.isRecommended,
+    });
+    setEditingId(item.id);
+    setShowForm(true);
+  };
+
+  const handleImageFile = (file: File | undefined) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image file.');
+      return;
+    }
+    if (file.size > 700 * 1024) {
+      setError('Please choose an image smaller than 700 KB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setForm((current) => ({ ...current, image: String(reader.result) }));
+    reader.readAsDataURL(file);
+  };
+
+  const columns: Column<MenuItemRow>[] = [
+    {
+      key: 'title',
+      header: 'Name',
+      render: (item) => (
+        <div className="flex items-center gap-3">
+          {item.image ? <img src={item.image} alt="" className="h-10 w-10 rounded-lg object-cover" /> : <div className="h-10 w-10 rounded-lg bg-neutral-100 dark:bg-neutral-800" />}
+          <span>{item.title}</span>
+        </div>
+      ),
+    },
+    { key: 'category', header: 'Category' },
+    { key: 'price', header: 'Price', render: (item) => `₹${item.price.toFixed(2)}` },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (item) => <Badge variant={item.status === 'Available' ? 'success' : 'error'} size="sm">{item.status}</Badge>,
+    },
+    { key: 'rating', header: 'Rating' },
+    { key: 'id', header: 'Actions', render: (item) => <Button size="sm" variant="outline" onClick={() => editItem(item)}>Edit</Button> },
+  ];
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -139,7 +203,7 @@ export default function MenuManagement() {
         actions={
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <Search placeholder="Search menu..." value={search} onChange={(e) => setSearch(e.target.value)} onClear={() => setSearch('')} />
-            <Button onClick={() => setShowForm((current) => !current)}>{showForm ? 'Close' : 'Add New Item'}</Button>
+            <Button onClick={() => (showForm ? resetForm() : setShowForm(true))}>{showForm ? 'Close' : 'Add New Item'}</Button>
           </div>
         }
       />
@@ -147,6 +211,7 @@ export default function MenuManagement() {
       {showForm ? (
         <Card className="rounded-[1.5rem] border-neutral-200 dark:border-neutral-700">
           <CardContent className="p-6">
+            <h2 className="mb-4 text-lg font-semibold text-neutral-900 dark:text-white">{editingId ? 'Edit menu item' : 'Add menu item'}</h2>
             <form onSubmit={handleSubmit} className="grid gap-4 md:grid-cols-2">
               <div className="md:col-span-2">
                 <label className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-200">Menu item name</label>
@@ -176,6 +241,9 @@ export default function MenuManagement() {
               <div className="md:col-span-2">
                 <label className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-200">Image URL</label>
                 <input value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900" placeholder="https://..." />
+                <label className="mt-2 block text-sm font-medium text-neutral-700 dark:text-neutral-200">Or choose from disk</label>
+                <input type="file" accept="image/*" onChange={(e) => handleImageFile(e.target.files?.[0])} className="w-full text-sm text-neutral-600 file:mr-3 file:rounded-lg file:border-0 file:bg-primary-50 file:px-3 file:py-2 file:font-semibold file:text-primary-700 dark:text-neutral-300 dark:file:bg-primary-950 dark:file:text-primary-300" />
+                {form.image ? <img src={form.image} alt="Selected menu item" className="mt-2 h-24 w-24 rounded-xl object-cover" /> : null}
               </div>
               <div className="md:col-span-2">
                 <label className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-200">Tags</label>
@@ -186,8 +254,8 @@ export default function MenuManagement() {
                 <label className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-200"><input type="checkbox" checked={form.isRecommended} onChange={(e) => setForm({ ...form, isRecommended: e.target.checked })} /> Recommended</label>
               </div>
               <div className="md:col-span-2 flex justify-end gap-3">
-                <Button type="button" variant="ghost" onClick={() => setShowForm(false)}>Cancel</Button>
-                <Button type="submit" disabled={isSaving}>{isSaving ? 'Saving...' : 'Save item'}</Button>
+                <Button type="button" variant="ghost" onClick={resetForm}>Cancel</Button>
+                <Button type="submit" disabled={isSaving}>{isSaving ? 'Saving...' : editingId ? 'Update item' : 'Save item'}</Button>
               </div>
             </form>
           </CardContent>

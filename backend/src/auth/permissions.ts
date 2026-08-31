@@ -24,6 +24,8 @@ export const permissions = {
   tablesManage: 'tables:manage',
   settingsRead: 'settings:read',
   settingsManage: 'settings:manage',
+  reviewsRead: 'reviews:read',
+  reviewsCreate: 'reviews:create',
 } as const;
 
 export type Permission = (typeof permissions)[keyof typeof permissions];
@@ -42,6 +44,8 @@ const rolePermissions: Record<Role, readonly Permission[]> = {
     permissions.invoicesRead,
     permissions.offersRead,
     permissions.settingsRead,
+    permissions.reviewsRead,
+    permissions.reviewsCreate,
   ],
   cashier: [
     permissions.menuRead,

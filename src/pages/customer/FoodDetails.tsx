@@ -3,9 +3,11 @@ import { useParams, Link } from 'react-router-dom';
 import { Badge, Button, Card } from '@/components/ui';
 import { QuantitySelector, Rating, FoodCard } from '@/components/customer';
 import { ROUTES } from '@/constants';
-import { menuApi } from '@/api';
+import { menuApi, reviewsApi } from '@/api';
 import { useCartStore } from '@/store';
-import type { MenuItem, CartItem } from '@/types';
+import type { MenuItem, CartItem, MenuReview } from '@/types';
+
+const FAVORITES_STORAGE_KEY = 'yogi_favorites';
 
 const normalizeMenuItem = (item: any): MenuItem => ({
   id: String(item._id ?? item.id ?? ''),
@@ -31,20 +33,6 @@ const normalizeMenuItem = (item: any): MenuItem => ({
   createdAt: item.createdAt ?? new Date().toISOString(),
 });
 
-interface Review {
-  id: string;
-  userName: string;
-  rating: number;
-  comment: string;
-  date: string;
-}
-
-const sampleReviews: Review[] = [
-  { id: 'r1', userName: 'Sarah M.', rating: 5, comment: 'Absolutely delicious! The flavors were perfectly balanced.', date: '2025-03-15' },
-  { id: 'r2', userName: 'John D.', rating: 4, comment: 'Great dish, very fresh ingredients. Will order again.', date: '2025-03-12' },
-  { id: 'r3', userName: 'Emily R.', rating: 5, comment: 'One of the best I\'ve had. Highly recommended!', date: '2025-03-10' },
-];
-
 export default function FoodDetails() {
   const { id } = useParams();
   const addItem = useCartStore((s) => s.addItem);
@@ -55,6 +43,24 @@ export default function FoodDetails() {
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
   const [addedToCart, setAddedToCart] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [reviews, setReviews] = useState<MenuReview[]>([]);
+
+  useEffect(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem(FAVORITES_STORAGE_KEY) || '[]');
+      setIsFavorite(Array.isArray(stored) && stored.includes(String(id)));
+    } catch {
+      setIsFavorite(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    reviewsApi.getForMenuItem(id)
+      .then((response) => setReviews(response.data?.data ?? []))
+      .catch(() => setReviews([]));
+  }, [id]);
 
   useEffect(() => {
     const loadItem = async () => {
@@ -135,6 +141,20 @@ export default function FoodDetails() {
     setTimeout(() => setAddedToCart(false), 1500);
   };
 
+  const toggleFavorite = () => {
+    try {
+      const stored = JSON.parse(localStorage.getItem(FAVORITES_STORAGE_KEY) || '[]');
+      const favorites = Array.isArray(stored) ? stored.map(String) : [];
+      const next = favorites.includes(item.id)
+        ? favorites.filter((favoriteId) => favoriteId !== item.id)
+        : [...favorites, item.id];
+      localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(next));
+      setIsFavorite(next.includes(item.id));
+    } catch {
+      setIsFavorite(false);
+    }
+  };
+
   const toggleAddon = (addonId: string) => {
     setSelectedAddons((prev) =>
       prev.includes(addonId)
@@ -199,9 +219,20 @@ export default function FoodDetails() {
             {item.isRecommended && <Badge variant="success" size="sm">Recommended</Badge>}
           </div>
 
-          <h1 className="mb-2 text-2xl font-bold text-neutral-900 dark:text-white lg:text-3xl">
-            {item.name}
-          </h1>
+          <div className="mb-2 flex items-start justify-between gap-4">
+            <h1 className="text-2xl font-bold text-neutral-900 dark:text-white lg:text-3xl">{item.name}</h1>
+            <button
+              type="button"
+              onClick={toggleFavorite}
+              aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              className="rounded-full p-2 text-red-500 transition hover:bg-red-50 dark:hover:bg-red-950/30"
+            >
+              <svg className="h-6 w-6" viewBox="0 0 24 24" fill={isFavorite ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </button>
+          </div>
 
           <div className="mb-4 flex items-center gap-4">
             <Rating value={item.rating} readonly showValue totalReviews={item.totalReviews} />
@@ -376,24 +407,26 @@ export default function FoodDetails() {
       {/* Reviews */}
       <section>
         <h2 className="mb-4 text-lg font-bold text-neutral-900 dark:text-white">
-          Reviews ({sampleReviews.length})
+          Reviews ({reviews.length})
         </h2>
         <div className="space-y-4">
-          {sampleReviews.map((review) => (
-            <Card key={review.id}>
+          {reviews.length === 0 ? (
+            <Card><p className="text-sm text-neutral-500">No reviews yet. Be the first to review this dish.</p></Card>
+          ) : reviews.map((review) => (
+            <Card key={review._id ?? review.id}>
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-50 text-sm font-bold text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
-                    {review.userName.charAt(0)}
+                    {(review.user?.firstName ?? 'C').charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <p className="font-semibold text-neutral-900 dark:text-white">{review.userName}</p>
+                    <p className="font-semibold text-neutral-900 dark:text-white">{`${review.user?.firstName ?? ''} ${review.user?.lastName ?? ''}`.trim() || 'Customer'}</p>
                     <Rating value={review.rating} readonly size="sm" />
                   </div>
                 </div>
-                <span className="text-xs text-neutral-400">{review.date}</span>
+                <span className="text-xs text-neutral-400">{new Date(review.createdAt).toLocaleDateString()}</span>
               </div>
-              <p className="mt-3 text-sm text-neutral-600 dark:text-neutral-400">{review.comment}</p>
+              <p className="mt-3 text-sm text-neutral-600 dark:text-neutral-400">{review.comment || review.subject || 'No comment provided.'}</p>
             </Card>
           ))}
         </div>

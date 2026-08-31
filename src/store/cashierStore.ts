@@ -88,7 +88,7 @@ interface CashierState {
   toggleShift: () => void;
   setSelectedOrder: (id: string | null) => void;
   createNewBill: (orderType?: CashierOrder['orderType'], tableNumber?: string, customerName?: string) => void;
-  updateBillInfo: (data: { orderType?: CashierOrder['orderType']; tableNumber?: string; customerName?: string; customerPhone?: string }) => void;
+  updateBillInfo: (data: { orderType?: CashierOrder['orderType']; tableId?: string; tableNumber?: string; customerName?: string; customerPhone?: string }) => void;
   addBillItem: (item: CashierOrderItem) => void;
   removeBillItem: (itemId: string) => void;
   updateQuantity: (itemId: string, delta: number) => void;
@@ -138,7 +138,8 @@ const normalizeCashierOrder = (order: any): CashierOrder => {
   return {
     id: orderId,
     orderNumber: order?.orderNumber ?? `ORD-${orderId.slice(-6).toUpperCase()}`,
-    tableNumber: order?.table ?? order?.tableNumber ?? undefined,
+    tableId: order?.table?._id ?? order?.tableId,
+    tableNumber: order?.table?.label ? Number(String(order.table.label).replace(/\D/g, '')) || undefined : order?.tableNumber ?? undefined,
     customer: normalizeCashierCustomer(order?.user),
     orderType: (order?.orderType ?? 'dine-in') as CashierOrder['orderType'],
     status: mapStatus(statusValue),
@@ -518,6 +519,7 @@ splitPayments: [],
     const updatedBill: CashierOrder = {
       ...bill,
       orderType: data.orderType ?? bill.orderType,
+      tableId: data.tableId !== undefined ? data.tableId || undefined : bill.tableId,
       tableNumber: data.tableNumber !== undefined ? (Number(data.tableNumber) || undefined) : bill.tableNumber,
       customer: updatedCustomer,
     };
@@ -932,6 +934,7 @@ splitPayments: [],
           quantity: i.quantity,
         })),
         orderType: bill.orderType,
+        tableId: bill.tableId,
         paymentStatus: 'pending',
         notes: [
           bill.customer.name ? `Customer: ${bill.customer.name}` : '',

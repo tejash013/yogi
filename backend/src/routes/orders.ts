@@ -198,7 +198,11 @@ router.put('/:id', authenticate, requirePermission(permissions.orderCreate), asy
     return res.status(404).json(failure('Order not found'));
   }
 
-  let resolvedItems = existingOrder.items;
+  let resolvedItems: Array<{ menuItem: any; quantity: number; unitPrice: number }> = existingOrder.items.map((item: any) => ({
+    menuItem: item.menuItem,
+    quantity: item.quantity,
+    unitPrice: item.unitPrice,
+  }));
   let subtotal = existingOrder.subtotal;
   let taxes = existingOrder.taxes;
   let total = existingOrder.total;
@@ -234,6 +238,10 @@ router.put('/:id', authenticate, requirePermission(permissions.orderCreate), asy
     },
     tenant
   );
+
+  if (!updatedOrder) {
+    return res.status(404).json(failure('Order not found'));
+  }
 
   emitOrderEvent('order:update', updatedOrder, { id: updatedOrder.id });
   return res.json(success(updatedOrder, 'Order updated successfully'));

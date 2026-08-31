@@ -15,6 +15,7 @@ import {
   settingsRouter,
   tablesRouter,
   usersRouter,
+  reviewsRouter,
 } from './routes/index.js';
 import { checkDbConnection } from './db.js';
 import { errorHandler } from './middleware/errorHandler.js';
@@ -146,6 +147,7 @@ app.use('/api/reports', reportsRouter);
 app.use('/api/schema', schemaRouter);
 app.use('/api/settings', settingsRouter);
 app.use('/api/users', usersRouter);
+app.use('/api/reviews', reviewsRouter);
 app.use('/api/tenants', tenantsRouter);
 
 app.use((_req, res) => {

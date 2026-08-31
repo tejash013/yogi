@@ -11,6 +11,7 @@ import schemaRouter from './schemaRoutes.js';
 import settingsRouter from './settings.js';
 import tablesRouter from './tables.js';
 import usersRouter from './users.js';
+import reviewsRouter from './reviews.js';
 
 export {
   authRouter,
@@ -26,4 +27,5 @@ export {
   settingsRouter,
   tablesRouter,
   usersRouter,
+  reviewsRouter,
 };

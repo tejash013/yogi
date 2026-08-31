@@ -18,6 +18,7 @@ PaginationParams,
   User,
   Restaurant,
   Branch,
+  MenuReview,
 } from '@/types';
 
 // Auth API
@@ -61,6 +62,9 @@ export const menuApi = {
   create: (item: Partial<MenuItem> & { title?: string; category?: string; availableQty?: number }) =>
     apiClient.post<ApiResponse<MenuItem>>('/api/menu', item),
 
+  update: (id: string, item: Partial<MenuItem> & { title?: string; category?: string; availableQty?: number }) =>
+    apiClient.patch<ApiResponse<MenuItem>>(`/api/menu/${id}`, item),
+
   getPopular: () =>
     apiClient.get<ApiResponse<MenuItem[]>>('/api/menu/popular'),
 
@@ -85,6 +89,13 @@ export const categoriesApi = {
     apiClient.post<ApiResponse<Category>>('/api/categories', payload),
 };
 
+export const reviewsApi = {
+  getForMenuItem: (menuItemId: string) =>
+    apiClient.get<ApiResponse<MenuReview[]>>(`/api/reviews/menu/${menuItemId}`),
+  create: (review: { menuItemId: string; rating: number; subject?: string; comment?: string; images?: string[] }) =>
+    apiClient.post<ApiResponse<MenuReview>>('/api/reviews', review),
+};
+
 // Orders API
 export const ordersApi = {
   getAll: (params?: PaginationParams) =>
@@ -96,7 +107,7 @@ export const ordersApi = {
   getUserOrders: () =>
     apiClient.get<ApiResponse<Order[]>>('/api/orders/my-orders'),
 
-  create: (order: Partial<Order> | { userId?: string; items?: Array<{ menuItem: string; quantity: number }>; orderType?: 'dine-in' | 'takeaway' | 'delivery'; paymentStatus?: 'pending' | 'paid' | 'failed' | 'refunded'; notes?: string; }) =>
+  create: (order: Partial<Order> | { userId?: string; tableId?: string; items?: Array<{ menuItem: string; quantity: number }>; orderType?: 'dine-in' | 'takeaway' | 'delivery'; paymentStatus?: 'pending' | 'paid' | 'failed' | 'refunded'; notes?: string; }) =>
     apiClient.post<ApiResponse<Order>>('/api/orders', order),
 
   update: (id: string, data: any) =>

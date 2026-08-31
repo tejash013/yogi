@@ -57,7 +57,7 @@ export default function AdminOrders() {
     const loadOrders = async () => {
       setIsLoading(true);
       try {
-        const response = await ordersApi.getAll({ page: 1, limit: 200 }).catch(() => ({ data: { data: [] } }));
+        const response = await ordersApi.getAll({ page: 1, limit: 100 }).catch(() => ({ data: { data: [] } }));
         const list = Array.isArray(response?.data?.data) ? response.data.data : [];
 
         const mapped = list.map((order: any) => {

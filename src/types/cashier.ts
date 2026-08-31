@@ -47,6 +47,7 @@ export interface CashierOrderItem {
 export interface CashierOrder {
   id: string;
   orderNumber: string;
+  tableId?: string;
   tableNumber?: number;
   customer: Customer;
   orderType: CashierOrderType;

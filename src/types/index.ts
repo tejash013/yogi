@@ -59,6 +59,17 @@ export interface MenuItem {
   createdAt: string;
 }
 
+export interface MenuReview {
+  id?: string;
+  _id?: string;
+  rating: number;
+  subject?: string;
+  comment?: string;
+  images?: string[];
+  createdAt: string;
+  user?: { firstName?: string; lastName?: string };
+}
+
 export interface NutritionalInfo {
   calories: number;
   protein: number;

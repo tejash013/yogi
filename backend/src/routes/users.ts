@@ -45,11 +45,11 @@ router.patch('/profile', authenticate, validateBody(profileUpdateSchema), async 
 });
 
 // Admin-only user management routes
-router.get('/', authenticate, requireRole(['owner', 'manager', 'platformAdmin']), validateQuery(userQuerySchema), async (req, res) => {
+router.get('/', authenticate, requireRole(['owner', 'manager', 'platformAdmin']), validateQuery(userQuerySchema), async (req: any, res) => {
   const page = Number(req.query.page ?? 1);
   const limit = Number(req.query.limit ?? 20);
   const q = String(req.query.q ?? '').trim();
-  const filter: any = { ...tenantFilter(req) };
+  const filter: any = req.user.role === 'platformAdmin' ? {} : { ...tenantFilter(req) };
 
   if (q) {
     filter.$or = [
@@ -69,7 +69,8 @@ router.get('/', authenticate, requireRole(['owner', 'manager', 'platformAdmin'])
 });
 
 router.patch('/:id/access', authenticate, requireRole(['owner', 'manager', 'platformAdmin']), validateParams(idParamSchema), validateBody(userAccessUpdateSchema), async (req: any, res) => {
-  const target = await User.findOne({ _id: req.params.id, ...tenantFilter(req) }).exec();
+  const targetFilter = req.user.role === 'platformAdmin' ? { _id: req.params.id } : { _id: req.params.id, ...tenantFilter(req) };
+  const target = await User.findOne(targetFilter).exec();
   if (!target) return res.status(404).json(failure('User not found'));
 
   if (String(target._id) === req.user.id) {

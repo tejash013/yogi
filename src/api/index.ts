@@ -12,5 +12,6 @@ export {
   offersApi,
   reportsApi,
   settingsApi,
+  reviewsApi,
 } from './endpoints';
 

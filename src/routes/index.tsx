@@ -137,7 +137,7 @@ const router = createBrowserRouter([
   {
     path: '/admin',
     element: (
-      <ProtectedRoute roles={['owner', 'manager']}>
+      <ProtectedRoute roles={['owner', 'manager', 'platformAdmin']}>
         <AdminLayout />
       </ProtectedRoute>
     ),
@@ -152,7 +152,7 @@ const router = createBrowserRouter([
       {
         path: 'users',
         element: (
-          <ProtectedRoute roles={['owner', 'manager']}>
+          <ProtectedRoute roles={['owner', 'manager', 'platformAdmin']}>
             <AdminUsers />
           </ProtectedRoute>
         ),
@@ -163,7 +163,7 @@ const router = createBrowserRouter([
       {
         path: 'settings',
         element: (
-          <ProtectedRoute roles={['owner', 'manager']}>
+          <ProtectedRoute roles={['owner', 'manager', 'platformAdmin']}>
             <AdminSettings />
           </ProtectedRoute>
         ),

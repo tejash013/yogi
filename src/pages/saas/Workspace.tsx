@@ -106,6 +106,14 @@ export default function Workspace() {
                 </svg>
                 Dashboard
               </Link>
+              {isPlatformAdmin && (
+                <Link
+                  to={ROUTES.ADMIN.USERS}
+                  className="flex items-center justify-center gap-2 rounded-2xl border border-[#d6e85e]/40 bg-[#d6e85e] px-4 py-3 text-sm font-semibold text-[#173c35] transition hover:bg-[#e5f47d]"
+                >
+                  User Access
+                </Link>
+              )}
               <button
                 onClick={() => {
                   logout();

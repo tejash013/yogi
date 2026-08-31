@@ -5,6 +5,8 @@ import { categoriesApi, menuApi } from '@/api';
 import { useOrderSyncStore } from '@/store';
 import type { MenuItem, Category } from '@/types';
 
+const FAVORITES_STORAGE_KEY = 'yogi_favorites';
+
 const normalizeMenuItem = (item: any): MenuItem => ({
   id: String(item._id ?? item.id ?? ''),
   name: item.title ?? item.name,
@@ -49,6 +51,14 @@ export default function Menu() {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 2000]);
   const [showVegOnly, setShowVegOnly] = useState(false);
   const [showNonVegOnly, setShowNonVegOnly] = useState(false);
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem(FAVORITES_STORAGE_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -126,6 +136,14 @@ export default function Menu() {
     setIsLoading(true);
     setSelectedCategory(catId);
     setTimeout(() => setIsLoading(false), 200);
+  };
+
+  const toggleFavorite = (id: string) => {
+    setFavorites((current) => {
+      const next = current.includes(id) ? current.filter((favoriteId) => favoriteId !== id) : [...current, id];
+      localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
   };
 
   return (
@@ -261,7 +279,12 @@ export default function Menu() {
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((item) => (
-            <FoodCard key={item.id} item={item} />
+            <FoodCard
+              key={item.id}
+              item={item}
+              isFavorite={favorites.includes(item.id)}
+              onFavoriteToggle={toggleFavorite}
+            />
           ))}
         </div>
       )}

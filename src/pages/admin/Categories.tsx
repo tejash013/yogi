@@ -31,7 +31,7 @@ export default function Categories() {
       try {
         const [categoryResponse, menuResponse] = await Promise.all([
           categoriesApi.getAll().catch(() => ({ data: { data: [] } })),
-          menuApi.getAll({ page: 1, limit: 200 }).catch(() => ({ data: { data: [] } })),
+          menuApi.getAll({ page: 1, limit: 100 }).catch(() => ({ data: { data: [] } })),
         ]);
 
         const categoryList = Array.isArray(categoryResponse?.data?.data)
@@ -108,7 +108,7 @@ export default function Categories() {
       setShowCreateForm(false);
       const categoryResponse = await categoriesApi.getAll().catch(() => ({ data: { data: [] } }));
       const categoryList = Array.isArray(categoryResponse?.data?.data) ? categoryResponse.data.data : [];
-      const menuResponse = await menuApi.getAll({ page: 1, limit: 200 }).catch(() => ({ data: { data: [] } }));
+      const menuResponse = await menuApi.getAll({ page: 1, limit: 100 }).catch(() => ({ data: { data: [] } }));
       const menuList = Array.isArray(menuResponse?.data?.data) ? menuResponse.data.data : [];
       const itemCounts = new Map<string, number>();
       menuList.forEach((item: any) => {
@@ -179,8 +179,8 @@ export default function Categories() {
         </Card>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-        <Card className="overflow-hidden rounded-[28px] border-[#efe4d7] bg-gradient-to-br from-[#201a17] via-[#1a1715] to-[#2d241f] p-0 shadow-[0_20px_60px_rgba(42,33,28,0.15)] dark:border-neutral-700">
+      <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+        <Card className="min-w-0 overflow-hidden rounded-[28px] border-[#efe4d7] bg-gradient-to-br from-[#201a17] via-[#1a1715] to-[#2d241f] p-0 shadow-[0_20px_60px_rgba(42,33,28,0.15)] dark:border-neutral-700">
           <div className="bg-[radial-gradient(circle_at_top,_rgba(231,189,117,0.22),_transparent_40%)] p-6">
             <CardHeader className="mb-4">
               <div>
@@ -208,7 +208,7 @@ export default function Categories() {
           </div>
         </Card>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-2">
           {isLoading ? (
             <div className="col-span-full rounded-[28px] border border-dashed border-[#eadcc7] bg-[#f9f4ee] p-6 text-sm text-neutral-500 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400">
               Loading categories...
@@ -219,21 +219,21 @@ export default function Categories() {
             </div>
           ) : (
             filteredCategories.map((cat) => (
-              <Card key={cat.id} className="rounded-[28px] border-[#efe4d7] bg-[#fffdfb] p-0 shadow-[0_16px_40px_rgba(85,68,44,0.06)] dark:border-neutral-700 dark:bg-neutral-900">
+              <Card key={cat.id} className="min-w-0 overflow-hidden rounded-[28px] border-[#efe4d7] bg-[#fffdfb] p-0 shadow-[0_16px_40px_rgba(85,68,44,0.06)] dark:border-neutral-700 dark:bg-neutral-900">
                 <div className="flex flex-col gap-4 p-5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                  <div className="relative min-w-0">
+                    <div className="flex min-w-0 items-center gap-3">
                       <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f9efd9] text-2xl shadow-sm dark:bg-[#2c251f]">{cat.icon}</span>
-                      <div>
-                        <p className="text-lg font-semibold text-neutral-900 dark:text-white">{cat.name}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="whitespace-normal break-words text-lg font-semibold text-neutral-900 dark:text-white">{cat.name}</p>
                         <p className="text-sm text-neutral-500 dark:text-neutral-400">{cat.itemCount} items</p>
                       </div>
                     </div>
-                    <Badge variant={cat.active ? 'success' : 'neutral'} size="sm" className="rounded-full">
+                    <Badge variant={cat.active ? 'success' : 'neutral'} size="sm" className="absolute right-0 top-0 rounded-full">
                       {cat.active ? 'Active' : 'Inactive'}
                     </Badge>
                   </div>
-                  <div className="rounded-[20px] bg-[#f8f3ee] px-4 py-3 text-sm font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
+                  <div className="break-words rounded-[20px] bg-[#f8f3ee] px-4 py-3 text-sm font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
                     {cat.description || 'Category overview with live menu data.'}
                   </div>
                 </div>

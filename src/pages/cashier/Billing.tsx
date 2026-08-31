@@ -15,7 +15,7 @@ import {
 import { formatINR, useCashierStore } from '@/store';
 import { ReceiptView } from '@/components/cashier';
 import { useRef } from 'react';
-import { menuApi, categoriesApi } from '@/api';
+import { menuApi, categoriesApi, tablesApi } from '@/api';
 import type { MenuItem, Category } from '@/types';
 import { FiPlus, FiShoppingBag, FiList, FiSearch } from 'react-icons/fi';
 
@@ -41,6 +41,7 @@ export default function Billing() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [menuSearch, setMenuSearch] = useState('');
   const [selectedCat, setSelectedCat] = useState<string>('all');
+  const [tables, setTables] = useState<Array<{ id: string; label: string }>>([]);
   const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -77,6 +78,18 @@ export default function Billing() {
       );
       setCategories(cats);
     });
+  }, []);
+
+  useEffect(() => {
+    tablesApi.getAll()
+      .then((res) => {
+        const list = Array.isArray(res.data?.data) ? res.data.data : [];
+        setTables(list.map((table: any) => ({
+          id: String(table._id ?? table.id),
+          label: String(table.label ?? table.number ?? 'Table'),
+        })));
+      })
+      .catch(() => setTables([]));
   }, []);
 
   const handleSelectOrder = (id: string) => {
@@ -301,14 +314,21 @@ export default function Billing() {
                 <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
                   {currentBill.orderType === 'dine-in' && (
                     <div>
-                      <label className="text-[11px] font-bold text-neutral-500">Table Number</label>
-                      <Input
-                        type="text"
-                        placeholder="e.g. 5"
-                        value={currentBill.tableNumber ?? ''}
-                        onChange={(e) => updateBillInfo({ tableNumber: e.target.value })}
-                        className="py-1 text-xs"
-                      />
+                      <label className="text-[11px] font-bold text-neutral-500">Database Table</label>
+                      <select
+                        value={currentBill.tableId ?? ''}
+                        onChange={(e) => {
+                          const selected = tables.find((table) => table.id === e.target.value);
+                          updateBillInfo({
+                            tableId: e.target.value,
+                            tableNumber: selected?.label.replace(/\D/g, '') || selected?.label || '',
+                          });
+                        }}
+                        className="w-full rounded-lg border border-neutral-200 bg-white px-2.5 py-1.5 text-xs font-semibold dark:border-neutral-700 dark:bg-neutral-800"
+                      >
+                        <option value="">Select table</option>
+                        {tables.map((table) => <option key={table.id} value={table.id}>{table.label}</option>)}
+                      </select>
                     </div>
                   )}
                   <div>

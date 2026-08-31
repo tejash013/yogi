@@ -50,7 +50,7 @@ async function persistRefreshToken(userId: any, token: string) {
 }
 
 const nameRegex = /^[A-Za-z][A-Za-z\s'\-]{0,}$/;
-const phoneRegex = /^\+?[0-9\s\-]{7,15}$/;
+const phoneRegex = /^\+[1-9][0-9]{7,14}$/;
 const localPartHasLetter = (email: string) => {
   const parts = email.split('@');
   return parts.length === 2 && /[A-Za-z]/.test(parts[0]);
@@ -59,10 +59,10 @@ const localPartHasLetter = (email: string) => {
 const loginSchema = z.object({ email: z.string().email().refine(localPartHasLetter, { message: 'Invalid email' }), password: z.string().min(1) });
 const registerSchema = z.object({
   email: z.string().email().refine(localPartHasLetter, { message: 'Invalid email' }),
-  password: z.string().min(6),
-  confirmPassword: z.string().min(6),
-  firstName: z.string().min(1).regex(nameRegex, { message: 'First name must contain only letters, spaces, hyphens or apostrophes' }),
-  lastName: z.string().min(1).regex(nameRegex, { message: 'Last name must contain only letters, spaces, hyphens or apostrophes' }),
+  password: z.string().min(8).max(72).regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d])/, { message: 'Password must include uppercase, lowercase, number and symbol' }),
+  confirmPassword: z.string().min(8).max(72),
+  firstName: z.string().trim().min(2).max(50).regex(nameRegex, { message: 'First name must contain only letters, spaces, hyphens or apostrophes' }),
+  lastName: z.string().trim().max(50).regex(nameRegex, { message: 'Last name must contain only letters, spaces, hyphens or apostrophes' }).optional().or(z.literal('')),
   phone: z.string().regex(phoneRegex, { message: 'Invalid phone number' }),
 }).strict().refine((data) => data.password === data.confirmPassword, {
   message: 'Passwords do not match',
@@ -105,7 +105,7 @@ router.post('/login', validateBody(loginSchema), async (req, res) => {
 
 router.post('/register', validateBody(registerSchema), async (req, res) => {
   const { email, password, firstName, lastName, phone } = req.body;
-  if (!email || !password || !firstName || !lastName || !phone) {
+  if (!email || !password || !firstName || !phone) {
     return res.status(400).json(failure('Required fields are missing'));
   }
 

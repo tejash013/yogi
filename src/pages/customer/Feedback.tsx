@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button, Card, Textarea } from '@/components/ui';
 import { Rating } from '@/components/customer';
 import { useAuthStore, useToastStore } from '@/store';
+import { menuApi, reviewsApi } from '@/api';
 
 export default function Feedback() {
   const user = useAuthStore((s) => s.user);
@@ -14,12 +15,28 @@ export default function Feedback() {
   const [reviewText, setReviewText] = useState('');
   const [name, setName] = useState('');
   const [images, setImages] = useState<string[]>([]);
+  const [menuItems, setMenuItems] = useState<Array<{ id: string; name: string }>>([]);
+  const [menuItemId, setMenuItemId] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   useEffect(() => {
     if (user?.firstName) {
       setName(`${user.firstName} ${user.lastName || ''}`.trim());
     }
   }, [user]);
+
+  useEffect(() => {
+    menuApi.getAll({ page: 1, limit: 100 })
+      .then((response) => {
+        const list = Array.isArray(response.data?.data) ? response.data.data : [];
+        setMenuItems(list.map((item: any) => ({
+          id: String(item._id ?? item.id),
+          name: String(item.title ?? item.name ?? 'Menu item'),
+        })));
+      })
+      .catch(() => setMenuItems([]));
+  }, []);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -40,10 +57,33 @@ export default function Feedback() {
     setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    showToast('Feedback submitted successfully! Thank you.', 'success');
-    setStep('thanks');
+    if (!menuItemId) {
+      setSubmitError('Please select the menu item you are reviewing.');
+      return;
+    }
+    if (!reviewText.trim() && !subject.trim()) {
+      setSubmitError('Please add a subject or comment to your review.');
+      return;
+    }
+    setIsSubmitting(true);
+    setSubmitError('');
+    try {
+      await reviewsApi.create({
+        menuItemId,
+        rating: foodRating,
+        subject: subject.trim() || undefined,
+        comment: reviewText.trim() || undefined,
+        images,
+      });
+      showToast('Review submitted successfully! Thank you.', 'success');
+      setStep('thanks');
+    } catch (error: any) {
+      setSubmitError(error?.response?.data?.message || 'Unable to submit your review. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (step === 'thanks') {
@@ -73,6 +113,19 @@ export default function Feedback() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300">Menu Item</label>
+            <select
+              value={menuItemId}
+              onChange={(e) => setMenuItemId(e.target.value)}
+              required
+              className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-600 dark:bg-neutral-800"
+            >
+              <option value="">Select the dish you want to review</option>
+              {menuItems.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+            </select>
+          </div>
+
           {/* Overall Rating */}
           <div>
             <label className="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
@@ -164,8 +217,9 @@ export default function Feedback() {
             />
           </div>
 
-          <Button type="submit" fullWidth size="lg">
-            Submit Feedback
+          {submitError ? <p className="text-sm text-red-600">{submitError}</p> : null}
+          <Button type="submit" fullWidth size="lg" disabled={isSubmitting}>
+            {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
           </Button>
         </form>
       </Card>

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Card, Input } from '@/components/ui';
 import { ROUTES } from '@/constants';
-import { ordersApi, settingsApi } from '@/api';
+import { ordersApi, settingsApi, tablesApi } from '@/api';
 import { getApiErrorMessage } from '@/api/errors';
 import { useAuthStore, useCartStore, useOrderSyncStore } from '@/store';
 
@@ -16,6 +16,8 @@ export default function Checkout() {
   const { items, subtotal, clearCart } = useCartStore();
   const [diningType, setDiningType] = useState<DiningType>('dine-in');
   const [tableNumber, setTableNumber] = useState(cartTableNumber ? String(cartTableNumber) : '');
+  const [tableId, setTableId] = useState('');
+  const [tables, setTables] = useState<Array<{ id: string; label: string }>>([]);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
   const [showEditCustomer, setShowEditCustomer] = useState(false);
   const [formData, setFormData] = useState({
@@ -59,6 +61,20 @@ export default function Checkout() {
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    tablesApi.getAll()
+      .then((res) => {
+        const list = Array.isArray(res.data?.data) ? res.data.data : [];
+        setTables(list
+          .filter((table: any) => table.status === 'available')
+          .map((table: any) => ({
+            id: String(table._id ?? table.id),
+            label: String(table.label ?? table.number ?? 'Table'),
+          })));
+      })
+      .catch(() => setTables([]));
+  }, []);
+
   const deliveryFee = diningType === 'delivery' ? standardDeliveryFee : 0;
   const actualTax = subtotal * (taxPercent / 100);
   const rewardDiscount = useRewardPoints ? Math.min(50, subtotal * 0.2) : 0;
@@ -83,6 +99,11 @@ export default function Checkout() {
       return;
     }
 
+    if (diningType === 'dine-in' && !tableId) {
+      setSubmitError('Please select an available restaurant table.');
+      return;
+    }
+
     setIsProcessing(true);
     setSubmitError(null);
 
@@ -95,6 +116,7 @@ export default function Checkout() {
 
       const response = await ordersApi.create({
         userId: String(customerId),
+        tableId: diningType === 'dine-in' ? tableId : undefined,
         items: items.map((item) => ({
           menuItem: item.menuItemId,
           quantity: item.quantity,
@@ -176,37 +198,22 @@ export default function Checkout() {
               {diningType === 'dine-in' && (
                 <div className="mt-4 rounded-2xl bg-amber-50/60 p-4 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40">
                   <label className="mb-1.5 flex items-center justify-between text-xs font-bold text-amber-900 dark:text-amber-300">
-                    <span>Table Number 🍽️ (Required for Dine-in)</span>
-                    <span className="text-[11px] font-normal text-amber-700 dark:text-amber-400">Enter your table #</span>
+                    <span>Restaurant Table 🍽️ (Required for Dine-in)</span>
+                    <span className="text-[11px] font-normal text-amber-700 dark:text-amber-400">Select from database</span>
                   </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="number"
-                      min="1"
-                      max="99"
-                      value={tableNumber}
-                      onChange={(e) => setTableNumber(e.target.value)}
-                      placeholder="e.g. 5"
-                      required
-                      className="w-32 rounded-xl border border-amber-300 bg-white px-3 py-2 text-center text-lg font-black text-neutral-900 shadow-sm focus:border-primary-500 focus:outline-none dark:border-amber-700 dark:bg-neutral-800 dark:text-white"
-                    />
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {['1', '2', '3', '4', '5', '6', '7', '8'].map((t) => (
-                        <button
-                          key={t}
-                          type="button"
-                          onClick={() => setTableNumber(t)}
-                          className={`rounded-lg px-2.5 py-1 text-xs font-bold transition ${
-                            tableNumber === t
-                              ? 'bg-amber-500 text-white'
-                              : 'bg-white text-neutral-700 hover:bg-amber-100 dark:bg-neutral-800 dark:text-neutral-200'
-                          }`}
-                        >
-                          Table {t}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  <select
+                    value={tableId}
+                    onChange={(e) => {
+                      const selected = tables.find((table) => table.id === e.target.value);
+                      setTableId(e.target.value);
+                      setTableNumber(selected?.label.replace(/\D/g, '') || selected?.label || '');
+                    }}
+                    required
+                    className="w-full rounded-xl border border-amber-300 bg-white px-3 py-2 text-sm font-bold text-neutral-900 shadow-sm focus:border-primary-500 focus:outline-none dark:border-amber-700 dark:bg-neutral-800 dark:text-white"
+                  >
+                    <option value="">Select an available table</option>
+                    {tables.map((table) => <option key={table.id} value={table.id}>{table.label}</option>)}
+                  </select>
                 </div>
               )}
             </Card>
