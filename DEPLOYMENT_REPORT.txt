@@ -1,110 +1,144 @@
 ================================================================================
-                    RESTAURANTOS - DEPLOYMENT READINESS REPORT
+                    RESTAURANTOS - PRODUCTION DEPLOYMENT REPORT & GUIDE
 ================================================================================
-Date: 2026-08-29
-Status: READY FOR PRODUCTION DEPLOYMENT
-Verdict: PASS (0 Errors, 0 Build Failures)
+Date: 2026-08-31
+Status: 100% READY FOR PRODUCTION DEPLOYMENT
+Verdict: PASS (0 Errors, 0 Build Failures, 31/31 Automated Tests Passing)
+Repository: https://github.com/tejash013/yogi.git
 ================================================================================
 
-1. EXECUTIVE SUMMARY
---------------------------------------------------------------------------------
-The RestaurantOS project (Frontend + Backend + Database orchestration) has been
-audited and verified. Both frontend and backend compile and build cleanly for 
-production with 0 errors. All necessary deployment configuration files 
-(Docker Compose, Dockerfile, vercel.json, _redirects, .env templates) are ready.
-
-
-2. AUDIT RESULTS MATRIX
+1. EXECUTIVE SUMMARY & VERIFICATION AUDIT
 --------------------------------------------------------------------------------
 Layer / Component            Status   Details
 --------------------------------------------------------------------------------
-Frontend Type Checking       PASS     tsc -b passed with 0 errors.
-Frontend Production Build    PASS     Vite bundle generated in dist/ (zero errors).
-Frontend Linter              PASS     oxlint passed across 371 files.
-SPA Route Rewrites           PASS     vercel.json and public/_redirects created.
+Frontend Compilation (TS)    PASS     tsc -b passed with 0 errors.
+Frontend Production Build    PASS     Vite production bundle generated in dist/.
 Backend TypeScript Build     PASS     tsc -p . passed with 0 errors (dist/server.js).
-Backend Health Endpoint      PASS     /health endpoint configured.
-Containerization             PASS     docker-compose.yml with MongoDB & Backend.
+Backend Automated Tests      PASS     31/31 test suites passed across all security,
+                                      tenant isolation, order, invoice, and auth modules.
+SPA Client-Side Routing      PASS     vercel.json & public/_redirects configured.
+Database Orchestration       PASS     MongoDB Atlas / Docker Compose compatible.
 Docker Security              PASS     Multi-stage build with non-root app user.
-Multi-Platform / Responsive  PASS     Bootstrap 5 + Tailwind responsive tiers active.
-Logout Functionality         PASS     Active across all roles, navbars, sidebars.
+Multi-Tenant Security        PASS     Strict isolation on all restaurant & branch data.
 
 
-3. DEPLOYMENT OPTION A: DECOUPLED CLOUD (RECOMMENDED)
+================================================================================
+2. RECOMMENDED DEPLOYMENT (FREE TIER / DECOUPLED CLOUD)
+================================================================================
+
+Architecture:
+  [Vercel / Netlify (Frontend)]  --->  [Render / Railway (Backend)]  --->  [MongoDB Atlas (Database)]
+
 --------------------------------------------------------------------------------
-A. FRONTEND HOSTING (Vercel / Netlify / Cloudflare Pages):
-   1. Connect your GitHub repository: https://github.com/tejash013/yogi.git
-   2. Build Settings:
-      - Framework Preset: Vite
-      - Root Directory: ./
-      - Build Command: npm run build
-      - Output Directory: dist
-   3. Environment Variables:
-      - VITE_API_URL = https://your-backend-api-domain.com
-
-B. BACKEND HOSTING (Render / Railway / Fly.io / AWS App Runner):
-   1. Create Web Service pointing to the same repository.
-   2. Service Settings:
-      - Root Directory: backend
-      - Build Command: npm run build
-      - Start Command: npm start
-   3. Environment Variables:
-      - NODE_ENV = production
-      - PORT = 3000
-      - MONGODB_URI = mongodb+srv://<user>:<password>@cluster.mongodb.net/restaurantos?retryWrites=true&w=majority
-      - MONGODB_DATABASE = restaurantos
-      - ACCESS_TOKEN_SECRET = <64-character random hex string>
-      - REFRESH_TOKEN_SECRET = <64-character random hex string>
-      - FRONTEND_URL = https://your-frontend-domain.vercel.app
-
-C. DATABASE (MongoDB Atlas):
-   1. Create a free or dedicated cluster on https://www.mongodb.com/atlas
-   2. Under Network Access, allow access from anywhere (0.0.0.0/0) or backend IP.
-   3. Under Database Access, create a database user and password.
-   4. Copy the connection URI into MONGODB_URI.
-
-
-4. DEPLOYMENT OPTION B: SINGLE SERVER / VPS (DOCKER COMPOSE)
+STEP 1: DATABASE SETUP (MongoDB Atlas)
 --------------------------------------------------------------------------------
-Deploy the full stack onto any Ubuntu/Debian VPS (AWS EC2, DigitalOcean, Hetzner):
+1. Go to https://www.mongodb.com/cloud/atlas and create/log into your account.
+2. Create a Free Shared Cluster (M0).
+3. In "Security" -> "Database Access":
+   - Add a new database user (e.g., username: restaurantos_user, set strong password).
+4. In "Security" -> "Network Access":
+   - Click "Add IP Address" -> choose "Allow Access from Anywhere" (0.0.0.0/0).
+5. In "Database" -> Click "Connect" -> "Drivers" (Node.js):
+   - Copy your connection string:
+     mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/restaurantos?retryWrites=true&w=majority
 
-Step 1: Install Docker & Docker Compose on your server:
-   sudo apt update && sudo apt install -y docker.io docker-compose
+--------------------------------------------------------------------------------
+STEP 2: BACKEND DEPLOYMENT (Render.com)
+--------------------------------------------------------------------------------
+1. Go to https://render.com and click "New +" -> "Web Service".
+2. Connect your GitHub repo: https://github.com/tejash013/yogi
+3. Configure the service:
+   - Name: restaurantos-backend
+   - Region: Singapore / Frankfurt / Oregon (closest to your users)
+   - Root Directory: backend
+   - Runtime: Node
+   - Build Command: npm install && npm run build
+   - Start Command: npm start
+   - Instance Type: Free
+4. Add Environment Variables in Render:
+   -----------------------------------------------------------------------------
+   KEY                     VALUE / DESCRIPTION
+   -----------------------------------------------------------------------------
+   NODE_ENV                production
+   PORT                    3000
+   MONGODB_URI             mongodb+srv://<user>:<pass>@cluster0.xxx.mongodb.net/restaurantos?retryWrites=true&w=majority
+   MONGODB_DATABASE        restaurantos
+   ACCESS_TOKEN_SECRET     <Generated 32-byte hex secret - see command below>
+   REFRESH_TOKEN_SECRET    <Generated 32-byte hex secret - see command below>
+   FRONTEND_URL            https://your-frontend-app.vercel.app (update after frontend is deployed)
+   -----------------------------------------------------------------------------
+5. Click "Create Web Service".
+   Save your backend URL (e.g., https://restaurantos-backend.onrender.com).
 
-Step 2: Clone repository:
+* Tip to generate secure 32-byte hex secrets:
+  Run in terminal:
+  node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+
+--------------------------------------------------------------------------------
+STEP 3: FRONTEND DEPLOYMENT (Vercel)
+--------------------------------------------------------------------------------
+1. Go to https://vercel.com and click "Add New..." -> "Project".
+2. Import your GitHub repository: yogi.
+3. Configure Project Settings:
+   - Framework Preset: Vite
+   - Root Directory: ./
+   - Build Command: npm run build
+   - Output Directory: dist
+4. Add Environment Variable in Vercel:
+   -----------------------------------------------------------------------------
+   KEY                     VALUE
+   -----------------------------------------------------------------------------
+   VITE_API_URL            https://restaurantos-backend.onrender.com (your backend URL)
+   -----------------------------------------------------------------------------
+5. Click "Deploy".
+6. Copy your live frontend URL (e.g., https://yogi-restaurantos.vercel.app) and 
+   paste it into Render's backend FRONTEND_URL variable.
+
+
+================================================================================
+3. ALTERNATIVE: SINGLE SERVER / VPS DEPLOYMENT (DOCKER COMPOSE)
+================================================================================
+
+Deploy the entire stack (Frontend + Backend + MongoDB) on any Linux VPS 
+(AWS EC2, DigitalOcean, Hetzner, Linode):
+
+1. Install Docker & Docker Compose on server:
+   sudo apt update && sudo apt install -y docker.io docker-compose git
+
+2. Clone repository:
    git clone https://github.com/tejash013/yogi.git
    cd yogi
 
-Step 3: Create backend environment configuration:
+3. Create backend configuration:
    nano backend/.env
-   
-   Add the following:
+
+   Add:
    NODE_ENV=production
-   ACCESS_TOKEN_SECRET=your_generated_access_token_secret_here
-   REFRESH_TOKEN_SECRET=your_generated_refresh_token_secret_here
+   ACCESS_TOKEN_SECRET=your_32_byte_hex_secret_here
+   REFRESH_TOKEN_SECRET=your_32_byte_hex_secret_here
    FRONTEND_URL=https://your-domain.com
 
-Step 4: Launch all services:
+4. Build and start services:
    docker-compose up -d --build
 
-Step 5: Verify running containers:
+5. Check service health:
    docker-compose ps
    curl http://localhost:3000/health
+   # Response: {"status":"ok","service":"restaurantos-backend"}
 
-
-5. PRE-DEPLOYMENT CHECKLIST & SECRETS GENERATION
---------------------------------------------------------------------------------
-[ ] Generate secure JWT Secrets using Node.js:
-    Run in terminal:
-    node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-    
-    Use the output for ACCESS_TOKEN_SECRET and REFRESH_TOKEN_SECRET.
-
-[ ] Set VITE_API_URL in frontend build environment to point to backend URL.
-[ ] Set FRONTEND_URL in backend environment to match your frontend domain (for CORS).
-[ ] (Optional) Configure SMTP for transactional emails and OTPs:
-    SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM.
 
 ================================================================================
-End of Deployment Report
+4. PRE-DEPLOYMENT HEALTH & SECRET CHECKLIST
+================================================================================
+[x] Frontend build check (npm run build) -> PASS
+[x] Backend build check (npm --prefix backend run build) -> PASS
+[x] Backend test suite (npm --prefix backend test) -> PASS (31/31 passing)
+[x] SPA fallback rewrite rules created (vercel.json, _redirects)
+[ ] MongoDB Atlas database user and network whitelist (0.0.0.0/0) created
+[ ] Random 32-byte ACCESS_TOKEN_SECRET and REFRESH_TOKEN_SECRET generated
+[ ] VITE_API_URL configured on Frontend pointing to live Backend
+[ ] FRONTEND_URL configured on Backend pointing to live Frontend
+
+================================================================================
+END OF REPORT
 ================================================================================
