@@ -8,6 +8,7 @@ import { useAuthStore, useCartStore } from '@/store';
 const navItems: NavItem[] = [
   { label: 'Home', href: ROUTES.CUSTOMER.HOME },
   { label: 'Menu', href: ROUTES.CUSTOMER.MENU },
+  { label: 'Tables 🪑', href: ROUTES.CUSTOMER.TABLES },
   { label: 'My Orders', href: ROUTES.CUSTOMER.MY_ORDERS },
   { label: 'Favorites', href: ROUTES.CUSTOMER.FAVORITES },
   { label: 'Rewards', href: ROUTES.CUSTOMER.REWARDS },

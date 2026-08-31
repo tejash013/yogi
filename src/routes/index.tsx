@@ -31,6 +31,7 @@ import {
   Rewards,
   Coupons,
   Feedback,
+  CustomerTables,
 } from '@/pages/customer';
 
 // Admin Pages
@@ -148,6 +149,7 @@ const router = createBrowserRouter([
       { path: 'rewards', element: <Rewards /> },
       { path: 'coupons', element: <Coupons /> },
       { path: 'feedback', element: <Feedback /> },
+      { path: 'tables', element: <CustomerTables /> },
     ],
   },
 

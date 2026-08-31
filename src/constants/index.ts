@@ -27,6 +27,7 @@ export const ROUTES = {
     REWARDS: '/customer/rewards',
     COUPONS: '/customer/coupons',
     FEEDBACK: '/customer/feedback',
+    TABLES: '/customer/tables',
   },
 
   // Admin routes

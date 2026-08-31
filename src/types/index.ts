@@ -167,7 +167,7 @@ export interface Table {
   id: string;
   number: number;
   capacity: number;
-  status: 'available' | 'occupied' | 'reserved' | 'maintenance';
+  status: 'available' | 'occupied' | 'reserved' | 'cleaning' | 'maintenance';
   location: string;
   qrCode?: string;
 }

@@ -1,12 +1,22 @@
 import Category from '../models/Category.js';
 import MenuItem from '../models/MenuItem.js';
 import Offer from '../models/Offer.js';
+import Table from '../models/Table.js';
 import { DEFAULT_BRANCH_ID, DEFAULT_RESTAURANT_ID } from '../utils/tenant.js';
 
 const tenant = {
   restaurantId: DEFAULT_RESTAURANT_ID,
   branchId: DEFAULT_BRANCH_ID,
 };
+
+const defaultTables = [
+  { label: 'Table 1', capacity: 4, status: 'available', location: 'Window View', notes: 'Warm ambient lighting & garden view' },
+  { label: 'Table 2', capacity: 4, status: 'available', location: 'Center Hall', notes: 'Under chef wall graphics with quick service' },
+  { label: 'Table 3', capacity: 4, status: 'available', location: 'Plant Corner', notes: 'Cozy greenery & quiet dining' },
+  { label: 'Table 4', capacity: 4, status: 'available', location: 'Window Front', notes: 'Near front glass facade' },
+  { label: 'Table 5', capacity: 4, status: 'available', location: 'Center Prime', notes: 'Prime seating for families & groups' },
+  { label: 'Table 6', capacity: 4, status: 'available', location: 'Wood Slat Corner', notes: 'Near wooden accent partition & lush vines' },
+];
 
 const defaultCategories = [
   { name: 'Pizza', description: 'Wood-fired pizzas with fresh ingredients' },
@@ -183,6 +193,11 @@ export async function seedDatabase() {
   const offerCount = await Offer.countDocuments({ ...tenant, isActive: true }).exec();
   if (offerCount === 0) {
     await Offer.insertMany(seededOffers.map((offer) => ({ ...tenant, ...offer })));
+  }
+
+  const tableCount = await Table.countDocuments({ ...tenant }).exec();
+  if (tableCount === 0) {
+    await Table.insertMany(defaultTables.map((table) => ({ ...tenant, ...table })));
   }
 
   await Offer.syncIndexes();

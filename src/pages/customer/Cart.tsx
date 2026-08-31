@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Card } from '@/components/ui';
 import { QuantitySelector } from '@/components/customer';
+import RestaurantFloorView, { type TableItem } from '@/components/common/RestaurantFloorView';
 import { ROUTES } from '@/constants';
-import { offersApi } from '@/api';
+import { offersApi, tablesApi } from '@/api';
 import { useCartStore } from '@/store';
 
 const TAX_RATE = 0.08;
@@ -14,10 +15,32 @@ export default function Cart() {
   const [couponCode, setCouponCode] = useState('');
   const [couponApplied, setCouponApplied] = useState(false);
   const [couponDiscount, setCouponDiscount] = useState(0);
+  const [showFloorModal, setShowFloorModal] = useState(false);
+  const [tablesList, setTablesList] = useState<TableItem[]>([]);
 
   const tableNumber = useCartStore((s) => s.tableNumber);
   const setTableNumber = useCartStore((s) => s.setTableNumber);
   const [instructions, setInstructions] = useState('');
+
+  useEffect(() => {
+    tablesApi.getAll().then((res: any) => {
+      const raw = Array.isArray(res?.data?.data) ? res.data.data : Array.isArray(res?.data) ? res.data : [];
+      const mapped: TableItem[] = raw.map((t: any, i: number) => {
+        const label = String(t?.label ?? t?.number ?? `Table ${i + 1}`);
+        const num = Number.parseInt(label.replace(/\D/g, ''), 10) || i + 1;
+        return {
+          id: String(t?._id ?? t?.id ?? `table-${i + 1}`),
+          number: num,
+          label,
+          capacity: Number(t?.capacity ?? 4),
+          status: (t?.status ?? 'available') as TableItem['status'],
+          location: t?.location ?? (num <= 2 ? 'Window View' : num <= 4 ? 'Center Hall' : 'Plant Corner'),
+          notes: t?.notes ?? '',
+        };
+      });
+      setTablesList(mapped);
+    }).catch(() => undefined);
+  }, []);
 
   const applyCoupon = async () => {
     const code = couponCode.trim();
@@ -159,20 +182,41 @@ export default function Cart() {
               )}
             </div>
 
-            {/* Table Number */}
-            <div className="mb-3 rounded-xl bg-amber-50 p-2.5 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40">
-              <label className="mb-1 block text-xs font-bold text-amber-900 dark:text-amber-300">
-                Table Number 🍽️
-              </label>
-              <input
-                type="number"
-                min="1"
-                max="99"
-                placeholder="Enter Table #"
-                value={tableNumber ?? ''}
-                onChange={(e) => setTableNumber(Number(e.target.value) || undefined)}
-                className="w-full rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-sm font-bold text-neutral-900 focus:border-primary-500 focus:outline-none dark:border-amber-700 dark:bg-neutral-800 dark:text-white"
-              />
+            {/* Table Number & Visual Floor Plan */}
+            <div className="mb-3 rounded-2xl bg-amber-50/80 p-3 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40">
+              <div className="mb-2 flex items-center justify-between">
+                <label className="text-xs font-bold text-amber-950 dark:text-amber-300">
+                  Dine-In Table 🍽️
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowFloorModal(true)}
+                  className="rounded-lg bg-amber-400/20 px-2 py-0.5 text-[11px] font-bold text-amber-900 hover:bg-amber-400/30 dark:text-amber-300"
+                >
+                  🗺️ Choose on Floor Map
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="1"
+                  max="99"
+                  placeholder="Enter Table #"
+                  value={tableNumber ?? ''}
+                  onChange={(e) => setTableNumber(Number(e.target.value) || undefined)}
+                  className="w-full rounded-xl border border-amber-300 bg-white px-3 py-2 text-sm font-bold text-neutral-900 focus:border-primary-500 focus:outline-none dark:border-amber-700 dark:bg-neutral-800 dark:text-white"
+                />
+                {tableNumber && (
+                  <button
+                    type="button"
+                    onClick={() => setTableNumber(undefined)}
+                    className="rounded-xl border border-amber-300 px-3 py-2 text-xs font-bold text-neutral-600 hover:bg-amber-100 dark:border-amber-700 dark:text-neutral-300"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Special Instructions */}
@@ -210,8 +254,6 @@ export default function Cart() {
               </div>
             </div>
 
-
-
             <Link to={ROUTES.CUSTOMER.CHECKOUT} className="mt-6 block">
               <Button fullWidth size="lg">
                 Proceed to Checkout
@@ -220,6 +262,38 @@ export default function Cart() {
           </Card>
         </div>
       </div>
+
+      {/* Visual Floor Plan Picker Modal */}
+      {showFloorModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md">
+          <div className="relative max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-[32px] border border-[#48392d] bg-[#161311] p-6 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-white">Choose Your Table on Floor Map 🍽️</h3>
+                <p className="text-xs text-[#a0907e]">
+                  Click an available table to seat yourself and place your order.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowFloorModal(false)}
+                className="rounded-full p-2 text-neutral-400 hover:bg-neutral-800 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            <RestaurantFloorView
+              tables={tablesList}
+              selectedTableNumber={tableNumber}
+              onSelectTable={(t) => {
+                setTableNumber(t.number);
+                setShowFloorModal(false);
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
