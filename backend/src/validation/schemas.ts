@@ -71,16 +71,16 @@ export const tableQuerySchema = paginationQuerySchema.extend({
 });
 
 export const orderCreateSchema = z.object({
-  userId: z.string().optional(),
-  tableId: z.string().optional(),
+  userId: objectId.optional(),
+  tableId: objectId.optional(),
   items: z.array(z.object({
-    menuItem: z.string(),
-    quantity: z.coerce.number().int().positive(),
+    menuItem: objectId,
+    quantity: z.coerce.number().int().positive('Number must be greater than 0'),
   })).optional().default([]),
   orderType: z.enum(['dine-in', 'takeaway', 'delivery']).optional(),
   paymentStatus: z.enum(['pending', 'paid', 'failed', 'refunded']).optional(),
   notes: z.string().trim().optional(),
-}).passthrough();
+}).strict();
 
 export const orderQuerySchema = paginationQuerySchema.extend({
   status: z.enum(['pending', 'confirmed', 'preparing', 'ready', 'served', 'completed', 'cancelled']).optional(),

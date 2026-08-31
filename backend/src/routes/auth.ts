@@ -49,8 +49,8 @@ async function persistRefreshToken(userId: any, token: string) {
   await rt.save();
 }
 
-const nameRegex = /^[A-Za-z][A-Za-z\s'\-]{0,}$/;
-const phoneRegex = /^\+[1-9][0-9]{7,14}$/;
+const nameRegex = /^[A-Za-z][A-Za-z\s'-]{0,}$/;
+const phoneRegex = /^\+?[0-9]{7,15}$/;
 const localPartHasLetter = (email: string) => {
   const parts = email.split('@');
   return parts.length === 2 && /[A-Za-z]/.test(parts[0]);

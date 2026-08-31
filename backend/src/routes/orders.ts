@@ -112,6 +112,10 @@ router.post('/', authenticate, requirePermission(permissions.orderCreate), valid
   const { userId, tableId, items: orderItems = [], orderType, paymentStatus, notes } = req.body;
   const authenticatedUser = (req as any).user;
   const tenant = tenantFilter(req);
+  if (authenticatedUser.role === 'customer' && userId && String(userId) !== String(authenticatedUser.id)) {
+    return res.status(403).json(failure('Cannot create order for another user'));
+  }
+
   const orderUserId = (authenticatedUser.role === 'customer' || !userId || userId === 'walk-in' || !String(userId).match(/^[a-fA-F0-9]{24}$/))
     ? authenticatedUser.id
     : userId;
@@ -157,6 +161,28 @@ router.post('/', authenticate, requirePermission(permissions.orderCreate), valid
     total = Number((subtotal + taxes).toFixed(2));
   }
 
+  // Atomically check & decrement available stock for items
+  const reservedItems: Array<{ menuItemId: any; quantity: number }> = [];
+  for (const item of resolvedItems) {
+    const updated = await MenuItem.findOneAndUpdate(
+      { _id: item.menuItem, availableQty: { $gte: item.quantity } },
+      { $inc: { availableQty: -item.quantity } },
+      { new: true }
+    ).exec();
+
+    if (!updated) {
+      // Rollback already reserved items
+      for (const resItem of reservedItems) {
+        await MenuItem.updateOne(
+          { _id: resItem.menuItemId },
+          { $inc: { availableQty: resItem.quantity } }
+        ).exec();
+      }
+      return res.status(409).json(failure('Item out of stock or insufficient quantity'));
+    }
+    reservedItems.push({ menuItemId: item.menuItem, quantity: item.quantity });
+  }
+
   let order;
   try {
     order = await orderRepo.create({
@@ -172,6 +198,12 @@ router.post('/', authenticate, requirePermission(permissions.orderCreate), valid
       notes,
     });
   } catch (error) {
+    for (const resItem of reservedItems) {
+      await MenuItem.updateOne(
+        { _id: resItem.menuItemId },
+        { $inc: { availableQty: resItem.quantity } }
+      ).exec();
+    }
     throw error;
   }
 
