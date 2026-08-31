@@ -63,8 +63,8 @@ const loginSchema = z.object({
 }).strict().refine((data) => Boolean(data.email || data.phone), { message: 'Email or phone is required' });
 const registerSchema = z.object({
   email: z.string().email().refine(localPartHasLetter, { message: 'Invalid email' }),
-  password: z.string().min(8).max(72).regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d])/, { message: 'Password must include uppercase, lowercase, number and symbol' }),
-  confirmPassword: z.string().min(8).max(72),
+  password: z.string().min(6, { message: 'Password must be at least 6 characters' }).max(72),
+  confirmPassword: z.string().min(6, { message: 'Confirm password must be at least 6 characters' }).max(72),
   firstName: z.string().trim().min(2).max(50).regex(nameRegex, { message: 'First name must contain only letters, spaces, hyphens or apostrophes' }),
   lastName: z.string().trim().max(50).regex(nameRegex, { message: 'Last name must contain only letters, spaces, hyphens or apostrophes' }).optional().or(z.literal('')),
   phone: z.string().regex(phoneRegex, { message: 'Invalid phone number' }),

@@ -30,7 +30,6 @@ const countries = [
 
 const namePattern = /^[A-Za-z][A-Za-z\s'-]{1,49}$/;
 const emailPattern = /^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/;
-const strongPasswordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,72}$/;
 
 export default function Register() {
   const navigate = useNavigate();
@@ -72,7 +71,7 @@ export default function Register() {
       nextErrors.phone = `${selectedCountry.name} mobile numbers must have ${selectedCountry.min === selectedCountry.max ? selectedCountry.min : `${selectedCountry.min}-${selectedCountry.max}`} digits`;
     }
     if (!formData.password) nextErrors.password = 'Password is required';
-    else if (!strongPasswordPattern.test(formData.password)) nextErrors.password = 'Use 8-72 characters with uppercase, lowercase, number and symbol';
+    else if (formData.password.length < 6) nextErrors.password = 'Password must be at least 6 characters';
     if (!formData.confirmPassword) nextErrors.confirmPassword = 'Confirm your password';
     if (formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword) {
       nextErrors.confirmPassword = 'Passwords do not match';
@@ -175,7 +174,7 @@ export default function Register() {
         <Input
           label="Password"
           type="password"
-          placeholder="Create a password"
+          placeholder="Create a password (min 6 characters)"
           value={formData.password}
           onChange={(e) => handleChange('password', e.target.value)}
           error={validationErrors.password}
