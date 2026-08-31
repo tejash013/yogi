@@ -23,7 +23,7 @@ const statusConfig: Record<string, { variant: 'success' | 'warning' | 'error' | 
 };
 
 export default function Tables() {
-  const { branchId, currentBranch, currentRestaurant } = useTenantStore();
+  const { branchId, currentBranch } = useTenantStore();
   const [tables, setTables] = useState<TableRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'floor' | 'cards'>('floor');

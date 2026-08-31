@@ -53,6 +53,8 @@ export default function TenantSelector({
         <span className="text-amber-800 dark:text-amber-300">{branchName}</span>
       </div>
     );
+  }
+
   if (variant === 'card') {
     return (
       <div className={`rounded-2xl border border-neutral-200/80 bg-neutral-50/90 p-3 dark:border-neutral-700/80 dark:bg-neutral-800/80 ${className}`}>
