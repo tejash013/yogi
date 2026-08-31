@@ -71,6 +71,10 @@ export const ROUTES = {
   },
 
   WORKSPACE: '/workspace',
+  PLATFORM_ADMIN: {
+    DASHBOARD: '/platform-admin/dashboard',
+    USERS: '/workspace/users',
+  },
 
   // Error routes
   ERROR: {

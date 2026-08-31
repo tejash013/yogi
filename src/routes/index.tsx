@@ -8,6 +8,7 @@ import AdminLayout from '@/layouts/AdminLayout';
 import KitchenLayout from '@/layouts/KitchenLayout';
 import CashierLayout from '@/layouts/CashierLayout';
 import OwnerLayout from '@/layouts/OwnerLayout';
+import PlatformAdminLayout from '@/layouts/PlatformAdminLayout';
 
 import SplashScreen from '@/pages/SplashScreen';
 import WelcomeScreen from '@/pages/WelcomeScreen';
@@ -97,6 +98,23 @@ const router = createBrowserRouter([
         <Workspace />
       </ProtectedRoute>
     ),
+  },
+  {
+    path: ROUTES.PLATFORM_ADMIN.DASHBOARD,
+    element: (
+      <ProtectedRoute roles={['platformAdmin']}>
+        <Workspace />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/workspace/users',
+    element: (
+      <ProtectedRoute roles={['platformAdmin']}>
+        <PlatformAdminLayout />
+      </ProtectedRoute>
+    ),
+    children: [{ index: true, element: <AdminUsers /> }],
   },
 
   // Auth routes
@@ -267,7 +285,7 @@ function RootRedirect() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const role = useAuthStore((state) => state.user?.role);
   if (!isAuthenticated) return <Navigate to={ROUTES.AUTH.LOGIN} replace />;
-  if (role === 'platformAdmin') return <Navigate to={ROUTES.WORKSPACE} replace />;
+  if (role === 'platformAdmin') return <Navigate to={ROUTES.PLATFORM_ADMIN.DASHBOARD} replace />;
   if (role === 'owner') return <Navigate to={ROUTES.OWNER.DASHBOARD} replace />;
   if (role === 'manager') return <Navigate to={ROUTES.ADMIN.DASHBOARD} replace />;
   if (role === 'chef') return <Navigate to={ROUTES.KITCHEN.DASHBOARD} replace />;
