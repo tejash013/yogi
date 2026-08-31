@@ -43,6 +43,7 @@ export default function TenantSelector({
 
   const restaurantName = currentRestaurant?.name || 'Yogi Grand Restaurant';
   const branchName = currentBranch?.name || 'Main Dining Hall (Downtown)';
+  const isCustomer = !user || user.role === 'customer';
 
   if (variant === 'badge') {
     return (
@@ -61,15 +62,21 @@ export default function TenantSelector({
         <div className="flex items-center justify-between gap-1">
           <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
             <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            Active Branch
+            {isCustomer ? 'Active Branch' : 'Operating Branch'}
           </span>
-          <button
-            type="button"
-            onClick={() => setModalOpen(true)}
-            className="rounded-lg bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-600 hover:bg-amber-500/20 dark:text-amber-300"
-          >
-            Switch
-          </button>
+          {isCustomer ? (
+            <button
+              type="button"
+              onClick={() => setModalOpen(true)}
+              className="rounded-lg bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-600 hover:bg-amber-500/20 dark:text-amber-300"
+            >
+              Switch
+            </button>
+          ) : (
+            <span className="rounded-md bg-neutral-200/70 px-1.5 py-0.5 text-[9px] font-semibold text-neutral-600 dark:bg-neutral-700 dark:text-neutral-300">
+              🔒 Assigned
+            </span>
+          )}
         </div>
         <p className="mt-1.5 truncate text-xs font-bold text-neutral-900 dark:text-white">
           {restaurantName}
@@ -91,7 +98,9 @@ export default function TenantSelector({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-300">SaaS Multi-Tenant Mode</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-300">
+                  {isCustomer ? 'SaaS Multi-Tenant Mode' : 'Assigned Operating Branch'}
+                </span>
                 <span className="rounded-md bg-amber-400/20 px-1.5 py-0.5 text-[9px] font-mono text-amber-200">REST: {restaurantId.slice(-6)}</span>
                 <span className="rounded-md bg-emerald-400/20 px-1.5 py-0.5 text-[9px] font-mono text-emerald-200">BR: {branchId.slice(-6)}</span>
               </div>
@@ -105,13 +114,19 @@ export default function TenantSelector({
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setModalOpen(true)}
-              className="rounded-xl border border-amber-400/40 bg-amber-400/10 px-3 py-1.5 text-xs font-bold text-amber-300 transition-all hover:bg-amber-400/20"
-            >
-              🔄 Switch Branch / Location
-            </button>
+            {isCustomer ? (
+              <button
+                type="button"
+                onClick={() => setModalOpen(true)}
+                className="rounded-xl border border-amber-400/40 bg-amber-400/10 px-3 py-1.5 text-xs font-bold text-amber-300 transition-all hover:bg-amber-400/20"
+              >
+                🔄 Switch Branch / Location
+              </button>
+            ) : (
+              <span className="rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-neutral-300">
+                🔒 Assigned Branch Context
+              </span>
+            )}
             {(user?.role === 'platformAdmin' || user?.role === 'owner') && (
               <Link
                 to={ROUTES.WORKSPACE}
@@ -122,6 +137,29 @@ export default function TenantSelector({
             )}
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (!isCustomer) {
+    return (
+      <div
+        className={`inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-neutral-50/90 px-3 py-1.5 text-xs text-neutral-800 dark:border-neutral-700 dark:bg-neutral-800/90 dark:text-neutral-200 ${className}`}
+        title="Assigned Restaurant & Branch Location"
+      >
+        <span className="flex h-2 w-2 rounded-full bg-emerald-500" />
+        <div className="flex items-center gap-1.5 font-medium">
+          <span className="font-bold text-neutral-900 dark:text-white truncate max-w-[120px] sm:max-w-[160px]">
+            {restaurantName}
+          </span>
+          <span className="text-neutral-400">•</span>
+          <span className="text-neutral-600 dark:text-neutral-300 truncate max-w-[100px] sm:max-w-[140px]">
+            {branchName}
+          </span>
+        </div>
+        <span className="rounded-full bg-neutral-200/70 px-1.5 py-0.5 text-[9px] font-semibold text-neutral-500 dark:bg-neutral-700 dark:text-neutral-300">
+          🔒 Assigned
+        </span>
       </div>
     );
   }
@@ -155,8 +193,8 @@ export default function TenantSelector({
         </svg>
       </button>
 
-      {/* SaaS Multi-Tenant Selection Modal */}
-      {isModalOpen && (
+      {/* SaaS Multi-Tenant Selection Modal - Only for Customers */}
+      {isCustomer && isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md">
           <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[32px] border border-[#48392d] bg-[#171412] p-6 text-white shadow-2xl">
             {/* Modal Header */}

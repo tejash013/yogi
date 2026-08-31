@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { authApi } from '@/api/endpoints';
 import { useOrderSyncStore } from '@/store/orderSyncStore';
+import { useTenantStore, DEFAULT_RESTAURANT_ID, DEFAULT_BRANCH_ID } from '@/store/tenantStore';
 import { socketService } from '@/services/socket';
 import type { User, UserRole, LoginCredentials, RegisterData } from '@/types';
 
@@ -52,6 +53,13 @@ const hasValidStoredSession = Boolean(
     supportedRoles.includes(normalizedStoredUser.role as UserRole)
 );
 
+// If stored session belongs to staff (non-customer), lock to their assigned tenant
+if (hasValidStoredSession && normalizedStoredUser && normalizedStoredUser.role !== 'customer') {
+  const targetRestId = normalizedStoredUser.restaurantId || DEFAULT_RESTAURANT_ID;
+  const targetBranchId = normalizedStoredUser.branchId || DEFAULT_BRANCH_ID;
+  void useTenantStore.getState().setTenant(targetRestId, targetBranchId);
+}
+
 export const useAuthStore = create<AuthState>((set) => ({
   user: normalizedStoredUser,
   token: storedToken,
@@ -79,6 +87,13 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       localStorage.setItem('restaurantos-token', token);
       localStorage.setItem('restaurantos-refresh-token', refreshToken);
+
+      // Lock tenant context for staff (non-customer) roles
+      if (normalizedUser.role !== 'customer') {
+        const targetRestId = normalizedUser.restaurantId || DEFAULT_RESTAURANT_ID;
+        const targetBranchId = normalizedUser.branchId || DEFAULT_BRANCH_ID;
+        void useTenantStore.getState().setTenant(targetRestId, targetBranchId);
+      }
 
       set({
         user: normalizedUser,
