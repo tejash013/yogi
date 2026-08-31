@@ -29,6 +29,13 @@ async function startServer() {
     if (migratedUsers.modifiedCount > 0) {
       logger.info({ count: migratedUsers.modifiedCount }, 'Migrated legacy admin users to manager');
     }
+    const migratedPlatformAdmins = await User.updateMany(
+      { role: { $in: ['platformadmin', 'platform-admin'] } },
+      { $set: { role: 'platformAdmin' } },
+    );
+    if (migratedPlatformAdmins.modifiedCount > 0) {
+      logger.info({ count: migratedPlatformAdmins.modifiedCount }, 'Normalized platform administrator roles');
+    }
     await seedDatabase();
     logger.info('Successfully connected to MongoDB');
   } catch (error) {

@@ -68,7 +68,8 @@ export default function AdminOrders() {
 
           const itemCount = Array.isArray(order?.items) ? order.items.length : 0;
           const total = Number(order?.total ?? order?.subtotal ?? 0);
-          const tableNumber = order?.table ? Number(order.table) : order?.tableNumber ? Number(order.tableNumber) : undefined;
+          const tableValue = typeof order?.table === 'object' ? order.table?.label : order?.table;
+          const tableNumber = tableValue ? Number.parseInt(String(tableValue).replace(/\D/g, ''), 10) : Number(order?.tableNumber);
 
           return {
             id: String(order?._id ?? order?.id ?? `ord-${Math.random()}`),
