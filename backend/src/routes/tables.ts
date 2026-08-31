@@ -14,13 +14,14 @@ function paginate(items: any[], page: number, limit: number) {
   return paginated(items.slice(start, start + limit), items.length, page, limit);
 }
 
-router.get('/', authenticate, requirePermission(permissions.tablesRead), validateQuery(tableQuerySchema), async (req, res) => {
+router.get('/', authenticate, requirePermission(permissions.tablesRead), validateQuery(tableQuerySchema), async (req: any, res) => {
   const page = Number(req.query.page ?? 1);
   const limit = Number(req.query.limit ?? 20);
   const status = String(req.query.status ?? '').trim();
 
   const filter: any = { ...tenantFilter(req) };
-  if (status) filter.status = status;
+  if (req.user.role === 'customer') filter.status = 'available';
+  else if (status) filter.status = status;
 
   const tables = await Table.find(filter)
     .sort({ label: 1 })

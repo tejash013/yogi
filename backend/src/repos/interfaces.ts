@@ -1,5 +1,6 @@
 export interface IUserRepo {
   findByEmail(email: string): Promise<any | null>;
+  findByPhone(phone: string): Promise<any | null>;
   create(data: any): Promise<any>;
   findById(id: string): Promise<any | null>;
   update(id: string, update: any): Promise<any | null>;

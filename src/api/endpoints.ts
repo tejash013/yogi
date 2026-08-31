@@ -23,7 +23,7 @@ PaginationParams,
 
 // Auth API
 export const authApi = {
-  login: (credentials: LoginCredentials) =>
+  login: (credentials: LoginCredentials | { phone: string; password: string }) =>
     apiClient.post<ApiResponse<AuthResponse>>('/api/auth/login', credentials),
 
   register: (data: RegisterData) =>
@@ -122,8 +122,8 @@ export const ordersApi = {
 
 // Tables API
 export const tablesApi = {
-  getAll: () =>
-    apiClient.get<ApiResponse<Table[]>>('/api/tables'),
+  getAll: (params?: { status?: Table['status'] }) =>
+    apiClient.get<ApiResponse<Table[]>>('/api/tables', { params }),
 
   getById: (id: string) =>
     apiClient.get<ApiResponse<Table>>(`/api/tables/${id}`),

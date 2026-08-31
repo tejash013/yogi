@@ -44,6 +44,7 @@ const rolePermissions: Record<Role, readonly Permission[]> = {
     permissions.invoicesRead,
     permissions.offersRead,
     permissions.settingsRead,
+    permissions.tablesRead,
     permissions.reviewsRead,
     permissions.reviewsCreate,
   ],
