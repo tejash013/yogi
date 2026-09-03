@@ -18,7 +18,7 @@ describe('Tenant isolation', () => {
 
   it('does not allow restaurant staff to provision tenants', async () => {
     const a = await tenant('Provisioning A');
-    const user = await User.create({ restaurantId: a.restaurant._id, branchId: a.branch._id, firstName: 'Owner', lastName: 'Test', email: `owner-${Date.now()}@example.com`, phone: '1234567890', password: 'hashed', role: 'owner' });
+    const user = await User.create({ restaurantId: a.restaurant._id, branchId: a.branch._id, firstName: 'Staff', lastName: 'Manager', email: `manager-${Date.now()}@example.com`, phone: '1234567890', password: 'hashed', role: 'manager' });
     const token = signAccessToken({ id: user._id, role: user.role, email: user.email, tokenVersion: user.tokenVersion, restaurantId: user.restaurantId, branchId: user.branchId });
     const res = await request(app).post('/api/tenants/restaurants').set('Authorization', `Bearer ${token}`).send({ name: 'Blocked', slug: `blocked-${Date.now()}` });
     assert.equal(res.status, 403);

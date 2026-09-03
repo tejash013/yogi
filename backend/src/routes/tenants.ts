@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import Restaurant from '../models/Restaurant.js';
 import Branch from '../models/Branch.js';
+import User from '../models/User.js';
 import { authenticate, optionalAuth, requireRole } from '../middleware/auth.js';
 import { failure, success } from '../utils/response.js';
 import { validateBody, validateParams } from '../middleware/validate.js';
@@ -185,8 +186,8 @@ router.get('/restaurants/:id', optionalAuth, validateParams(idParamSchema), asyn
   return res.json(success({ ...enriched, branchCount }, 'Restaurant loaded'));
 });
 
-// POST /api/tenants/restaurants - Provision new restaurant (Platform Admin only)
-router.post('/restaurants', authenticate, requireRole('platformAdmin'), validateBody(restaurantSchema), async (req, res) => {
+// POST /api/tenants/restaurants - Provision new restaurant (Platform Admin or Owner)
+router.post('/restaurants', authenticate, requireRole(['platformAdmin', 'owner']), validateBody(restaurantSchema), async (req: any, res) => {
   const payload = { ...req.body };
 
   // Generate consolidated address if addressDetails are provided
@@ -212,6 +213,12 @@ router.post('/restaurants', authenticate, requireRole('platformAdmin'), validate
   }
 
   const restaurant = await Restaurant.create(payload);
+
+  // If created by an owner whose restaurantId is not yet assigned, link it
+  if (req.user?.role === 'owner' && !req.user.restaurantId) {
+    await User.findByIdAndUpdate(req.user.id, { $set: { restaurantId: restaurant._id } });
+  }
+
   return res.status(201).json(success(restaurant, 'Restaurant created successfully'));
 });
 
@@ -252,9 +259,13 @@ router.put('/restaurants/:id', authenticate, requireRole(['platformAdmin', 'owne
   return res.json(success(withResolvedCoords(updated), 'Restaurant updated successfully'));
 });
 
-// DELETE /api/tenants/restaurants/:id - Deactivate or Delete restaurant (Platform Admin only)
-router.delete('/restaurants/:id', authenticate, requireRole('platformAdmin'), validateParams(idParamSchema), async (req, res) => {
-  const permanent = req.query.permanent === 'true';
+// DELETE /api/tenants/restaurants/:id - Deactivate or Delete restaurant (Platform Admin or Owner)
+router.delete('/restaurants/:id', authenticate, requireRole(['platformAdmin', 'owner']), validateParams(idParamSchema), async (req: any, res) => {
+  if (req.user.role === 'owner' && String(req.user.restaurantId) !== req.params.id) {
+    return res.status(403).json(failure('Owners can only deactivate their own restaurant'));
+  }
+
+  const permanent = req.query.permanent === 'true' && req.user.role === 'platformAdmin';
 
   if (permanent) {
     const deleted = await Restaurant.findByIdAndDelete(req.params.id).exec();
