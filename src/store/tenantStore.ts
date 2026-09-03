@@ -458,6 +458,7 @@ export const useTenantStore = create<TenantState>((set, get) => ({
         detail: { restaurantId: get().restaurantId, branchId },
       })
     );
+    window.location.reload();
   },
 
   setTenant: async (restaurantId: string, branchId: string) => {

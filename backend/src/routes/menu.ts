@@ -31,10 +31,7 @@ async function resolveMenuImage(image: unknown, tenant: { restaurantId: string; 
     process.env.CLOUDINARY_API_SECRET
   );
   if (!hasCloudinaryConfig) {
-    if (isDataUrl) {
-      throw Object.assign(new Error('Cloudinary is required for device image uploads.'), { status: 503 });
-    }
-    return { value: image, metadata: { provider: 'external' } };
+    return { value: image, metadata: { provider: isDataUrl ? 'local' : 'external' } };
   }
 
   const result = await uploadImage(
