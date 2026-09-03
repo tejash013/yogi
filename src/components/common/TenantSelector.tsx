@@ -2,12 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore, useTenantStore } from '@/store';
 import { ROUTES } from '@/constants';
-import {
-  formatDistance,
-  KNOWN_LOCATION_PRESETS,
-  searchLocationQuery,
-  type Coordinates,
-} from '@/utils/geolocation';
+import { formatDistance, searchLocationQuery, type Coordinates } from '@/utils/geolocation';
 
 interface TenantSelectorProps {
   variant?: 'pill' | 'banner' | 'card' | 'badge';
@@ -37,11 +32,11 @@ export default function TenantSelector({
     userLocation,
     isLocating,
     locationError,
+    requestUserLocation,
     onlyNearby,
     setOnlyNearby,
     maxRadiusKm,
     setMaxRadiusKm,
-    requestUserLocation,
     setManualLocation,
   } = useTenantStore();
 
@@ -59,6 +54,22 @@ export default function TenantSelector({
   const isCustomer = !user || user.role === 'customer';
   const currentDistanceLabel = formatDistance(currentBranch?.distanceKm);
 
+  const handleLocationSearch = async (query: string) => {
+    setSearchQuery(query);
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    setIsSearching(true);
+    try {
+      setSearchResults(await searchLocationQuery(query));
+    } catch {
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   // Proximity filtering: strictly filter by maxRadiusKm when onlyNearby is enabled and location exists
   const displayedBranches =
     onlyNearby && userLocation
@@ -69,37 +80,6 @@ export default function TenantSelector({
     onlyNearby && userLocation
       ? availableRestaurants.filter((r) => (r.distanceKm ?? 9999) <= maxRadiusKm)
       : availableRestaurants;
-
-  // Handle location search query
-  const handleLocationSearch = async (query: string) => {
-    setSearchQuery(query);
-    if (!query.trim()) {
-      setSearchResults([]);
-      return;
-    }
-    setIsSearching(true);
-    try {
-      const results = await searchLocationQuery(query);
-      setSearchResults(results);
-    } catch {
-      setSearchResults([]);
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  const handleSelectPreset = (preset: { latitude: number; longitude: number; name: string; state: string }) => {
-    setManualLocation({
-      latitude: preset.latitude,
-      longitude: preset.longitude,
-      city: preset.name,
-      state: preset.state,
-      displayName: `${preset.name}, ${preset.state}`,
-      source: 'manual',
-    });
-    setSearchQuery('');
-    setSearchResults([]);
-  };
 
   if (variant === 'badge') {
     return (
@@ -293,162 +273,52 @@ export default function TenantSelector({
               </button>
             </div>
 
-            {/* Live Location Detection & Multi-Tier Location Box */}
-            <div className="mt-4 rounded-2xl border border-emerald-500/25 bg-emerald-950/20 p-4 text-emerald-100">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/20 text-xl border border-emerald-400/30">
-                    📍
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-300">
-                      Your Current Location
-                    </h4>
-                    {userLocation ? (
-                      <p className="text-xs text-neutral-200">
-                        Detected: <span className="font-bold text-emerald-300">{userLocation.displayName || userLocation.city || 'Located'}</span>
-                        <span className="ml-2 font-mono text-[11px] text-neutral-400">
-                          ({userLocation.latitude.toFixed(3)}, {userLocation.longitude.toFixed(3)})
-                        </span>
-                      </p>
-                    ) : (
-                      <p className="text-xs text-neutral-400">
-                        Share your location to display only nearby restaurants and branches.
-                      </p>
-                    )}
-                  </div>
+            <div className="mt-4">
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <div className="relative min-w-0 flex-1">
+                  <input
+                    type="search"
+                    value={searchQuery}
+                    onChange={(event) => void handleLocationSearch(event.target.value)}
+                    placeholder="Search city, area, or pincode"
+                    aria-label="Search restaurant location"
+                    className="w-full rounded-xl border border-neutral-700 bg-neutral-900 px-3.5 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/20"
+                  />
+                  {isSearching && <span className="absolute right-3 top-3 text-[10px] text-emerald-300">Searching...</span>}
                 </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => void requestUserLocation()}
-                    disabled={isLocating}
-                    className="flex items-center gap-1.5 rounded-xl border border-emerald-400/40 bg-emerald-500/20 px-3.5 py-2 text-xs font-bold text-emerald-200 transition-all hover:bg-emerald-500/30 disabled:opacity-50"
-                  >
-                    {isLocating ? (
-                      <>
-                        <span className="h-3 w-3 animate-spin rounded-full border-2 border-emerald-300 border-t-transparent" />
-                        Locating GPS / IP...
-                      </>
-                    ) : userLocation ? (
-                      '↻ Refresh Location'
-                    ) : (
-                      '🎯 Detect My Location'
-                    )}
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => void requestUserLocation()}
+                  disabled={isLocating}
+                  className="rounded-xl bg-emerald-400 px-4 py-2.5 text-sm font-bold text-neutral-950 transition hover:bg-emerald-300 disabled:cursor-wait disabled:opacity-60"
+                >
+                  {isLocating ? 'Finding kitchens...' : '📍 Find kitchens near me'}
+                </button>
               </div>
-
-              {locationError && (
-                <div className="mt-2.5 rounded-xl border border-amber-500/40 bg-amber-950/40 p-2 text-xs text-amber-200 flex items-center justify-between">
-                  <span>⚠️ {locationError}</span>
-                  <button
-                    type="button"
-                    onClick={() => void requestUserLocation()}
-                    className="underline text-[11px] font-bold hover:text-white"
-                  >
-                    Retry
-                  </button>
+              {searchResults.length > 0 && (
+                <div className="relative z-20 mt-1 rounded-xl border border-neutral-700 bg-neutral-900 p-1 shadow-lg">
+                  {searchResults.map((result, index) => (
+                    <button
+                      key={`${result.latitude}-${result.longitude}-${index}`}
+                      type="button"
+                      onClick={() => {
+                        setManualLocation(result);
+                        setSearchQuery('');
+                        setSearchResults([]);
+                      }}
+                      className="w-full rounded-lg px-3 py-2 text-left text-xs text-neutral-200 hover:bg-neutral-800 hover:text-white"
+                    >
+                      📍 {result.displayName || `${result.city || 'Selected area'}${result.state ? `, ${result.state}` : ''}`}
+                    </button>
+                  ))}
                 </div>
               )}
-
-              {/* Quick City Presets */}
-              <div className="mt-3 pt-3 border-t border-emerald-500/20">
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <span className="text-[11px] font-semibold text-neutral-300">Quick-Pick Area:</span>
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    {KNOWN_LOCATION_PRESETS.map((preset) => {
-                      const isCurrent =
-                        userLocation?.city?.toLowerCase() === preset.name.toLowerCase() ||
-                        userLocation?.displayName?.toLowerCase().includes(preset.name.toLowerCase());
-                      return (
-                        <button
-                          key={preset.id}
-                          type="button"
-                          onClick={() => handleSelectPreset(preset)}
-                          className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition-all ${
-                            isCurrent
-                              ? 'bg-emerald-400 text-neutral-950 shadow-sm'
-                              : 'bg-neutral-900 text-neutral-300 hover:bg-neutral-800 hover:text-white'
-                          }`}
-                        >
-                          📍 {preset.name}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Optional Manual Search input */}
-                <div className="mt-2 relative">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => void handleLocationSearch(e.target.value)}
-                    placeholder="Search city, town, or area (e.g., Bardoli, Surat, Vyara)..."
-                    className="w-full rounded-xl border border-neutral-700 bg-neutral-900/80 px-3 py-1.5 text-xs text-white placeholder-neutral-500 focus:border-emerald-400 focus:outline-none"
-                  />
-                  {isSearching && (
-                    <span className="absolute right-3 top-2 text-[10px] text-emerald-400 animate-pulse">
-                      Searching...
-                    </span>
-                  )}
-                  {searchResults.length > 0 && (
-                    <div className="absolute left-0 right-0 top-full z-20 mt-1 rounded-xl border border-neutral-700 bg-neutral-900 p-1 shadow-lg">
-                      {searchResults.map((res, i) => (
-                        <button
-                          key={i}
-                          type="button"
-                          onClick={() => {
-                            setManualLocation(res);
-                            setSearchQuery('');
-                            setSearchResults([]);
-                          }}
-                          className="w-full rounded-lg px-3 py-1.5 text-left text-xs text-neutral-200 hover:bg-neutral-800 hover:text-white"
-                        >
-                          📍 {res.displayName || `${res.city}, ${res.state}`}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Proximity Filter Toggle & Radius Selector */}
-              <div className="mt-3 pt-3 border-t border-emerald-500/20 flex flex-wrap items-center justify-between gap-3 text-xs">
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={onlyNearby}
-                    onChange={(e) => setOnlyNearby(e.target.checked)}
-                    className="h-4 w-4 rounded border-neutral-700 bg-neutral-900 text-emerald-500 focus:ring-emerald-400"
-                  />
-                  <span className="font-semibold text-emerald-200">
-                    Only show outlets within {maxRadiusKm} km
-                  </span>
-                </label>
-
-                {onlyNearby && (
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-[11px] text-neutral-400">Radius:</span>
-                    {[5, 15, 25, 50, 100].map((radius) => (
-                      <button
-                        key={radius}
-                        type="button"
-                        onClick={() => setMaxRadiusKm(radius)}
-                        className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition-all ${
-                          maxRadiusKm === radius
-                            ? 'bg-emerald-400 text-neutral-950'
-                            : 'bg-neutral-800 text-neutral-300 hover:bg-neutral-700'
-                        }`}
-                      >
-                        {radius} km
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              {locationError && <p className="mt-2 text-xs text-amber-300">{locationError}</p>}
+              {userLocation && !isLocating && (
+                <p className="mt-2 text-xs text-neutral-400">
+                  Using {userLocation.displayName || userLocation.city || 'your selected location'}{userLocation.source === 'gps' ? ' from your device' : ' manually'}.
+                </p>
+              )}
             </div>
 
             {/* Nearby Restaurants */}
