@@ -13,6 +13,7 @@ interface AuthState {
   error: string | null;
 
   login: (credentials: LoginCredentials) => Promise<void>;
+  loginWithGoogle: (credential: string) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => void;
   setUser: (user: User) => void;
@@ -168,6 +169,63 @@ export const useAuthStore = create<AuthState>((set) => ({
       const message = apiMessage || (error instanceof Error ? error.message : 'Registration failed. Please try again.');
 
       set({ isLoading: false, error: message });
+    }
+  },
+
+  loginWithGoogle: async (credential: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      localStorage.removeItem('restaurantos-token');
+      if (!credential) {
+        throw new Error('Google credential token is missing');
+      }
+
+      const response = await authApi.googleLogin(credential);
+      const { user, token } = response.data.data;
+      const normalizedUser = normalizeUser(user as (Partial<User> & { _id?: string }) | null);
+
+      if (!normalizedUser) {
+        throw new Error('Session user is invalid. Please try again.');
+      }
+
+      localStorage.setItem('restaurantos-token', token);
+
+      // Lock tenant context for staff (non-customer) roles
+      if (normalizedUser.role !== 'customer') {
+        const targetRestId = normalizedUser.restaurantId || DEFAULT_RESTAURANT_ID;
+        const targetBranchId = normalizedUser.branchId || DEFAULT_BRANCH_ID;
+        void useTenantStore.getState().setTenant(targetRestId, targetBranchId);
+      }
+
+      set({
+        user: normalizedUser,
+        token,
+        isAuthenticated: true,
+        isLoading: false,
+        error: null,
+      });
+
+      useOrderSyncStore.getState().notifyOrderChange({
+        type: 'update',
+        orderId: 'auth-session',
+        status: 'pending',
+        at: new Date().toISOString(),
+      });
+    } catch (error) {
+      const apiMessage =
+        typeof error === 'object' && error !== null && 'response' in error
+          ? (error as any).response?.data?.message
+          : undefined;
+      const message = apiMessage || (error instanceof Error ? error.message : 'Google authentication failed.');
+
+      set({
+        user: null,
+        token: null,
+        isAuthenticated: false,
+        isLoading: false,
+        error: message,
+      });
+      throw new Error(message);
     }
   },
 

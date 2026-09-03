@@ -6,6 +6,7 @@ Status: 100% READY FOR PRODUCTION DEPLOYMENT
 Repository: https://github.com/tejash013/yogi.git
 Architecture:
   [ Frontend: Vercel ]  --->  [ Backend: Render.com ]  --->  [ Database: MongoDB Atlas ]
+  Google OAuth 2.0 Identity Services Integrated (Direct Login & Register)
 ================================================================================
 
 
@@ -16,11 +17,12 @@ Component / Layer         Status    Details
 Frontend Compilation (TS) PASS      tsc -b completed with 0 errors.
 Frontend Production Build PASS      Vite bundle generated in dist/ (337 kB gzip 104 kB).
 Backend TypeScript Build  PASS      tsc -p . completed with 0 errors (dist/server.js).
-Backend Automated Tests   PASS      42 / 42 test suites passed across all security,
+Backend Automated Tests   PASS      48 / 48 test suites passed including Google OAuth,
                                     RBAC, multi-tenant isolation, orders & auth.
+Google Authentication     PASS      Google Identity Services integrated on frontend &
+                                    backend (/api/auth/google) for direct 1-click auth.
 SPA Client-Side Routing   PASS      vercel.json and public/_redirects configured.
 Cloud Blueprint Added     PASS      render.yaml added for automated 1-click provisioning.
-Package Cleanup           PASS      Unused parent 'site' dependency removed from backend.
 
 
 ================================================================================
@@ -32,44 +34,53 @@ STEP 1: DATABASE SETUP (MongoDB Atlas - 100% Free Forever)
 --------------------------------------------------------------------------------
 1. Visit: https://www.mongodb.com/cloud/atlas and create or log into your account.
 2. Click "Create" and select the "M0 Free" shared cluster.
-   - Choose a cloud provider and region closest to your users (e.g. AWS / Singapore or Frankfurt).
-   - Cluster Name: Cluster0 (default).
+   - Choose a cloud provider and region closest to your users.
 3. Set up Database User (Security -> Database Access):
-   - Click "Add New Database User".
-   - Authentication Method: Password.
-   - Username: restaurantos_admin (or your preferred username).
-   - Password: Choose or generate a strong password (save this password!).
+   - Click "Add New Database User" (Password auth).
+   - Username: restaurantos_admin.
+   - Password: Choose a strong password and save it.
    - Database User Privileges: Read and write to any database.
-   - Click "Add User".
 4. Configure Network Access (Security -> Network Access):
-   - Click "Add IP Address".
-   - Click "Allow Access from Anywhere" (sets IP to 0.0.0.0/0).
-   - Reason: Cloud providers like Render use dynamic IP addresses.
+   - Click "Add IP Address" -> choose "Allow Access from Anywhere" (0.0.0.0/0).
    - Click "Confirm".
 5. Get your Connection String:
-   - Go to "Database" -> click "Connect" on your cluster.
-   - Select "Drivers" -> Node.js.
-   - Copy the connection string format:
+   - Go to "Database" -> click "Connect" -> Drivers (Node.js).
+   - Copy connection string:
      mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/restaurantos?retryWrites=true&w=majority
-   - Replace <username> and <password> with your actual database user credentials.
+   - Replace <username> and <password> with your database user credentials.
 
 
 --------------------------------------------------------------------------------
-STEP 2: COMMIT & PUSH YOUR LATEST CODE TO GITHUB
+STEP 2: GOOGLE OAUTH CLIENT ID (Optional for 1-Click Google Sign-In)
 --------------------------------------------------------------------------------
-Run the following commands in your terminal to ensure your repository has all
-the deployment configuration files:
+1. Go to: https://console.cloud.google.com/apis/credentials
+2. Create a Project (e.g., "RestaurantOS").
+3. Configure "OAuth consent screen":
+   - User Type: External -> enter App name & Support email -> Save.
+4. Go to "Credentials" -> click "+ CREATE CREDENTIALS" -> "OAuth client ID":
+   - Application type: Web application
+   - Name: RestaurantOS Web
+   - Authorized JavaScript origins:
+       http://localhost:5173
+       https://<your-app>.vercel.app (add after frontend deploy)
+5. Click "Create" and copy your Client ID:
+   Example: 123456789-abcdef.apps.googleusercontent.com
 
+
+--------------------------------------------------------------------------------
+STEP 3: COMMIT & PUSH YOUR LATEST CODE TO GITHUB
+--------------------------------------------------------------------------------
+Run in your terminal:
   git add .
-  git commit -m "chore: prepare configuration for cloud deployment"
+  git commit -m "feat: add Google 1-click authentication and deployment config"
   git push origin master
 
 
 --------------------------------------------------------------------------------
-STEP 3: BACKEND DEPLOYMENT (Render.com - Free Web Service)
+STEP 4: BACKEND DEPLOYMENT (Render.com - Free Web Service)
 --------------------------------------------------------------------------------
-1. Visit: https://render.com and sign up / log in with your GitHub account.
-2. In your dashboard, click "New +" -> "Web Service".
+1. Visit: https://render.com and sign up / log in with GitHub.
+2. Click "New +" -> "Web Service".
 3. Choose "Build and deploy from a Git repository" and connect:
    https://github.com/tejash013/yogi
 4. Configure the Web Service:
@@ -92,19 +103,19 @@ STEP 3: BACKEND DEPLOYMENT (Render.com - Free Web Service)
    ACCESS_TOKEN_SECRET     <Generate 32-byte hex string - see command below>
    REFRESH_TOKEN_SECRET    <Generate another 32-byte hex string>
    FRONTEND_URL            https://restaurantos.vercel.app (placeholder for now)
+   GOOGLE_CLIENT_ID        <Your Google Client ID from Step 2>
    -----------------------------------------------------------------------------
 
    * Quick command to generate random 32-byte hex secrets in terminal:
      node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 6. Click "Create Web Service".
-7. Render will build and deploy your backend.
-8. Once finished, copy your assigned backend URL:
+7. Once deployed, copy your assigned backend URL:
    Example: https://restaurantos-backend.onrender.com
 
 
 --------------------------------------------------------------------------------
-STEP 4: FRONTEND DEPLOYMENT (Vercel - Free Global Edge Hosting)
+STEP 5: FRONTEND DEPLOYMENT (Vercel - Free Global Edge Hosting)
 --------------------------------------------------------------------------------
 1. Visit: https://vercel.com and log in with GitHub.
 2. Click "Add New..." -> "Project".
@@ -114,26 +125,27 @@ STEP 4: FRONTEND DEPLOYMENT (Vercel - Free Global Edge Hosting)
    - Root Directory: ./
    - Build Command: npm run build
    - Output Directory: dist
-5. Add Environment Variable:
+5. Add Environment Variables:
    -----------------------------------------------------------------------------
    KEY                     VALUE
    -----------------------------------------------------------------------------
-   VITE_API_URL            https://restaurantos-backend.onrender.com (your Render URL)
+   VITE_API_URL            https://restaurantos-backend.onrender.com
+   VITE_GOOGLE_CLIENT_ID   <Your Google Client ID from Step 2>
    -----------------------------------------------------------------------------
 6. Click "Deploy".
-7. Within 1-2 minutes, your frontend will be live!
-8. Copy your live frontend URL (e.g., https://yogi-restaurantos.vercel.app).
+7. Once deployed, copy your live frontend URL (e.g., https://yogi-restaurantos.vercel.app).
 
 
 --------------------------------------------------------------------------------
-STEP 5: LINK FRONTEND DOMAIN IN BACKEND CORS
+STEP 6: LINK FRONTEND DOMAIN IN BACKEND & GOOGLE CONSOLE
 --------------------------------------------------------------------------------
-1. Open your Render dashboard -> click on "restaurantos-backend" -> "Environment".
-2. Find the FRONTEND_URL variable.
-3. Update its value to your actual live Vercel URL:
-   FRONTEND_URL = https://yogi-restaurantos.vercel.app
-4. Click "Save Changes".
-5. Render will automatically redeploy the backend with updated CORS permissions.
+1. In Render Dashboard -> "restaurantos-backend" -> "Environment":
+   Update: FRONTEND_URL = https://yogi-restaurantos.vercel.app
+   Click "Save Changes".
+2. In Google Cloud Console -> Credentials -> your OAuth client ID:
+   Add your live Vercel URL to "Authorized JavaScript origins":
+   https://yogi-restaurantos.vercel.app
+   Click "Save".
 
 
 ================================================================================
@@ -152,23 +164,18 @@ STEP 5: LINK FRONTEND DOMAIN IN BACKEND CORS
 
 3. Check Frontend Application:
    Open your Vercel URL in your browser.
-   - Try registering a new customer or manager account.
-   - Browse the menu and add items to cart.
-   - Place an order and verify real-time Socket.io status updates.
+   - Click "Continue with Google" or "Sign up with Google" on Login or Register page.
+   - Test instant authentication and automatic redirection.
 
 ================================================================================
 4. IMPORTANT NOTES ON FREE CLOUD TIERS
 ================================================================================
 - Render Free Tier Spin-Down:
-  Free web services on Render sleep after 15 minutes of inactivity. The first
-  request after sleeping takes ~45-50 seconds to wake up (cold start).
-  After waking up, it operates normally.
-
-  * Tip to prevent sleep:
-    You can use a free monitoring service like https://cron-job.org or
-    https://uptimerobot.com to send an HTTP GET ping to:
+  Free web services sleep after 15 minutes of inactivity. First request takes
+  ~45 seconds to wake up (cold start).
+  * Tip: Use a free service like https://cron-job.org to ping:
     https://restaurantos-backend.onrender.com/health
-    every 10 minutes. This will keep your backend awake 24/7 at no cost.
+    every 10 minutes to keep your server awake 24/7 at no cost.
 
 ================================================================================
 END OF GUIDE

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button, Input } from '@/components/ui';
 import { ROUTES } from '@/constants';
 import { useAuthStore } from '@/store';
+import GoogleAuthButton from '@/components/auth/GoogleAuthButton';
 
 type RegisterForm = {
   firstName: string;
@@ -193,6 +194,14 @@ export default function Register() {
           {isLoading ? 'Creating account...' : 'Create Account'}
         </Button>
       </form>
+
+      <div className="my-6 flex items-center gap-3">
+        <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-700" />
+        <span className="text-xs font-medium text-neutral-400">OR</span>
+        <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-700" />
+      </div>
+
+      <GoogleAuthButton mode="signup" />
 
       <p className="mt-6 text-center text-sm text-neutral-500">
         Already have an account?{' '}

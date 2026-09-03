@@ -12,6 +12,8 @@ export interface User {
   status?: 'active' | 'inactive' | 'suspended';
   branch?: string;
   avatar?: string;
+  googleId?: string;
+  authProvider?: 'local' | 'google';
   createdAt: string;
   updatedAt: string;
 }

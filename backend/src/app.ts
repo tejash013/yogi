@@ -134,6 +134,7 @@ app.get('/db-health', (_req, res) => res.redirect(307, '/ready'));
 
 app.use('/api/auth/login', authRateLimit);
 app.use('/api/auth/register', authRateLimit);
+app.use('/api/auth/google', authRateLimit);
 app.use('/api/auth/forgot-password', authRateLimit);
 app.use('/api/auth/reset-password', authRateLimit);
 app.use('/api/auth/verify-otp', authRateLimit);

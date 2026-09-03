@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button, Input } from '@/components/ui';
 import { ROUTES } from '@/constants';
 import { useAuthStore } from '@/store';
+import GoogleAuthButton, { redirectByRole } from '@/components/auth/GoogleAuthButton';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -69,19 +70,7 @@ export default function Login() {
     const { isAuthenticated } = useAuthStore.getState();
     if (isAuthenticated) {
       const role = useAuthStore.getState().user?.role;
-      if (role === 'platformAdmin') {
-        navigate(ROUTES.WORKSPACE);
-      } else if (role === 'owner') {
-        navigate(ROUTES.OWNER.DASHBOARD);
-      } else if (role === 'manager') {
-        navigate(ROUTES.ADMIN.DASHBOARD);
-      } else if (role === 'chef') {
-        navigate(ROUTES.KITCHEN.DASHBOARD);
-      } else if (role === 'cashier') {
-        navigate(ROUTES.CASHIER.DASHBOARD);
-      } else {
-        navigate(ROUTES.CUSTOMER.HOME);
-      }
+      redirectByRole(navigate, role);
     }
   };
 
@@ -204,19 +193,7 @@ export default function Login() {
         <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-700" />
       </div>
 
-      <button
-        type="button"
-        className="flex w-full items-center justify-center gap-3 rounded-xl border-2 border-neutral-200 bg-white px-4 py-3 text-sm font-medium text-neutral-700 transition-all hover:-translate-y-0.5 hover:border-neutral-300 hover:bg-neutral-50 hover:shadow-sm dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:border-neutral-500"
-      >
-        <svg className="h-5 w-5" viewBox="0 0 24 24">
-          <path fill="#EA4335" d="M5.266 9.765A7.077 7.077 0 0112 4.91c1.665 0 3.158.613 4.303 1.626l3.196-3.196A11.954 11.954 0 0012 0C7.667 0 3.855 2.322 1.8 5.715l3.466 4.05z" />
-          <path fill="#34A853" d="M16.693 19.626A7.048 7.048 0 0112 21.09c-3.876 0-7.178-2.623-8.336-6.243l-3.466 4.05A11.96 11.96 0 0012 24c3.27 0 6.286-1.323 8.463-3.596l-3.77-2.778z" />
-          <path fill="#FBBC05" d="M5.337 14.268A7.12 7.12 0 014.89 12c0-.723.12-1.44.348-2.118L1.8 5.715A11.89 11.89 0 000 12c0 2.308.653 4.494 1.82 6.45l3.517-4.182z" />
-          <path fill="#4285F4" d="M12 21.09c2.427 0 4.636-.98 6.255-2.56l3.77 2.778C20.338 21.183 16.478 24 12 24V21.09z" />
-          <path fill="#34A853" d="M22.637 12c0-.789-.07-1.575-.21-2.34H12v4.364h6.016a5.68 5.68 0 01-1.973 2.634l3.77 2.778c2.172-2.052 3.484-5.056 3.484-8.436z" />
-        </svg>
-        Continue with Google
-      </button>
+      <GoogleAuthButton mode="signin" />
 
       <p className="mt-6 text-center text-sm text-neutral-500">
         Don't have an account?{' '}

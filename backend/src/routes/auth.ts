@@ -12,6 +12,7 @@ import { recordAudit } from '../utils/audit.js';
 import { tenantIdsFromRequest } from '../utils/tenant.js';
 import { isSupportedRole } from '../auth/permissions.js';
 import { hashPassword, verifyPassword } from '../utils/password.js';
+import { verifyGoogleIdToken } from '../utils/googleAuth.js';
 
 const router = Router();
 const REFRESH_COOKIE = 'restaurantos_refresh';
@@ -84,6 +85,7 @@ const registerSchema = z.object({
 const forgotSchema = z.object({ email: z.string().email().refine(localPartHasLetter, { message: 'Invalid email' }) });
 const resetSchema = z.object({ email: z.string().email().refine(localPartHasLetter, { message: 'Invalid email' }), token: z.string().min(1), password: z.string().min(6) });
 const verifyOtpSchema = z.object({ email: z.string().email().refine(localPartHasLetter, { message: 'Invalid email' }), otp: z.string().min(1) });
+const googleAuthSchema = z.object({ credential: z.string().min(1) }).strict();
 
 router.post('/login', validateBody(loginSchema), async (req, res) => {
   const { email, phone, password } = req.body;
@@ -154,6 +156,84 @@ router.post('/register', validateBody(registerSchema), async (req, res) => {
         token: accessToken,
       },
       'Registration successful'
+    )
+  );
+});
+
+router.post('/google', validateBody(googleAuthSchema), async (req, res) => {
+  const { credential } = req.body;
+  let googleUser;
+  try {
+    googleUser = await verifyGoogleIdToken(credential);
+  } catch (err: any) {
+    return res.status(401).json(failure(err?.message || 'Invalid Google credential token'));
+  }
+
+  const { email, googleId, firstName, lastName, avatar } = googleUser;
+
+  let user = await User.findOne({ googleId }).exec();
+  if (!user) {
+    user = await User.findOne({ email }).exec();
+    if (user) {
+      user.googleId = googleId;
+      if (!user.avatar && avatar) user.avatar = avatar;
+      if (!user.authProvider || user.authProvider === 'local') {
+        user.authProvider = 'google';
+      }
+      await user.save();
+    }
+  }
+
+  if (!user) {
+    const tenant = tenantIdsFromRequest(req);
+    user = new User({
+      firstName,
+      lastName,
+      email,
+      phone: '',
+      googleId,
+      avatar: avatar || undefined,
+      authProvider: 'google',
+      role: 'customer',
+      status: 'active',
+      restaurantId: tenant.restaurantId,
+      branchId: tenant.branchId,
+    });
+    await user.save();
+  }
+
+  if (user.status !== 'active') {
+    return res.status(403).json(failure('Your account is deactivated or suspended'));
+  }
+
+  const payload = {
+    id: user._id,
+    role: user.role,
+    email: user.email,
+    tokenVersion: user.tokenVersion,
+    restaurantId: user.restaurantId,
+    branchId: user.branchId,
+  };
+  const accessToken = signAccessToken(payload);
+  const refreshToken = signRefreshToken({ id: user._id, jti: crypto.randomUUID() });
+  await persistRefreshToken(user._id, refreshToken);
+  setRefreshCookie(res, refreshToken);
+  await recordAudit({
+    actor: String(user._id),
+    action: 'auth.google_login',
+    resourceType: 'User',
+    resourceId: String(user._id),
+    ip: req.ip,
+    userAgent: req.get('user-agent'),
+  });
+
+  return res.json(
+    success(
+      {
+        user: sanitizeUser(user),
+        token: accessToken,
+      },
+      'Google authentication successful'
     )
   );
 });

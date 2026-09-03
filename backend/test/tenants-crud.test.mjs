@@ -285,9 +285,18 @@ describe('Restaurant and Branch CRUD & Address Setup', () => {
     });
 
     it('forbids manager from updating a different branch', async () => {
+      const manager = await User.findOne({ firstName: 'Branch', lastName: 'Manager' });
+      const currentManagerToken = signAccessToken({
+        id: manager._id,
+        role: manager.role,
+        email: manager.email,
+        tokenVersion: manager.tokenVersion,
+        restaurantId: manager.restaurantId,
+        branchId: manager.branchId,
+      });
       const res = await request(app)
         .put(`/api/tenants/branches/${createdBranchId}`)
-        .set('Authorization', `Bearer ${managerToken}`)
+        .set('Authorization', `Bearer ${currentManagerToken}`)
         .send({ name: 'Unauthorized Change' });
 
       assert.equal(res.status, 403);

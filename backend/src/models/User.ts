@@ -8,8 +8,10 @@ const userSchema = new Schema(
     firstName: { type: String, required: true, trim: true },
     lastName: { type: String, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    phone: { type: String, required: true, trim: true },
-    password: { type: String, required: true },
+    phone: { type: String, trim: true, default: '' },
+    password: { type: String },
+    googleId: { type: String, sparse: true, index: true },
+    authProvider: { type: String, enum: ['local', 'google'], default: 'local' },
     role: {
       type: String,
       enum: ['customer', 'cashier', 'chef', 'manager', 'owner', 'platformAdmin'],
