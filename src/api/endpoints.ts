@@ -47,11 +47,29 @@ export const authApi = {
 export const tenantsApi = {
   getCurrent: () =>
     apiClient.get<ApiResponse<{ restaurantId: string; branchId: string; restaurant: Restaurant; branch: Branch }>>('/api/tenants/current'),
-  getRestaurants: () => apiClient.get<ApiResponse<Restaurant[]>>('/api/tenants/restaurants'),
-  getAllBranches: () => apiClient.get<ApiResponse<Branch[]>>('/api/tenants/branches'),
-  getBranches: (restaurantId: string) => apiClient.get<ApiResponse<Branch[]>>(`/api/tenants/restaurants/${restaurantId}/branches`),
-  createRestaurant: (payload: { name: string; slug: string; address?: string; latitude?: number; longitude?: number }) => apiClient.post<ApiResponse<Restaurant>>('/api/tenants/restaurants', payload),
-  createBranch: (restaurantId: string, payload: { name: string; slug: string; address?: string; latitude?: number; longitude?: number }) => apiClient.post<ApiResponse<Branch>>(`/api/tenants/restaurants/${restaurantId}/branches`, payload),
+  getRestaurants: (params?: { includeInactive?: boolean }) =>
+    apiClient.get<ApiResponse<Restaurant[]>>('/api/tenants/restaurants', { params }),
+  getRestaurant: (id: string) =>
+    apiClient.get<ApiResponse<Restaurant & { branchCount?: number }>>(`/api/tenants/restaurants/${id}`),
+  createRestaurant: (payload: Partial<Restaurant> & { name: string; slug: string }) =>
+    apiClient.post<ApiResponse<Restaurant>>('/api/tenants/restaurants', payload),
+  updateRestaurant: (id: string, payload: Partial<Restaurant>) =>
+    apiClient.put<ApiResponse<Restaurant>>(`/api/tenants/restaurants/${id}`, payload),
+  deleteRestaurant: (id: string, permanent = false) =>
+    apiClient.delete<ApiResponse<null>>(`/api/tenants/restaurants/${id}`, { params: { permanent } }),
+
+  getAllBranches: (params?: { restaurantId?: string; includeInactive?: boolean }) =>
+    apiClient.get<ApiResponse<Branch[]>>('/api/tenants/branches', { params }),
+  getBranches: (restaurantId: string, params?: { includeInactive?: boolean }) =>
+    apiClient.get<ApiResponse<Branch[]>>(`/api/tenants/restaurants/${restaurantId}/branches`, { params }),
+  getBranch: (id: string) =>
+    apiClient.get<ApiResponse<Branch>>(`/api/tenants/branches/${id}`),
+  createBranch: (restaurantId: string, payload: Partial<Branch> & { name: string; slug: string }) =>
+    apiClient.post<ApiResponse<Branch>>(`/api/tenants/restaurants/${restaurantId}/branches`, payload),
+  updateBranch: (id: string, payload: Partial<Branch>) =>
+    apiClient.put<ApiResponse<Branch>>(`/api/tenants/branches/${id}`, payload),
+  deleteBranch: (id: string, permanent = false) =>
+    apiClient.delete<ApiResponse<null>>(`/api/tenants/branches/${id}`, { params: { permanent } }),
 };
 
 // Menu API

@@ -3,11 +3,88 @@ import { Link, useNavigate } from 'react-router-dom';
 import { tenantsApi } from '@/api/endpoints';
 import { useAuthStore, useTenantStore } from '@/store';
 import { ROUTES } from '@/constants';
-import type { Branch, Restaurant } from '@/types';
+import type { Branch, Restaurant, AddressDetails } from '@/types';
+import {
+  calculateDistanceKm,
+  formatDistance,
+  getCurrentBrowserLocation,
+  KNOWN_LOCATION_PRESETS,
+  reverseGeocode,
+} from '@/utils/geolocation';
 
 function slugify(value: string) {
-  return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
 }
+
+interface RestaurantFormData {
+  name: string;
+  slug: string;
+  tagline: string;
+  phone: string;
+  email: string;
+  street: string;
+  landmark: string;
+  city: string;
+  state: string;
+  pincode: string;
+  latitude: number | '';
+  longitude: number | '';
+  gstNumber: string;
+}
+
+interface BranchFormData {
+  name: string;
+  slug: string;
+  branchCode: string;
+  phone: string;
+  email: string;
+  managerName: string;
+  street: string;
+  landmark: string;
+  city: string;
+  state: string;
+  pincode: string;
+  latitude: number | '';
+  longitude: number | '';
+  seatingCapacity: number;
+}
+
+const initialRestaurantForm: RestaurantFormData = {
+  name: '',
+  slug: '',
+  tagline: '',
+  phone: '',
+  email: '',
+  street: '',
+  landmark: '',
+  city: 'Surat',
+  state: 'Gujarat',
+  pincode: '',
+  latitude: 21.1702,
+  longitude: 72.8311,
+  gstNumber: '',
+};
+
+const initialBranchForm: BranchFormData = {
+  name: '',
+  slug: '',
+  branchCode: '',
+  phone: '',
+  email: '',
+  managerName: '',
+  street: '',
+  landmark: '',
+  city: 'Bardoli',
+  state: 'Gujarat',
+  pincode: '',
+  latitude: 21.1197,
+  longitude: 73.1167,
+  seatingCapacity: 40,
+};
 
 export default function Workspace() {
   const navigate = useNavigate();
@@ -16,106 +93,328 @@ export default function Workspace() {
   const {
     restaurantId: activeRestaurantId,
     branchId: activeBranchId,
+    userLocation,
     switchRestaurant: storeSwitchRestaurant,
     switchBranch: storeSwitchBranch,
     loadTenants,
   } = useTenantStore();
 
   const isPlatformAdmin = user?.role === 'platformAdmin';
-  const isOwnerOrAdmin = user?.role === 'owner' || isPlatformAdmin || user?.role === 'manager';
+  const isOwner = user?.role === 'owner';
+  const isManager = user?.role === 'manager';
+  const isOwnerOrAdmin = isOwner || isPlatformAdmin;
 
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [selectedRestaurant, setSelectedRestaurant] = useState(activeRestaurantId || '');
-  const [restaurantName, setRestaurantName] = useState('');
-  const [branchName, setBranchName] = useState('');
-  const [branchAddress, setBranchAddress] = useState('');
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [branchesLoading, setBranchesLoading] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+
+  // Modals state
+  const [isRestaurantModalOpen, setIsRestaurantModalOpen] = useState(false);
+  const [editingRestaurantId, setEditingRestaurantId] = useState<string | null>(null);
+  const [restaurantForm, setRestaurantForm] = useState<RestaurantFormData>(initialRestaurantForm);
+
+  const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
+  const [editingBranchId, setEditingBranchId] = useState<string | null>(null);
+  const [branchForm, setBranchForm] = useState<BranchFormData>(initialBranchForm);
+
+  const [deleteModal, setDeleteModal] = useState<{
+    type: 'restaurant' | 'branch';
+    id: string;
+    name: string;
+  } | null>(null);
 
   const activeRestaurant = useMemo(
     () => restaurants.find((restaurant) => restaurant._id === selectedRestaurant),
     [restaurants, selectedRestaurant],
   );
 
+  const fetchRestaurants = async () => {
+    try {
+      const response = await tenantsApi.getRestaurants({ includeInactive: true });
+      const items = response.data.data;
+      setRestaurants(items);
+      if (!selectedRestaurant && items.length > 0) {
+        setSelectedRestaurant(activeRestaurantId || items[0]._id);
+      }
+    } catch {
+      setMessage({ type: 'error', text: 'Workspace directory could not be loaded.' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchBranches = async (restaurantId: string) => {
+    setBranchesLoading(true);
+    try {
+      const response = await tenantsApi.getBranches(restaurantId, { includeInactive: true });
+      setBranches(response.data.data);
+    } catch {
+      setMessage({ type: 'error', text: 'Branches could not be loaded.' });
+    } finally {
+      setBranchesLoading(false);
+    }
+  };
+
   useEffect(() => {
-    tenantsApi.getRestaurants()
-      .then((response) => {
-        const items = response.data.data;
-        setRestaurants(items);
-        if (!selectedRestaurant && items.length > 0) {
-          setSelectedRestaurant(activeRestaurantId || items[0]._id);
-        }
-      })
-      .catch(() => setMessage('Workspace directory could not be loaded.'))
-      .finally(() => setLoading(false));
-  }, [activeRestaurantId, selectedRestaurant]);
+    void fetchRestaurants();
+  }, [activeRestaurantId]);
 
   useEffect(() => {
     if (!selectedRestaurant) {
       setBranches([]);
       return;
     }
-    setBranchesLoading(true);
-    tenantsApi.getBranches(selectedRestaurant)
-      .then((response) => setBranches(response.data.data))
-      .catch(() => setMessage('Branches could not be loaded.'))
-      .finally(() => setBranchesLoading(false));
+    void fetchBranches(selectedRestaurant);
   }, [selectedRestaurant]);
 
-  async function createRestaurant(event: React.FormEvent) {
-    event.preventDefault();
-    if (!restaurantName.trim()) return;
-    try {
-      const response = await tenantsApi.createRestaurant({ name: restaurantName.trim(), slug: slugify(restaurantName) });
-      setRestaurants((current) => [...current, response.data.data]);
-      setSelectedRestaurant(response.data.data._id);
-      void storeSwitchRestaurant(response.data.data._id);
-      void loadTenants();
-      setRestaurantName('');
-      setMessage('Restaurant workspace created.');
-    } catch {
-      setMessage('Restaurant could not be created.');
-    }
-  }
+  // Geolocation quick helpers
+  const applyPresetToRestaurant = (presetId: string) => {
+    const preset = KNOWN_LOCATION_PRESETS.find((p) => p.id === presetId);
+    if (!preset) return;
+    setRestaurantForm((prev) => ({
+      ...prev,
+      city: preset.name,
+      state: preset.state,
+      latitude: preset.latitude,
+      longitude: preset.longitude,
+    }));
+  };
 
-  async function createBranch(event: React.FormEvent) {
-    event.preventDefault();
-    if (!selectedRestaurant || !branchName.trim()) return;
+  const applyPresetToBranch = (presetId: string) => {
+    const preset = KNOWN_LOCATION_PRESETS.find((p) => p.id === presetId);
+    if (!preset) return;
+    setBranchForm((prev) => ({
+      ...prev,
+      city: preset.name,
+      state: preset.state,
+      latitude: preset.latitude,
+      longitude: preset.longitude,
+    }));
+  };
+
+  const detectLocationForRestaurant = async () => {
+    setIsLocating(true);
     try {
-      const response = await tenantsApi.createBranch(selectedRestaurant, {
-        name: branchName.trim(),
-        slug: slugify(branchName),
-        address: branchAddress.trim() || undefined,
-      });
-      setBranches((current) => [...current, response.data.data]);
-      storeSwitchBranch(response.data.data._id);
-      void loadTenants();
-      setBranchName('');
-      setBranchAddress('');
-      setMessage('Branch added and set as active.');
+      const coords = await getCurrentBrowserLocation();
+      const geo = await reverseGeocode(coords.latitude, coords.longitude);
+      setRestaurantForm((prev) => ({
+        ...prev,
+        latitude: Math.round(coords.latitude * 10000) / 10000,
+        longitude: Math.round(coords.longitude * 10000) / 10000,
+        city: geo.city || prev.city,
+        state: coords.state || prev.state,
+      }));
+      setMessage({ type: 'success', text: `Detected location: ${geo.displayName || coords.city || 'Nearby'}` });
     } catch {
-      setMessage('Branch could not be created.');
+      setMessage({ type: 'error', text: 'Could not detect browser location. Please enter address manually.' });
+    } finally {
+      setIsLocating(false);
     }
-  }
+  };
+
+  const detectLocationForBranch = async () => {
+    setIsLocating(true);
+    try {
+      const coords = await getCurrentBrowserLocation();
+      const geo = await reverseGeocode(coords.latitude, coords.longitude);
+      setBranchForm((prev) => ({
+        ...prev,
+        latitude: Math.round(coords.latitude * 10000) / 10000,
+        longitude: Math.round(coords.longitude * 10000) / 10000,
+        city: geo.city || prev.city,
+        state: coords.state || prev.state,
+      }));
+      setMessage({ type: 'success', text: `Detected location: ${geo.displayName || coords.city || 'Nearby'}` });
+    } catch {
+      setMessage({ type: 'error', text: 'Could not detect browser location. Please enter address manually.' });
+    } finally {
+      setIsLocating(false);
+    }
+  };
+
+  // Open modals
+  const openCreateRestaurantModal = () => {
+    setEditingRestaurantId(null);
+    setRestaurantForm(initialRestaurantForm);
+    setIsRestaurantModalOpen(true);
+  };
+
+  const openEditRestaurantModal = (restaurant: Restaurant) => {
+    setEditingRestaurantId(restaurant._id);
+    const details = (restaurant.addressDetails || {}) as Partial<AddressDetails>;
+    setRestaurantForm({
+      name: restaurant.name,
+      slug: restaurant.slug,
+      tagline: restaurant.tagline || '',
+      phone: restaurant.phone || '',
+      email: restaurant.email || '',
+      street: details.street || '',
+      landmark: details.landmark || '',
+      city: details.city || 'Surat',
+      state: details.state || 'Gujarat',
+      pincode: details.pincode || '',
+      latitude: restaurant.latitude ?? 21.1702,
+      longitude: restaurant.longitude ?? 72.8311,
+      gstNumber: restaurant.gstNumber || '',
+    });
+    setIsRestaurantModalOpen(true);
+  };
+
+  const openCreateBranchModal = () => {
+    setEditingBranchId(null);
+    setBranchForm(initialBranchForm);
+    setIsBranchModalOpen(true);
+  };
+
+  const openEditBranchModal = (branch: Branch) => {
+    setEditingBranchId(branch._id);
+    const details = (branch.addressDetails || {}) as Partial<AddressDetails>;
+    setBranchForm({
+      name: branch.name,
+      slug: branch.slug,
+      branchCode: branch.branchCode || '',
+      phone: branch.phone || '',
+      email: branch.email || '',
+      managerName: branch.managerName || '',
+      street: details.street || '',
+      landmark: details.landmark || '',
+      city: details.city || 'Bardoli',
+      state: details.state || 'Gujarat',
+      pincode: details.pincode || '',
+      latitude: branch.latitude ?? 21.1197,
+      longitude: branch.longitude ?? 73.1167,
+      seatingCapacity: branch.seatingCapacity || 40,
+    });
+    setIsBranchModalOpen(true);
+  };
+
+  // Submit handlers
+  const handleSaveRestaurant = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!restaurantForm.name.trim()) return;
+
+    const payload: Partial<Restaurant> & { name: string; slug: string } = {
+      name: restaurantForm.name.trim(),
+      slug: restaurantForm.slug.trim() || slugify(restaurantForm.name),
+      tagline: restaurantForm.tagline.trim() || undefined,
+      phone: restaurantForm.phone.trim() || undefined,
+      email: restaurantForm.email.trim() || undefined,
+      gstNumber: restaurantForm.gstNumber.trim() || undefined,
+      addressDetails: {
+        street: restaurantForm.street.trim() || undefined,
+        landmark: restaurantForm.landmark.trim() || undefined,
+        city: restaurantForm.city.trim(),
+        state: restaurantForm.state.trim(),
+        pincode: restaurantForm.pincode.trim() || undefined,
+        country: 'India',
+      },
+      latitude: typeof restaurantForm.latitude === 'number' ? restaurantForm.latitude : undefined,
+      longitude: typeof restaurantForm.longitude === 'number' ? restaurantForm.longitude : undefined,
+    };
+
+    try {
+      if (editingRestaurantId) {
+        const res = await tenantsApi.updateRestaurant(editingRestaurantId, payload);
+        setMessage({ type: 'success', text: `Restaurant "${res.data.data.name}" updated successfully.` });
+      } else {
+        const res = await tenantsApi.createRestaurant(payload);
+        setSelectedRestaurant(res.data.data._id);
+        void storeSwitchRestaurant(res.data.data._id);
+        setMessage({ type: 'success', text: `Restaurant "${res.data.data.name}" provisioned successfully.` });
+      }
+      setIsRestaurantModalOpen(false);
+      void fetchRestaurants();
+      void loadTenants();
+    } catch {
+      setMessage({ type: 'error', text: 'Failed to save restaurant details. Check required fields.' });
+    }
+  };
+
+  const handleSaveBranch = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!branchForm.name.trim() || !selectedRestaurant) return;
+
+    const payload: Partial<Branch> & { name: string; slug: string } = {
+      name: branchForm.name.trim(),
+      slug: branchForm.slug.trim() || slugify(branchForm.name),
+      branchCode: branchForm.branchCode.trim() || undefined,
+      phone: branchForm.phone.trim() || undefined,
+      email: branchForm.email.trim() || undefined,
+      managerName: branchForm.managerName.trim() || undefined,
+      seatingCapacity: Number(branchForm.seatingCapacity) || 40,
+      addressDetails: {
+        street: branchForm.street.trim() || undefined,
+        landmark: branchForm.landmark.trim() || undefined,
+        city: branchForm.city.trim(),
+        state: branchForm.state.trim(),
+        pincode: branchForm.pincode.trim() || undefined,
+        country: 'India',
+      },
+      latitude: typeof branchForm.latitude === 'number' ? branchForm.latitude : undefined,
+      longitude: typeof branchForm.longitude === 'number' ? branchForm.longitude : undefined,
+    };
+
+    try {
+      if (editingBranchId) {
+        const res = await tenantsApi.updateBranch(editingBranchId, payload);
+        setMessage({ type: 'success', text: `Branch "${res.data.data.name}" updated successfully.` });
+      } else {
+        const res = await tenantsApi.createBranch(selectedRestaurant, payload);
+        storeSwitchBranch(res.data.data._id);
+        setMessage({ type: 'success', text: `Branch "${res.data.data.name}" added and set as active.` });
+      }
+      setIsBranchModalOpen(false);
+      void fetchBranches(selectedRestaurant);
+      void loadTenants();
+    } catch {
+      setMessage({ type: 'error', text: 'Failed to save branch details. Check required fields.' });
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteModal) return;
+    try {
+      if (deleteModal.type === 'restaurant') {
+        await tenantsApi.deleteRestaurant(deleteModal.id);
+        setMessage({ type: 'success', text: `Restaurant "${deleteModal.name}" deactivated.` });
+        void fetchRestaurants();
+      } else {
+        await tenantsApi.deleteBranch(deleteModal.id);
+        setMessage({ type: 'success', text: `Branch "${deleteModal.name}" deactivated.` });
+        void fetchBranches(selectedRestaurant);
+      }
+      void loadTenants();
+      setDeleteModal(null);
+    } catch {
+      setMessage({ type: 'error', text: `Failed to deactivate ${deleteModal.type}.` });
+    }
+  };
 
   return (
     <main className="min-h-screen bg-[#f4f1ea] px-4 py-6 text-[#17211d] sm:px-8 lg:px-12">
       <div className="mx-auto max-w-7xl">
-        <header className="relative overflow-hidden rounded-[2rem] bg-[#173c35] px-6 py-8 text-white shadow-xl sm:px-10 lg:py-10">
+        {/* Header Banner */}
+        <header className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-[#173c35] via-[#1c483f] to-[#122c26] px-6 py-8 text-white shadow-2xl sm:px-10 lg:py-10">
           <div className="absolute -right-16 -top-20 h-64 w-64 rounded-full border-[28px] border-[#d6e85e]/20" />
           <div className="absolute bottom-[-100px] right-48 h-48 w-48 rounded-full bg-[#df714c]/30 blur-2xl" />
           <div className="relative flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl">
-              <p className="text-xs font-bold uppercase tracking-[0.28em] text-[#d6e85e]">RestaurantOS / SaaS Workspace</p>
-              <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">Multi-Tenant Management Console</h1>
-              <p className="mt-4 max-w-xl text-sm leading-6 text-white/70">Provision restaurants, organize branches, and switch active operating context across all screens seamlessly.</p>
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-[#d6e85e] backdrop-blur">
+                <span>🏢</span> RestaurantOS Multi-Tenant Architecture
+              </div>
+              <h1 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-5xl">Restaurant & Branch Setup</h1>
+              <p className="mt-4 max-w-xl text-sm leading-6 text-white/75">
+                Manage your dining chains, configure branches with structured street addresses and GPS coordinates, and effortlessly switch operating context.
+              </p>
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="flex flex-wrap items-center gap-3">
               <Link
                 to={isPlatformAdmin ? ROUTES.PLATFORM_ADMIN.DASHBOARD : ROUTES.ADMIN.DASHBOARD}
-                className="inline-flex h-11 min-w-40 items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20"
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -125,7 +424,7 @@ export default function Workspace() {
               {isPlatformAdmin && (
                 <Link
                   to={ROUTES.PLATFORM_ADMIN.USERS}
-                  className="inline-flex h-11 min-w-40 items-center justify-center gap-2 rounded-2xl border border-[#d6e85e]/40 bg-[#d6e85e] px-4 text-sm font-semibold text-[#173c35] transition hover:bg-[#e5f47d]"
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-[#d6e85e]/40 bg-[#d6e85e] px-4 text-sm font-bold text-[#173c35] transition hover:bg-[#e5f47d]"
                 >
                   User Access
                 </Link>
@@ -135,7 +434,7 @@ export default function Workspace() {
                   logout();
                   navigate(ROUTES.AUTH.LOGIN);
                 }}
-                className="inline-flex h-11 min-w-40 items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/15 px-4 text-sm font-semibold text-white backdrop-blur transition hover:bg-red-500 hover:border-red-500"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 text-sm font-semibold text-white backdrop-blur transition hover:border-red-500 hover:bg-red-500/80"
                 title="Sign out of workspace"
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -147,144 +446,795 @@ export default function Workspace() {
           </div>
         </header>
 
-        {message && <div className="mt-4 rounded-xl border border-[#d6e85e] bg-[#f8fbdc] px-4 py-3 text-sm text-[#42520f]">{message}</div>}
+        {/* Feedback Alert */}
+        {message && (
+          <div
+            className={`mt-4 flex items-center justify-between rounded-2xl border p-4 text-sm font-medium transition ${
+              message.type === 'success'
+                ? 'border-emerald-300 bg-emerald-50 text-emerald-900'
+                : 'border-red-300 bg-red-50 text-red-900'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <span>{message.type === 'success' ? '✅' : '⚠️'}</span>
+              <span>{message.text}</span>
+            </div>
+            <button
+              onClick={() => setMessage(null)}
+              className="text-xs font-bold uppercase tracking-wider text-neutral-500 hover:text-neutral-800"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
 
-        <section className="mt-6 grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
-          {/* Restaurant Workspaces */}
+        <section className="mt-8 grid gap-8 lg:grid-cols-[1fr_1.4fr]">
+          {/* Column 1: Restaurant Directory */}
           <div className="space-y-6">
-            <div className="rounded-[1.75rem] border border-[#dfd9cc] bg-white p-6 shadow-sm">
-              <div className="flex items-center justify-between">
+            <div className="rounded-[2rem] border border-[#dfd9cc] bg-white p-6 shadow-sm sm:p-7">
+              <div className="flex items-center justify-between border-b border-[#eee9df] pb-5">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#7d877f]">Restaurant directory</p>
-                  <h2 className="mt-2 text-2xl font-semibold">Restaurants</h2>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#7d877f]">Tenant Architecture</p>
+                  <h2 className="mt-1 text-2xl font-bold tracking-tight text-[#17211d]">Restaurants</h2>
                 </div>
-                <span className="rounded-full bg-[#e8f1d2] px-3 py-1 text-xs font-bold text-[#526000]">{restaurants.length} workspaces</span>
+                {isPlatformAdmin && (
+                  <button
+                    onClick={openCreateRestaurantModal}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-[#173c35] px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-[#22574d]"
+                  >
+                    <span>+</span> Provision
+                  </button>
+                )}
               </div>
-              <div className="mt-5 space-y-2">
+
+              <div className="mt-5 space-y-3">
                 {loading ? (
-                  <p className="text-sm text-[#7d877f]">Loading workspaces...</p>
+                  <p className="py-6 text-center text-sm text-[#7d877f]">Loading workspaces...</p>
+                ) : restaurants.length === 0 ? (
+                  <p className="py-6 text-center text-sm text-[#7d877f]">No restaurants provisioned yet.</p>
                 ) : (
-                  restaurants.map((restaurant) => (
-                    <button
-                      key={restaurant._id}
-                      onClick={() => {
-                        setSelectedRestaurant(restaurant._id);
-                        void storeSwitchRestaurant(restaurant._id);
-                      }}
-                      className={`w-full rounded-2xl border px-4 py-3 text-left transition flex items-center justify-between ${
-                        selectedRestaurant === restaurant._id
-                          ? 'border-[#173c35] bg-[#edf4e1] ring-1 ring-[#173c35]/20'
-                          : 'border-[#ebe6dc] hover:border-[#aeb9a8]'
-                      }`}
-                    >
-                      <div>
-                        <span className="block font-medium">{restaurant.name}</span>
-                        <span className="mt-1 block text-xs text-[#7d877f]">Select to manage its branches</span>
+                  restaurants.map((restaurant) => {
+                    const isSelected = selectedRestaurant === restaurant._id;
+                    const isCurrentActive = restaurant._id === activeRestaurantId;
+                    const city = restaurant.addressDetails?.city || (restaurant.address?.split(',').slice(-3, -2)[0]?.trim());
+
+                    return (
+                      <div
+                        key={restaurant._id}
+                        className={`rounded-2xl border p-4 transition-all ${
+                          isSelected
+                            ? 'border-[#173c35] bg-[#edf4e1] ring-2 ring-[#173c35]/20'
+                            : 'border-[#ebe6dc] bg-white hover:border-[#aeb9a8]'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedRestaurant(restaurant._id);
+                              void storeSwitchRestaurant(restaurant._id);
+                            }}
+                            className="flex-1 text-left"
+                          >
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-bold text-base text-[#17211d]">{restaurant.name}</h3>
+                              {isCurrentActive && (
+                                <span className="rounded-full bg-[#173c35] px-2 py-0.5 text-[9px] font-bold text-white">
+                                  Active Context
+                                </span>
+                              )}
+                              {!restaurant.isActive && (
+                                <span className="rounded-full bg-red-100 px-2 py-0.5 text-[9px] font-bold text-red-700">
+                                  Inactive
+                                </span>
+                              )}
+                            </div>
+                            <p className="mt-1 text-xs text-[#526000]">
+                              📍 {city || 'Headquarters'} {restaurant.latitude && `(${restaurant.latitude.toFixed(2)}°, ${restaurant.longitude?.toFixed(2)}°)`}
+                            </p>
+                            {restaurant.address && (
+                              <p className="mt-1 line-clamp-1 text-[11px] text-[#7d877f]">{restaurant.address}</p>
+                            )}
+                          </button>
+
+                          {/* Restaurant Action Buttons */}
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {(isPlatformAdmin || (isOwner && restaurant._id === user?.restaurantId)) && (
+                              <button
+                                type="button"
+                                onClick={() => openEditRestaurantModal(restaurant)}
+                                className="rounded-lg border border-[#ddd3c4] bg-white p-1.5 text-xs text-neutral-600 hover:border-[#173c35] hover:text-[#173c35]"
+                                title="Edit Restaurant Profile & Address"
+                              >
+                                ✏️
+                              </button>
+                            )}
+                            {isPlatformAdmin && (
+                              <button
+                                type="button"
+                                onClick={() => setDeleteModal({ type: 'restaurant', id: restaurant._id, name: restaurant.name })}
+                                className="rounded-lg border border-[#ddd3c4] bg-white p-1.5 text-xs text-red-500 hover:border-red-400 hover:bg-red-50"
+                                title="Deactivate Restaurant"
+                              >
+                                🗑️
+                              </button>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      {restaurant._id === activeRestaurantId && (
-                        <span className="rounded-full bg-[#173c35] px-2.5 py-0.5 text-[10px] font-bold text-white">Active</span>
-                      )}
-                    </button>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>
-
-            {isOwnerOrAdmin && (
-              <form onSubmit={createRestaurant} className="rounded-[1.75rem] border border-[#dfd9cc] bg-[#fffaf0] p-6 shadow-sm">
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#df714c]">Provision</p>
-                <h2 className="mt-2 text-2xl font-semibold">New Restaurant</h2>
-                <div className="mt-5 flex gap-2">
-                  <input
-                    value={restaurantName}
-                    onChange={(event) => setRestaurantName(event.target.value)}
-                    placeholder="Restaurant name (e.g. Skyline Dining)"
-                    className="min-w-0 flex-1 rounded-xl border border-[#ddd3c4] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#173c35]"
-                  />
-                  <button className="rounded-xl bg-[#173c35] px-4 py-2 text-sm font-semibold text-white hover:bg-[#245a4e]">Create</button>
-                </div>
-              </form>
-            )}
           </div>
 
-          {/* Branch Network for Selected Restaurant */}
-          <div className="rounded-[1.75rem] border border-[#dfd9cc] bg-white p-6 shadow-sm sm:p-8">
-            <div className="flex flex-col gap-4 border-b border-[#eee9df] pb-6 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#df714c]">Branch network</p>
-                <h2 className="mt-2 text-3xl font-semibold">{activeRestaurant?.name ?? 'Select a restaurant'}</h2>
-              </div>
-              <span className="rounded-full bg-[#f4f1ea] px-3 py-1.5 text-xs font-medium text-[#68736d]">{branches.length} branches</span>
-            </div>
-
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              {branchesLoading ? (
-                <p className="text-sm text-[#7d877f]">Loading branches...</p>
-              ) : branches.length === 0 ? (
-                <p className="rounded-2xl border border-dashed border-[#ddd3c4] p-5 text-sm text-[#7d877f]">No branches configured for this restaurant yet.</p>
-              ) : branches.map((branch) => {
-                const isActive = branch._id === activeBranchId;
-                return (
-                  <div
-                    key={branch._id}
-                    className={`rounded-2xl border p-4 transition-all ${
-                      isActive ? 'border-[#173c35] bg-[#edf4e1]/60 ring-1 ring-[#173c35]/20' : 'border-[#ebe6dc]'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className={`h-2.5 w-2.5 rounded-full ${isActive ? 'bg-[#173c35]' : 'bg-[#6fa56e]'}`} />
-                      <span className="text-xs font-medium text-[#7d877f]">{isActive ? 'Current Active' : 'Available'}</span>
-                    </div>
-                    <h3 className="mt-4 font-bold text-base">{branch.name}</h3>
-                    <p className="mt-1 text-sm text-[#7d877f]">{branch.address || 'Address not configured'}</p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        storeSwitchBranch(branch._id);
-                        setMessage(`Switched active branch to ${branch.name}`);
-                      }}
-                      className={`mt-4 w-full rounded-xl py-2 text-xs font-bold transition ${
-                        isActive
-                          ? 'bg-[#173c35] text-white shadow-sm'
-                          : 'border border-[#ddd3c4] bg-white text-[#173c35] hover:bg-[#f4f1ea]'
-                      }`}
-                    >
-                      {isActive ? 'Current branch' : 'Set as active branch'}
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-
-            {isOwnerOrAdmin && (
-              <form onSubmit={createBranch} className="mt-8 rounded-2xl bg-[#f4f1ea] p-5">
-                <p className="text-sm font-semibold">Add Branch to {activeRestaurant?.name}</p>
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <input
-                    value={branchName}
-                    onChange={(event) => setBranchName(event.target.value)}
-                    placeholder="Branch name (e.g. Airport Lounge)"
-                    className="rounded-xl border border-[#ddd3c4] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#173c35]"
-                  />
-                  <input
-                    value={branchAddress}
-                    onChange={(event) => setBranchAddress(event.target.value)}
-                    placeholder="Address / Terminal / Street"
-                    className="rounded-xl border border-[#ddd3c4] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#173c35]"
-                  />
+          {/* Column 2: Branch Network for Selected Restaurant */}
+          <div className="space-y-6">
+            <div className="rounded-[2rem] border border-[#dfd9cc] bg-white p-6 shadow-sm sm:p-8">
+              <div className="flex flex-col gap-4 border-b border-[#eee9df] pb-6 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#df714c]">Branch Outlets & Dining Rooms</p>
+                  <h2 className="mt-1 text-2xl sm:text-3xl font-extrabold text-[#17211d]">
+                    {activeRestaurant?.name ?? 'Select a Restaurant'}
+                  </h2>
+                  <p className="mt-1 text-xs text-[#7d877f]">
+                    {branches.length} branch location{branches.length === 1 ? '' : 's'} configured for this tenant
+                  </p>
                 </div>
-                <button
-                  disabled={!selectedRestaurant}
-                  className="mt-3 rounded-xl bg-[#df714c] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#c95f3c] disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  Add Branch Location
-                </button>
-              </form>
-            )}
+                {isOwnerOrAdmin && selectedRestaurant && (
+                  <button
+                    onClick={openCreateBranchModal}
+                    className="inline-flex items-center gap-2 rounded-xl bg-[#df714c] px-4 py-2.5 text-xs font-bold text-white shadow transition hover:bg-[#c95f3c]"
+                  >
+                    <span>+</span> Add Branch Outlet
+                  </button>
+                )}
+              </div>
+
+              {/* Branch Cards Grid */}
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                {branchesLoading ? (
+                  <div className="col-span-2 py-8 text-center text-sm text-[#7d877f]">Loading branch outlets...</div>
+                ) : branches.length === 0 ? (
+                  <div className="col-span-2 rounded-2xl border border-dashed border-[#ddd3c4] p-8 text-center">
+                    <p className="text-sm font-medium text-[#7d877f]">No branch outlets configured yet for {activeRestaurant?.name}.</p>
+                    {isOwnerOrAdmin && (
+                      <button
+                        onClick={openCreateBranchModal}
+                        className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-[#173c35] px-4 py-2 text-xs font-bold text-white shadow-sm"
+                      >
+                        Add First Branch
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  branches.map((branch) => {
+                    const isActiveOperating = branch._id === activeBranchId;
+                    const distanceKm =
+                      userLocation && branch.latitude && branch.longitude
+                        ? calculateDistanceKm(userLocation.latitude, userLocation.longitude, branch.latitude, branch.longitude)
+                        : branch.distanceKm;
+                    const distanceLabel = formatDistance(distanceKm);
+                    const city = branch.addressDetails?.city;
+
+                    return (
+                      <div
+                        key={branch._id}
+                        className={`relative flex flex-col justify-between rounded-2xl border p-5 transition-all ${
+                          isActiveOperating
+                            ? 'border-[#173c35] bg-[#edf4e1]/70 ring-2 ring-[#173c35]/20 shadow-md'
+                            : 'border-[#ebe6dc] bg-white hover:border-[#aeb9a8] shadow-sm'
+                        }`}
+                      >
+                        <div>
+                          {/* Top Tag & Status */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className={`h-2.5 w-2.5 rounded-full ${isActiveOperating ? 'bg-[#173c35]' : 'bg-[#6fa56e]'}`} />
+                              <span className="text-xs font-bold text-[#173c35]">
+                                {isActiveOperating ? 'Active Operating Branch' : 'Operating Branch'}
+                              </span>
+                            </div>
+                            {branch.branchCode && (
+                              <span className="rounded-md bg-neutral-100 border border-neutral-200 px-1.5 py-0.5 font-mono text-[10px] font-bold text-neutral-600">
+                                {branch.branchCode}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Branch Name & Distance */}
+                          <h3 className="mt-3 font-bold text-lg text-[#17211d]">{branch.name}</h3>
+                          <div className="mt-1 flex items-center gap-2 flex-wrap">
+                            {city && (
+                              <span className="rounded-md bg-amber-100 text-amber-800 px-2 py-0.5 text-[10px] font-bold">
+                                📍 {city}
+                              </span>
+                            )}
+                            {distanceLabel && (
+                              <span className="rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 text-[10px] font-bold">
+                                🚗 {distanceLabel}
+                              </span>
+                            )}
+                            {!branch.isActive && (
+                              <span className="rounded-md bg-red-100 text-red-700 px-2 py-0.5 text-[10px] font-bold">
+                                Inactive
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Structured / Formatted Address */}
+                          <p className="mt-2.5 text-xs leading-relaxed text-[#5c6861]">
+                            {branch.address || 'Address not yet specified'}
+                          </p>
+
+                          {/* Contact Info */}
+                          {(branch.phone || branch.managerName) && (
+                            <div className="mt-3 rounded-xl bg-[#f7f5f0] p-2.5 text-[11px] text-[#4d5651] space-y-1">
+                              {branch.managerName && (
+                                <p>👤 <span className="font-semibold">Manager:</span> {branch.managerName}</p>
+                              )}
+                              {branch.phone && (
+                                <p>📞 <span className="font-semibold">Phone:</span> {branch.phone}</p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Card Actions */}
+                        <div className="mt-5 pt-3 border-t border-[#eee9df] flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              storeSwitchBranch(branch._id);
+                              setMessage({ type: 'success', text: `Switched active branch to ${branch.name}` });
+                            }}
+                            className={`flex-1 rounded-xl py-2 text-xs font-bold transition ${
+                              isActiveOperating
+                                ? 'bg-[#173c35] text-white shadow'
+                                : 'border border-[#ddd3c4] bg-white text-[#173c35] hover:bg-[#f4f1ea]'
+                            }`}
+                          >
+                            {isActiveOperating ? '✓ Currently Active' : 'Set as Active'}
+                          </button>
+
+                          {/* Edit / Delete Buttons */}
+                          {(isOwnerOrAdmin || (isManager && branch._id === user?.branchId)) && (
+                            <button
+                              type="button"
+                              onClick={() => openEditBranchModal(branch)}
+                              className="rounded-xl border border-[#ddd3c4] bg-white p-2 text-xs text-neutral-600 hover:border-[#173c35] hover:text-[#173c35]"
+                              title="Edit Branch & Address Details"
+                            >
+                              ✏️
+                            </button>
+                          )}
+                          {isOwnerOrAdmin && (
+                            <button
+                              type="button"
+                              onClick={() => setDeleteModal({ type: 'branch', id: branch._id, name: branch.name })}
+                              className="rounded-xl border border-[#ddd3c4] bg-white p-2 text-xs text-red-500 hover:border-red-400 hover:bg-red-50"
+                              title="Deactivate Branch"
+                            >
+                              🗑️
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
           </div>
         </section>
+
+        {/* Modal: Restaurant Form (Create / Edit) */}
+        {isRestaurantModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[2rem] border border-[#ddd3c4] bg-white p-6 shadow-2xl sm:p-8">
+              <div className="flex items-center justify-between border-b border-[#eee9df] pb-4">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-[#df714c]">
+                    {editingRestaurantId ? 'Modify Restaurant Tenant' : 'Provision Restaurant'}
+                  </p>
+                  <h3 className="mt-1 text-2xl font-bold text-[#17211d]">
+                    {editingRestaurantId ? 'Edit Restaurant Profile' : 'New Restaurant Workspace'}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setIsRestaurantModalOpen(false)}
+                  className="rounded-full bg-neutral-100 p-2 text-neutral-500 hover:bg-neutral-200"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveRestaurant} className="mt-6 space-y-5">
+                {/* Basic Details */}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-neutral-700">
+                      Restaurant Name *
+                    </label>
+                    <input
+                      required
+                      value={restaurantForm.name}
+                      onChange={(e) => {
+                        const name = e.target.value;
+                        setRestaurantForm((prev) => ({
+                          ...prev,
+                          name,
+                          slug: editingRestaurantId ? prev.slug : slugify(name),
+                        }));
+                      }}
+                      placeholder="e.g. Yogi Grand Restaurant"
+                      className="mt-1.5 w-full rounded-xl border border-[#ddd3c4] bg-[#fdfcf9] px-3.5 py-2.5 text-sm outline-none focus:border-[#173c35] focus:ring-1 focus:ring-[#173c35]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-neutral-700">
+                      URL Slug *
+                    </label>
+                    <input
+                      required
+                      value={restaurantForm.slug}
+                      onChange={(e) => setRestaurantForm((prev) => ({ ...prev, slug: slugify(e.target.value) }))}
+                      placeholder="e.g. yogi-grand"
+                      className="mt-1.5 w-full rounded-xl border border-[#ddd3c4] bg-[#fdfcf9] px-3.5 py-2.5 font-mono text-sm outline-none focus:border-[#173c35]"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-neutral-700">Phone</label>
+                    <input
+                      value={restaurantForm.phone}
+                      onChange={(e) => setRestaurantForm((prev) => ({ ...prev, phone: e.target.value }))}
+                      placeholder="+91 98765 43210"
+                      className="mt-1.5 w-full rounded-xl border border-[#ddd3c4] bg-[#fdfcf9] px-3.5 py-2.5 text-sm outline-none focus:border-[#173c35]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-neutral-700">Email</label>
+                    <input
+                      type="email"
+                      value={restaurantForm.email}
+                      onChange={(e) => setRestaurantForm((prev) => ({ ...prev, email: e.target.value }))}
+                      placeholder="contact@yogi.com"
+                      className="mt-1.5 w-full rounded-xl border border-[#ddd3c4] bg-[#fdfcf9] px-3.5 py-2.5 text-sm outline-none focus:border-[#173c35]"
+                    />
+                  </div>
+                </div>
+
+                {/* Structured Address Setup Section */}
+                <div className="rounded-2xl border border-amber-300/60 bg-amber-50/50 p-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-amber-200 pb-3">
+                    <div>
+                      <h4 className="font-bold text-sm text-[#173c35]">📍 Structured Address & Geolocation</h4>
+                      <p className="text-[11px] text-neutral-600">Enables automatic GPS branch discovery for customers.</p>
+                    </div>
+
+                    {/* Geolocation Helpers */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <select
+                        onChange={(e) => applyPresetToRestaurant(e.target.value)}
+                        defaultValue=""
+                        className="rounded-lg border border-amber-300 bg-white px-2 py-1 text-xs font-medium text-neutral-700"
+                      >
+                        <option value="" disabled>Quick Preset...</option>
+                        {KNOWN_LOCATION_PRESETS.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name}, {p.state}
+                          </option>
+                        ))}
+                      </select>
+
+                      <button
+                        type="button"
+                        onClick={detectLocationForRestaurant}
+                        disabled={isLocating}
+                        className="rounded-lg bg-[#173c35] px-2.5 py-1 text-xs font-bold text-white hover:bg-[#21574d] disabled:opacity-50"
+                      >
+                        {isLocating ? 'Locating...' : '🎯 GPS Detect'}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 space-y-3">
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-700">
+                        Street Address / Building
+                      </label>
+                      <input
+                        value={restaurantForm.street}
+                        onChange={(e) => setRestaurantForm((prev) => ({ ...prev, street: e.target.value }))}
+                        placeholder="e.g. 101 Culinary Blvd, Station Road"
+                        className="mt-1 w-full rounded-xl border border-[#ddd3c4] bg-white px-3.5 py-2 text-sm outline-none focus:border-[#173c35]"
+                      />
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      <div>
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-700">
+                          City / Town *
+                        </label>
+                        <input
+                          required
+                          value={restaurantForm.city}
+                          onChange={(e) => setRestaurantForm((prev) => ({ ...prev, city: e.target.value }))}
+                          placeholder="e.g. Surat or Bardoli"
+                          className="mt-1 w-full rounded-xl border border-[#ddd3c4] bg-white px-3.5 py-2 text-sm outline-none focus:border-[#173c35]"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-700">
+                          State *
+                        </label>
+                        <input
+                          required
+                          value={restaurantForm.state}
+                          onChange={(e) => setRestaurantForm((prev) => ({ ...prev, state: e.target.value }))}
+                          placeholder="e.g. Gujarat"
+                          className="mt-1 w-full rounded-xl border border-[#ddd3c4] bg-white px-3.5 py-2 text-sm outline-none focus:border-[#173c35]"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-700">
+                          PIN Code
+                        </label>
+                        <input
+                          value={restaurantForm.pincode}
+                          onChange={(e) => setRestaurantForm((prev) => ({ ...prev, pincode: e.target.value }))}
+                          placeholder="e.g. 395007"
+                          className="mt-1 w-full rounded-xl border border-[#ddd3c4] bg-white px-3.5 py-2 text-sm outline-none focus:border-[#173c35]"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-700">
+                          Latitude Coordinate
+                        </label>
+                        <input
+                          type="number"
+                          step="any"
+                          value={restaurantForm.latitude}
+                          onChange={(e) =>
+                            setRestaurantForm((prev) => ({
+                              ...prev,
+                              latitude: e.target.value === '' ? '' : parseFloat(e.target.value),
+                            }))
+                          }
+                          placeholder="e.g. 21.1702"
+                          className="mt-1 w-full rounded-xl border border-[#ddd3c4] bg-white px-3.5 py-2 font-mono text-sm outline-none focus:border-[#173c35]"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-700">
+                          Longitude Coordinate
+                        </label>
+                        <input
+                          type="number"
+                          step="any"
+                          value={restaurantForm.longitude}
+                          onChange={(e) =>
+                            setRestaurantForm((prev) => ({
+                              ...prev,
+                              longitude: e.target.value === '' ? '' : parseFloat(e.target.value),
+                            }))
+                          }
+                          placeholder="e.g. 72.8311"
+                          className="mt-1 w-full rounded-xl border border-[#ddd3c4] bg-white px-3.5 py-2 font-mono text-sm outline-none focus:border-[#173c35]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsRestaurantModalOpen(false)}
+                    className="rounded-xl border border-[#ddd3c4] px-4 py-2.5 text-sm font-semibold text-neutral-700 hover:bg-neutral-100"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="rounded-xl bg-[#173c35] px-6 py-2.5 text-sm font-bold text-white hover:bg-[#23584e]"
+                  >
+                    {editingRestaurantId ? 'Save Changes' : 'Create Restaurant'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Modal: Branch Form (Create / Edit) */}
+        {isBranchModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[2rem] border border-[#ddd3c4] bg-white p-6 shadow-2xl sm:p-8">
+              <div className="flex items-center justify-between border-b border-[#eee9df] pb-4">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-[#df714c]">
+                    {activeRestaurant?.name}
+                  </p>
+                  <h3 className="mt-1 text-2xl font-bold text-[#17211d]">
+                    {editingBranchId ? 'Edit Branch Outlet' : 'Add New Branch Outlet'}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setIsBranchModalOpen(false)}
+                  className="rounded-full bg-neutral-100 p-2 text-neutral-500 hover:bg-neutral-200"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveBranch} className="mt-6 space-y-5">
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-neutral-700">
+                      Branch Name *
+                    </label>
+                    <input
+                      required
+                      value={branchForm.name}
+                      onChange={(e) => {
+                        const name = e.target.value;
+                        setBranchForm((prev) => ({
+                          ...prev,
+                          name,
+                          slug: editingBranchId ? prev.slug : slugify(name),
+                        }));
+                      }}
+                      placeholder="e.g. Bardoli Central Hall"
+                      className="mt-1.5 w-full rounded-xl border border-[#ddd3c4] bg-[#fdfcf9] px-3.5 py-2.5 text-sm outline-none focus:border-[#173c35]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-neutral-700">
+                      Branch Code
+                    </label>
+                    <input
+                      value={branchForm.branchCode}
+                      onChange={(e) => setBranchForm((prev) => ({ ...prev, branchCode: e.target.value.toUpperCase() }))}
+                      placeholder="e.g. BR-01"
+                      className="mt-1.5 w-full rounded-xl border border-[#ddd3c4] bg-[#fdfcf9] px-3.5 py-2.5 font-mono text-sm outline-none focus:border-[#173c35]"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-neutral-700">
+                      Manager Name
+                    </label>
+                    <input
+                      value={branchForm.managerName}
+                      onChange={(e) => setBranchForm((prev) => ({ ...prev, managerName: e.target.value }))}
+                      placeholder="e.g. Ramesh Patel"
+                      className="mt-1.5 w-full rounded-xl border border-[#ddd3c4] bg-[#fdfcf9] px-3.5 py-2.5 text-sm outline-none focus:border-[#173c35]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-neutral-700">Phone</label>
+                    <input
+                      value={branchForm.phone}
+                      onChange={(e) => setBranchForm((prev) => ({ ...prev, phone: e.target.value }))}
+                      placeholder="+91 98765 43210"
+                      className="mt-1.5 w-full rounded-xl border border-[#ddd3c4] bg-[#fdfcf9] px-3.5 py-2.5 text-sm outline-none focus:border-[#173c35]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-neutral-700">
+                      Seating Capacity
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={branchForm.seatingCapacity}
+                      onChange={(e) => setBranchForm((prev) => ({ ...prev, seatingCapacity: parseInt(e.target.value, 10) || 0 }))}
+                      placeholder="40"
+                      className="mt-1.5 w-full rounded-xl border border-[#ddd3c4] bg-[#fdfcf9] px-3.5 py-2.5 text-sm outline-none focus:border-[#173c35]"
+                    />
+                  </div>
+                </div>
+
+                {/* Structured Address Setup Section */}
+                <div className="rounded-2xl border border-emerald-300/70 bg-emerald-50/40 p-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-emerald-200 pb-3">
+                    <div>
+                      <h4 className="font-bold text-sm text-[#173c35]">📍 Outlet Location & Geolocation</h4>
+                      <p className="text-[11px] text-neutral-600">Accurate coordinates guarantee nearest branch routing.</p>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <select
+                        onChange={(e) => applyPresetToBranch(e.target.value)}
+                        defaultValue=""
+                        className="rounded-lg border border-emerald-300 bg-white px-2 py-1 text-xs font-medium text-neutral-700"
+                      >
+                        <option value="" disabled>Quick Preset...</option>
+                        {KNOWN_LOCATION_PRESETS.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name}, {p.state}
+                          </option>
+                        ))}
+                      </select>
+
+                      <button
+                        type="button"
+                        onClick={detectLocationForBranch}
+                        disabled={isLocating}
+                        className="rounded-lg bg-[#173c35] px-2.5 py-1 text-xs font-bold text-white hover:bg-[#21574d] disabled:opacity-50"
+                      >
+                        {isLocating ? 'Locating...' : '🎯 GPS Detect'}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 space-y-3">
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-700">
+                        Street Address / Area / Market
+                      </label>
+                      <input
+                        value={branchForm.street}
+                        onChange={(e) => setBranchForm((prev) => ({ ...prev, street: e.target.value }))}
+                        placeholder="e.g. Main Bazaar Road, Near Sardar Baug"
+                        className="mt-1 w-full rounded-xl border border-[#ddd3c4] bg-white px-3.5 py-2 text-sm outline-none focus:border-[#173c35]"
+                      />
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      <div>
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-700">
+                          City / Town *
+                        </label>
+                        <input
+                          required
+                          value={branchForm.city}
+                          onChange={(e) => setBranchForm((prev) => ({ ...prev, city: e.target.value }))}
+                          placeholder="e.g. Bardoli"
+                          className="mt-1 w-full rounded-xl border border-[#ddd3c4] bg-white px-3.5 py-2 text-sm outline-none focus:border-[#173c35]"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-700">
+                          State *
+                        </label>
+                        <input
+                          required
+                          value={branchForm.state}
+                          onChange={(e) => setBranchForm((prev) => ({ ...prev, state: e.target.value }))}
+                          placeholder="e.g. Gujarat"
+                          className="mt-1 w-full rounded-xl border border-[#ddd3c4] bg-white px-3.5 py-2 text-sm outline-none focus:border-[#173c35]"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-700">
+                          PIN Code
+                        </label>
+                        <input
+                          value={branchForm.pincode}
+                          onChange={(e) => setBranchForm((prev) => ({ ...prev, pincode: e.target.value }))}
+                          placeholder="e.g. 394601"
+                          className="mt-1 w-full rounded-xl border border-[#ddd3c4] bg-white px-3.5 py-2 text-sm outline-none focus:border-[#173c35]"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-700">
+                          Latitude
+                        </label>
+                        <input
+                          type="number"
+                          step="any"
+                          value={branchForm.latitude}
+                          onChange={(e) =>
+                            setBranchForm((prev) => ({
+                              ...prev,
+                              latitude: e.target.value === '' ? '' : parseFloat(e.target.value),
+                            }))
+                          }
+                          placeholder="e.g. 21.1197"
+                          className="mt-1 w-full rounded-xl border border-[#ddd3c4] bg-white px-3.5 py-2 font-mono text-sm outline-none focus:border-[#173c35]"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-700">
+                          Longitude
+                        </label>
+                        <input
+                          type="number"
+                          step="any"
+                          value={branchForm.longitude}
+                          onChange={(e) =>
+                            setBranchForm((prev) => ({
+                              ...prev,
+                              longitude: e.target.value === '' ? '' : parseFloat(e.target.value),
+                            }))
+                          }
+                          placeholder="e.g. 73.1167"
+                          className="mt-1 w-full rounded-xl border border-[#ddd3c4] bg-white px-3.5 py-2 font-mono text-sm outline-none focus:border-[#173c35]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsBranchModalOpen(false)}
+                    className="rounded-xl border border-[#ddd3c4] px-4 py-2.5 text-sm font-semibold text-neutral-700 hover:bg-neutral-100"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="rounded-xl bg-[#df714c] px-6 py-2.5 text-sm font-bold text-white hover:bg-[#c95f3c]"
+                  >
+                    {editingBranchId ? 'Save Branch Details' : 'Add Branch'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Modal: Confirm Deactivation */}
+        {deleteModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-md rounded-[2rem] border border-[#ddd3c4] bg-white p-6 shadow-2xl">
+              <div className="flex items-center gap-3 text-red-600">
+                <span className="text-2xl">⚠️</span>
+                <h3 className="text-lg font-bold text-neutral-900">
+                  Deactivate {deleteModal.type === 'restaurant' ? 'Restaurant' : 'Branch'}?
+                </h3>
+              </div>
+              <p className="mt-3 text-sm text-neutral-600">
+                Are you sure you want to deactivate <span className="font-bold text-neutral-800">{deleteModal.name}</span>?
+                {deleteModal.type === 'restaurant' && ' This will also cascade deactivation to all its branch locations.'}
+              </p>
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setDeleteModal(null)}
+                  className="rounded-xl border border-neutral-300 px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDelete}
+                  className="rounded-xl bg-red-600 px-5 py-2 text-sm font-bold text-white hover:bg-red-700"
+                >
+                  Confirm Deactivation
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );
 }
-

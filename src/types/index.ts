@@ -18,15 +18,38 @@ export interface User {
 
 export type UserRole = 'customer' | 'cashier' | 'chef' | 'manager' | 'owner' | 'platformAdmin';
 
+export interface AddressDetails {
+  street?: string;
+  landmark?: string;
+  city: string;
+  state: string;
+  pincode?: string;
+  country?: string;
+}
+
 export interface Restaurant {
   _id: string;
   name: string;
   slug: string;
+  tagline?: string;
+  description?: string;
+  phone?: string;
+  email?: string;
+  website?: string;
   address?: string;
+  addressDetails?: AddressDetails;
   latitude?: number;
   longitude?: number;
+  gstNumber?: string;
+  currency?: string;
+  taxRate?: number;
+  deliveryFee?: number;
+  businessHours?: Record<string, any>;
   distanceKm?: number;
+  branchCount?: number;
   isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Branch {
@@ -34,11 +57,20 @@ export interface Branch {
   restaurantId: string;
   name: string;
   slug: string;
+  branchCode?: string;
+  phone?: string;
+  email?: string;
+  managerName?: string;
   address?: string;
+  addressDetails?: AddressDetails;
   latitude?: number;
   longitude?: number;
+  businessHours?: Record<string, any>;
+  seatingCapacity?: number;
   distanceKm?: number;
   isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // Menu Types

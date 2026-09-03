@@ -26,6 +26,14 @@ export const permissions = {
   settingsManage: 'settings:manage',
   reviewsRead: 'reviews:read',
   reviewsCreate: 'reviews:create',
+  restaurantsRead: 'restaurants:read',
+  restaurantsCreate: 'restaurants:create',
+  restaurantsUpdate: 'restaurants:update',
+  restaurantsDelete: 'restaurants:delete',
+  branchesRead: 'branches:read',
+  branchesCreate: 'branches:create',
+  branchesUpdate: 'branches:update',
+  branchesDelete: 'branches:delete',
 } as const;
 
 export type Permission = (typeof permissions)[keyof typeof permissions];
@@ -47,6 +55,8 @@ const rolePermissions: Record<Role, readonly Permission[]> = {
     permissions.tablesRead,
     permissions.reviewsRead,
     permissions.reviewsCreate,
+    permissions.restaurantsRead,
+    permissions.branchesRead,
   ],
   cashier: [
     permissions.menuRead,
@@ -60,6 +70,8 @@ const rolePermissions: Record<Role, readonly Permission[]> = {
     permissions.settingsRead,
     permissions.tablesRead,
     permissions.kitchenRead,
+    permissions.restaurantsRead,
+    permissions.branchesRead,
   ],
   chef: [
     permissions.menuRead,
@@ -70,6 +82,8 @@ const rolePermissions: Record<Role, readonly Permission[]> = {
     permissions.invoicesRead,
     permissions.settingsRead,
     permissions.tablesRead,
+    permissions.restaurantsRead,
+    permissions.branchesRead,
   ],
   manager: Object.values(permissions) as Permission[],
   owner: Object.values(permissions) as Permission[],
