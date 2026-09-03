@@ -47,7 +47,7 @@ interface TenantState {
   isModalOpen: boolean;
 
   // Geolocation & Proximity Filtering
-  userLocation: { latitude: number; longitude: number } | null;
+  userLocation: { latitude: number; longitude: number; accuracy?: number } | null;
   isLocating: boolean;
   locationError: string | null;
   onlyNearby: boolean;
@@ -108,7 +108,11 @@ export const useTenantStore = create<TenantState>((set, get) => ({
     set({ isLocating: true, locationError: null });
     try {
       const coords = await getCurrentBrowserLocation();
-      const userLoc = { latitude: coords.latitude, longitude: coords.longitude };
+      const userLoc = {
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        accuracy: coords.accuracy,
+      };
       set({ userLocation: userLoc, isLocating: false, locationError: null });
 
       // Re-enrich current lists with distance

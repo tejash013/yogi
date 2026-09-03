@@ -237,29 +237,6 @@ export default function QuickOrderModal({ item, isOpen, onClose }: QuickOrderMod
             </div>
           </div>
 
-          {/* Quick Table Number presets */}
-          <div>
-            <span className="mb-1.5 block text-[11px] font-semibold text-neutral-500 dark:text-neutral-400">
-              Quick Table Select:
-            </span>
-            <div className="flex flex-wrap gap-1.5">
-              {['1', '2', '3', '4', '5', '6', '7', '8'].map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => setTableInput(t)}
-                  className={`rounded-lg px-2.5 py-1 text-xs font-bold transition ${
-                    tableInput === t
-                      ? 'bg-primary-500 text-white shadow-sm'
-                      : 'bg-neutral-100 text-neutral-700 hover:bg-primary-50 hover:text-primary-600 dark:bg-neutral-800 dark:text-neutral-200'
-                  }`}
-                >
-                  Table {t}
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Special Instructions / Cooking Description */}
           <div>
             <label className="mb-1.5 flex items-center justify-between text-xs font-bold text-neutral-700 dark:text-neutral-300">

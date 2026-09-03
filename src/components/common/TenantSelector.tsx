@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore, useTenantStore } from '@/store';
 import { ROUTES } from '@/constants';
@@ -22,6 +22,7 @@ export default function TenantSelector({
     currentBranch,
     availableRestaurants,
     availableBranches,
+    isLoading,
     isModalOpen,
     setModalOpen,
     loadTenants,
@@ -38,17 +39,9 @@ export default function TenantSelector({
   } = useTenantStore();
 
   const user = useAuthStore((s) => s.user);
-  const [copiedKey, setCopiedKey] = useState<string | null>(null);
-
   useEffect(() => {
     void loadTenants();
   }, [loadTenants]);
-
-  const copyToClipboard = (text: string, key: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedKey(key);
-    setTimeout(() => setCopiedKey(null), 2000);
-  };
 
   const restaurantName = currentRestaurant?.name || 'Yogi Grand Restaurant';
   const branchName = currentBranch?.name || 'Main Dining Hall (Downtown)';
@@ -231,35 +224,32 @@ export default function TenantSelector({
 
       {/* SaaS Multi-Tenant Selection Modal - Only for Customers */}
       {isCustomer && isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md">
-          <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[32px] border border-[#48392d] bg-[#171412] p-6 text-white shadow-2xl">
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-neutral-950/75 p-0 backdrop-blur-sm sm:items-center sm:p-4">
+            <div className="relative max-h-[94vh] w-full max-w-3xl overflow-y-auto rounded-t-[28px] border border-neutral-700 bg-[#121716] p-4 text-white shadow-2xl sm:rounded-[28px] sm:p-6">
             {/* Modal Header */}
-            <div className="flex items-start justify-between border-b border-[#302620] pb-4">
+            <div className="flex items-start justify-between gap-4 border-b border-neutral-800 pb-4">
               <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-amber-300">
-                    SaaS Tenant Switcher
-                  </span>
-                  <span className="rounded-full bg-amber-400/20 px-2 py-0.5 text-[10px] font-semibold text-amber-200">
-                    Multi-Branch Network
-                  </span>
+                <div className="flex items-center gap-2 text-emerald-300">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-400/15 text-lg">⌖</span>
+                  <span className="text-[10px] font-bold uppercase tracking-[0.22em]">Your dining location</span>
                 </div>
-                <h3 className="mt-1 text-xl font-bold sm:text-2xl">Choose Location & Branch</h3>
-                <p className="text-xs text-[#a0907e]">
-                  Select the dining location you are ordering from. Discover nearby branches by GPS.
+                <h3 className="mt-3 text-xl font-bold tracking-tight sm:text-2xl">Choose a restaurant or branch</h3>
+                <p className="mt-1 max-w-xl text-xs leading-5 text-neutral-400">
+                  Pick where you want to order. Nearby locations are sorted first after you share your location.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setModalOpen(false)}
-                className="rounded-full p-2 text-neutral-400 hover:bg-neutral-800 hover:text-white"
+                aria-label="Close location picker"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-neutral-700 text-lg text-neutral-400 transition hover:border-neutral-500 hover:bg-neutral-800 hover:text-white"
               >
                 ✕
               </button>
             </div>
 
             {/* HTML5 Geolocation Live Detection & Proximity Box */}
-            <div className="mt-4 rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-[#17231c] to-[#161a18] p-4 text-emerald-100">
+            <div className="mt-4 rounded-2xl border border-emerald-500/25 bg-emerald-950/20 p-4 text-emerald-100">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/20 text-xl border border-emerald-400/30">
@@ -267,15 +257,20 @@ export default function TenantSelector({
                   </div>
                   <div>
                     <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-300">
-                      HTML5 Live GPS Proximity
+                      Find locations near you
                     </h4>
                     {userLocation ? (
                       <p className="text-xs text-neutral-300">
-                        GPS Active: <span className="font-mono text-emerald-300">{userLocation.latitude.toFixed(3)}, {userLocation.longitude.toFixed(3)}</span>
+                        Location found <span className="font-mono text-emerald-300">{userLocation.latitude.toFixed(3)}, {userLocation.longitude.toFixed(3)}</span>
+                        {userLocation.accuracy !== undefined && (
+                          <span className="ml-2 text-neutral-400">
+                            (±{Math.round(userLocation.accuracy)} m)
+                          </span>
+                        )}
                       </p>
                     ) : (
                       <p className="text-xs text-neutral-400">
-                        Detect your exact GPS location to show closest restaurants first.
+                        Use your current location to sort restaurants and branches by distance.
                       </p>
                     )}
                   </div>
@@ -294,9 +289,9 @@ export default function TenantSelector({
                         Detecting...
                       </>
                     ) : userLocation ? (
-                      '🔄 Refresh GPS'
+                      '↻ Refresh location'
                     ) : (
-                      '🎯 Detect My Location'
+                      '⌖ Use my location'
                     )}
                   </button>
                 </div>
@@ -326,7 +321,7 @@ export default function TenantSelector({
                       className="h-4 w-4 rounded border-neutral-700 bg-neutral-900 text-emerald-500 focus:ring-emerald-400"
                     />
                     <span className="font-semibold text-emerald-200">
-                      Show only nearby locations (≤ {maxRadiusKm} km)
+                      Only show locations within {maxRadiusKm} km
                     </span>
                   </label>
 
@@ -353,51 +348,20 @@ export default function TenantSelector({
               )}
             </div>
 
-            {/* Current Active Tenant IDs Card */}
-            <div className="mt-4 rounded-2xl border border-[#3e3126] bg-[#1f1a16] p-4">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#d7c6b4]">Active Tenant Context</p>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-xl border border-[#30261f] bg-[#14110f] p-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-[#9d8d7e]">Restaurant ID</span>
-                    <button
-                      type="button"
-                      onClick={() => copyToClipboard(restaurantId, 'rest')}
-                      className="text-[10px] text-amber-400 hover:underline"
-                    >
-                      {copiedKey === 'rest' ? '✓ Copied' : 'Copy'}
-                    </button>
-                  </div>
-                  <p className="mt-1 truncate font-mono text-xs text-amber-200">{restaurantId}</p>
-                </div>
-
-                <div className="rounded-xl border border-[#30261f] bg-[#14110f] p-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-[#9d8d7e]">Branch ID</span>
-                    <button
-                      type="button"
-                      onClick={() => copyToClipboard(branchId, 'branch')}
-                      className="text-[10px] text-amber-400 hover:underline"
-                    >
-                      {copiedKey === 'branch' ? '✓ Copied' : 'Copy'}
-                    </button>
-                  </div>
-                  <p className="mt-1 truncate font-mono text-xs text-emerald-300">{branchId}</p>
-                </div>
-              </div>
-            </div>
-
             {/* Multi-Restaurant Switcher (if multiple available) */}
-            {displayedRestaurants.length > 1 && (
+            {displayedRestaurants.length > 0 && (
               <div className="mt-5">
-                <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-[#d7c6b4]">Restaurants</p>
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-neutral-300">Restaurants</p>
+                  <span className="text-xs text-neutral-500">{displayedRestaurants.length} available</span>
+                </div>
                 <div className="grid gap-2 sm:grid-cols-2">
                   {displayedRestaurants.map((rest) => (
                     <button
                       key={rest._id}
                       type="button"
                       onClick={() => void switchRestaurant(rest._id)}
-                      className={`flex items-center justify-between rounded-2xl border p-3 text-left transition-all ${
+                        className={`flex min-h-[68px] items-center justify-between rounded-2xl border p-3 text-left transition-all ${
                         rest._id === restaurantId
                           ? 'border-amber-400 bg-amber-500/15 text-white shadow-sm'
                           : 'border-[#30261f] bg-[#1b1714] text-neutral-300 hover:border-amber-500/40 hover:bg-[#221c18]'
@@ -405,8 +369,8 @@ export default function TenantSelector({
                     >
                       <div>
                         <p className="font-bold">{rest.name}</p>
-                        <p className="text-[11px] text-[#9d8d7e]">
-                          /{rest.slug} {rest.distanceKm !== undefined && `• 📍 ${formatDistance(rest.distanceKm)}`}
+                        <p className="mt-1 text-[11px] text-neutral-500">
+                          {rest.distanceKm !== undefined ? `📍 ${formatDistance(rest.distanceKm)}` : 'Restaurant location'}
                         </p>
                       </div>
                       {rest._id === restaurantId && (
@@ -426,13 +390,18 @@ export default function TenantSelector({
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#d7c6b4]">
                   Branches for {restaurantName}
                 </p>
-                <span className="text-xs text-[#9d8d7e]">{displayedBranches.length} locations</span>
+                <span className="text-xs text-neutral-500">{displayedBranches.length} locations</span>
               </div>
 
-              {displayedBranches.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-[#30261f] bg-[#1b1714] p-6 text-center text-neutral-400">
-                  <p className="text-sm font-semibold">🔍 No branches within {maxRadiusKm} km</p>
-                  <p className="mt-1 text-xs text-neutral-500">Try expanding your search radius or viewing all locations.</p>
+              {isLoading ? (
+                <div className="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-8 text-center text-neutral-400">
+                  <span className="mx-auto mb-3 block h-5 w-5 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
+                  <p className="text-sm font-semibold">Loading locations...</p>
+                </div>
+              ) : displayedBranches.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-neutral-700 bg-neutral-900/60 p-6 text-center text-neutral-400">
+                  <p className="text-sm font-semibold">No branches found nearby</p>
+                  <p className="mt-1 text-xs text-neutral-500">Expand your search radius or view all branches.</p>
                   <button
                     type="button"
                     onClick={() => setOnlyNearby(false)}
@@ -447,16 +416,17 @@ export default function TenantSelector({
                     const isSelected = br._id === branchId;
                     const isClosest = index === 0 && userLocation && br.distanceKm !== undefined;
                     return (
-                      <div
+                      <button
                         key={br._id}
+                        type="button"
                         onClick={() => {
                           switchBranch(br._id);
                           setModalOpen(false);
                         }}
-                        className={`cursor-pointer rounded-2xl border p-4 transition-all ${
+                        className={`w-full rounded-2xl border p-4 text-left transition-all ${
                           isSelected
                             ? 'border-emerald-400 bg-emerald-500/15 ring-1 ring-emerald-400/40'
-                            : 'border-[#30261f] bg-[#1b1714] hover:border-neutral-500 hover:bg-[#221c18]'
+                            : 'border-neutral-800 bg-neutral-900/60 hover:border-neutral-600 hover:bg-neutral-800/80'
                         }`}
                       >
                         <div className="flex items-start justify-between gap-2">
@@ -485,10 +455,9 @@ export default function TenantSelector({
                             }`}>
                               {isSelected ? '✓ Current' : 'Select'}
                             </span>
-                            <span className="font-mono text-[9px] text-[#786c60]">{br._id.slice(-6)}</span>
                           </div>
                         </div>
-                      </div>
+                      </button>
                     );
                   })}
                 </div>
@@ -496,7 +465,7 @@ export default function TenantSelector({
             </div>
 
             {/* Modal Footer */}
-            <div className="mt-6 flex items-center justify-between border-t border-[#302620] pt-4">
+            <div className="mt-6 flex flex-col-reverse items-stretch gap-3 border-t border-neutral-800 pt-4 sm:flex-row sm:items-center sm:justify-between">
               {(user?.role === 'platformAdmin' || user?.role === 'owner') ? (
                 <Link
                   to={ROUTES.WORKSPACE}
@@ -506,13 +475,13 @@ export default function TenantSelector({
                   <span>🏢 Open Tenant Admin Console</span> &rarr;
                 </Link>
               ) : (
-                <span className="text-[11px] text-[#786c60]">HTML5 Geolocation & Multi-Tenant Security Enabled</span>
+                <span className="text-[11px] text-neutral-500">Your choice is saved for this device.</span>
               )}
 
               <button
                 type="button"
                 onClick={() => setModalOpen(false)}
-                className="rounded-xl bg-amber-400 px-5 py-2 text-xs font-bold text-neutral-950 shadow-md transition-all hover:bg-amber-300"
+                className="rounded-xl bg-amber-400 px-5 py-2.5 text-xs font-bold text-neutral-950 shadow-md transition-all hover:bg-amber-300"
               >
                 Close
               </button>
