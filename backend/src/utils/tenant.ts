@@ -4,8 +4,24 @@ export const DEFAULT_RESTAURANT_ID = new Types.ObjectId('00000000000000000000000
 export const DEFAULT_BRANCH_ID = new Types.ObjectId('000000000000000000000002');
 
 export function tenantIdsFromRequest(req: any) {
-  const restaurantId = req.user?.restaurantId ?? req.headers['x-restaurant-id'] ?? DEFAULT_RESTAURANT_ID;
-  const branchId = req.user?.branchId ?? req.headers['x-branch-id'] ?? DEFAULT_BRANCH_ID;
+  let restaurantId: any;
+  let branchId: any;
+
+  if (req.user?.role === 'platformAdmin') {
+    restaurantId = req.headers['x-restaurant-id'] ?? req.user?.restaurantId ?? DEFAULT_RESTAURANT_ID;
+    branchId = req.headers['x-branch-id'] ?? req.user?.branchId ?? DEFAULT_BRANCH_ID;
+  } else if (req.user?.role === 'owner') {
+    restaurantId = req.user?.restaurantId ?? DEFAULT_RESTAURANT_ID;
+    branchId = req.headers['x-branch-id'] ?? req.user?.branchId ?? DEFAULT_BRANCH_ID;
+  } else if (req.user?.role === 'customer' || !req.user) {
+    restaurantId = req.headers['x-restaurant-id'] ?? req.user?.restaurantId ?? DEFAULT_RESTAURANT_ID;
+    branchId = req.headers['x-branch-id'] ?? req.user?.branchId ?? DEFAULT_BRANCH_ID;
+  } else {
+    // Fixed terminal staff (cashier, chef)
+    restaurantId = req.user?.restaurantId ?? DEFAULT_RESTAURANT_ID;
+    branchId = req.user?.branchId ?? DEFAULT_BRANCH_ID;
+  }
+
   if (!Types.ObjectId.isValid(String(restaurantId)) || !Types.ObjectId.isValid(String(branchId))) {
     const error: any = new Error('Invalid restaurant or branch context');
     error.status = 400;

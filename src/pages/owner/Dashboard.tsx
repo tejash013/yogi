@@ -108,6 +108,38 @@ export default function OwnerDashboard() {
         }
       />
 
+      {/* Active Operating Branch Bar */}
+      <div className="flex flex-col gap-3 rounded-2xl border border-amber-300/40 bg-gradient-to-r from-amber-50/70 via-orange-50/40 to-amber-50/60 p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-800/40 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-400/20 text-xl border border-amber-400/30">
+            🏪
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 dark:text-amber-400">
+                Operating Outlet Scope
+              </span>
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            </div>
+            <h3 className="font-bold text-sm text-neutral-900 dark:text-white">
+              {currentRestaurant?.name || 'Restaurant'} — <span className="text-amber-700 dark:text-amber-300">{currentBranch?.name || 'Branch'}</span>
+            </h3>
+            {currentBranch?.address && (
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">📍 {currentBranch.address}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Link
+            to={ROUTES.WORKSPACE}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-300 bg-white px-3.5 py-1.5 text-xs font-bold text-neutral-800 shadow-sm transition hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200"
+          >
+            <span>⚙️</span> Manage Outlets & Branches
+          </Link>
+        </div>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {dashboardStats.map((stat) => (
           <Card key={stat.label} className="overflow-hidden">

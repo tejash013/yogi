@@ -129,6 +129,9 @@ export default function TenantSelector({
     );
   }
 
+  const isOwnerOrAdmin = user?.role === 'owner' || user?.role === 'platformAdmin';
+  const canSwitchContext = isCustomer || isOwnerOrAdmin;
+
   if (variant === 'banner') {
     return (
       <div className={`relative overflow-hidden rounded-[24px] border border-amber-400/30 bg-gradient-to-r from-[#1e1915] via-[#241e1a] to-[#1a1512] p-4 text-white shadow-md sm:p-5 ${className}`}>
@@ -163,20 +166,20 @@ export default function TenantSelector({
           </div>
 
           <div className="flex items-center gap-2">
-            {isCustomer ? (
+            {canSwitchContext ? (
               <button
                 type="button"
                 onClick={() => setModalOpen(true)}
                 className="rounded-xl border border-amber-400/40 bg-amber-400/10 px-3 py-1.5 text-xs font-bold text-amber-300 transition-all hover:bg-amber-400/20"
               >
-                🔄 Switch / Nearby Outlets
+                🔄 Switch Outlet
               </button>
             ) : (
               <span className="rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-neutral-300">
                 🔒 Assigned Branch Context
               </span>
             )}
-            {(user?.role === 'platformAdmin' || user?.role === 'owner') && (
+            {isOwnerOrAdmin && (
               <Link
                 to={ROUTES.WORKSPACE}
                 className="rounded-xl border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-bold text-white transition-all hover:bg-white/20"
@@ -190,7 +193,7 @@ export default function TenantSelector({
     );
   }
 
-  if (!isCustomer) {
+  if (!canSwitchContext) {
     return (
       <div
         className={`inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-neutral-50/90 px-3 py-1.5 text-xs text-neutral-800 dark:border-neutral-700 dark:bg-neutral-800/90 dark:text-neutral-200 ${className}`}
@@ -247,8 +250,8 @@ export default function TenantSelector({
         </svg>
       </button>
 
-      {/* Location picker for customers */}
-      {isCustomer && isModalOpen && (
+      {/* Location picker modal for customers, owners, and platform admins */}
+      {canSwitchContext && isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-neutral-950/75 p-0 backdrop-blur-sm sm:items-center sm:p-4">
           <div className="relative max-h-[94vh] w-full max-w-3xl overflow-y-auto rounded-t-[28px] border border-neutral-700 bg-[#121716] p-4 text-white shadow-2xl sm:rounded-[28px] sm:p-6">
             {/* Modal Header */}
@@ -256,21 +259,38 @@ export default function TenantSelector({
               <div>
                 <div className="flex items-center gap-2 text-emerald-300">
                   <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-400/15 text-lg">⌖</span>
-                  <span className="text-[10px] font-bold uppercase tracking-[0.22em]">Nearby Dining Outlets</span>
+                  <span className="text-[10px] font-bold uppercase tracking-[0.22em]">
+                    {isOwnerOrAdmin ? 'Operating Branch Context' : 'Nearby Dining Outlets'}
+                  </span>
                 </div>
-                <h3 className="mt-2 text-xl font-bold tracking-tight sm:text-2xl">Select Nearby Restaurant & Branch</h3>
+                <h3 className="mt-2 text-xl font-bold tracking-tight sm:text-2xl">
+                  {isOwnerOrAdmin ? 'Switch Operating Branch' : 'Select Nearby Restaurant & Branch'}
+                </h3>
                 <p className="mt-1 max-w-xl text-xs leading-5 text-neutral-400">
-                  Only outlets close to your current location are displayed so you get hot food & instant table booking.
+                  {isOwnerOrAdmin
+                    ? 'Choose an operating branch context to actively filter dashboard analytics, live orders, and tables.'
+                    : 'Only outlets close to your current location are displayed so you get hot food & instant table booking.'}
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setModalOpen(false)}
-                aria-label="Close location picker"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-neutral-700 text-lg text-neutral-400 transition hover:border-neutral-500 hover:bg-neutral-800 hover:text-white"
-              >
-                ✕
-              </button>
+              <div className="flex items-center gap-2">
+                {isOwnerOrAdmin && (
+                  <Link
+                    to={ROUTES.WORKSPACE}
+                    onClick={() => setModalOpen(false)}
+                    className="rounded-xl border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-white/20"
+                  >
+                    ⚙️ Outlets
+                  </Link>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setModalOpen(false)}
+                  aria-label="Close location picker"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-neutral-700 text-lg text-neutral-400 transition hover:border-neutral-500 hover:bg-neutral-800 hover:text-white"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
 
             <div className="mt-4">

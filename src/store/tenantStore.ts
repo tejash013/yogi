@@ -358,12 +358,12 @@ export const useTenantStore = create<TenantState>((set, get) => ({
   },
 
   switchRestaurant: async (restaurantId: string) => {
-    // Restrict staff (non-customers) from changing restaurant
+    // Restrict fixed staff (cashier, chef) from changing restaurant
     const storedToken = localStorage.getItem('restaurantos-token');
     if (storedToken) {
       try {
         const payload = JSON.parse(atob(storedToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-        if (payload?.role && payload.role !== 'customer') {
+        if (payload?.role && !['customer', 'owner', 'platformAdmin'].includes(payload.role)) {
           return;
         }
       } catch {}
@@ -412,12 +412,12 @@ export const useTenantStore = create<TenantState>((set, get) => ({
   },
 
   switchBranch: (branchId: string) => {
-    // Restrict staff (non-customers) from changing branch
+    // Restrict fixed staff (cashier, chef) from changing branch
     const storedToken = localStorage.getItem('restaurantos-token');
     if (storedToken) {
       try {
         const payload = JSON.parse(atob(storedToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-        if (payload?.role && payload.role !== 'customer') {
+        if (payload?.role && !['customer', 'owner', 'platformAdmin', 'manager'].includes(payload.role)) {
           return;
         }
       } catch {}
