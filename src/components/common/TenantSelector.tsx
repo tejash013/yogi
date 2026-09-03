@@ -160,18 +160,13 @@ export default function TenantSelector({
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-300">
-<<<<<<< HEAD
                   {isCustomer ? 'Current dining location' : 'Assigned operating branch'}
-                </span>
-=======
-                  {isCustomer ? 'Dining Location' : 'Assigned Operating Branch'}
                 </span>
                 {userLocation?.displayName && (
                   <span className="rounded-md bg-emerald-500/20 border border-emerald-400/30 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
                     📍 {userLocation.displayName}
                   </span>
                 )}
->>>>>>> e44c7870034ced4261f22539f3169716529ad4d3
                 {currentDistanceLabel && (
                   <span className="rounded-md bg-amber-400/20 border border-amber-400/40 px-2 py-0.5 text-[10px] font-bold text-amber-300">
                     {currentDistanceLabel}
