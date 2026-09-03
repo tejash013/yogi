@@ -18,6 +18,7 @@ export default function Workspace() {
     branchId: activeBranchId,
     switchRestaurant: storeSwitchRestaurant,
     switchBranch: storeSwitchBranch,
+    loadTenants,
   } = useTenantStore();
 
   const isPlatformAdmin = user?.role === 'platformAdmin';
@@ -65,6 +66,7 @@ export default function Workspace() {
       setRestaurants((current) => [...current, response.data.data]);
       setSelectedRestaurant(response.data.data._id);
       void storeSwitchRestaurant(response.data.data._id);
+      void loadTenants();
       setRestaurantName('');
       setMessage('Restaurant workspace created.');
     } catch {
@@ -83,6 +85,7 @@ export default function Workspace() {
       });
       setBranches((current) => [...current, response.data.data]);
       storeSwitchBranch(response.data.data._id);
+      void loadTenants();
       setBranchName('');
       setBranchAddress('');
       setMessage('Branch added and set as active.');
