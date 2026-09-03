@@ -18,7 +18,8 @@ describe('Auth routes', () => {
     assert.equal(res.status, 201);
     assert.equal(res.body.success, true);
     assert.ok(res.body.data.token);
-    assert.ok(res.body.data.refreshToken);
+    assert.equal(res.body.data.refreshToken, undefined);
+    assert.match(res.headers['set-cookie'][0], /restaurantos_refresh=.*HttpOnly/);
   });
 
   it('should never allow public registration to assign an elevated role', async () => {
@@ -40,19 +41,31 @@ describe('Auth routes', () => {
     assert.equal(res.status, 200);
     assert.equal(res.body.success, true);
     assert.ok(res.body.data.token);
-    assert.ok(res.body.data.refreshToken);
+    assert.equal(res.body.data.refreshToken, undefined);
+    assert.match(res.headers['set-cookie'][0], /restaurantos_refresh=.*HttpOnly/);
   });
 
   it('rotates a refresh token atomically under concurrent use', async () => {
     const login = await request(app).post('/api/auth/login').send({ email, password });
-    const refreshToken = login.body.data.refreshToken;
+    const refreshCookie = login.headers['set-cookie'][0];
     const results = await Promise.all([
-      request(app).post('/api/auth/refresh').send({ refreshToken }),
-      request(app).post('/api/auth/refresh').send({ refreshToken }),
+      request(app).post('/api/auth/refresh').set('Cookie', refreshCookie),
+      request(app).post('/api/auth/refresh').set('Cookie', refreshCookie),
     ]);
 
     assert.equal(results.filter((result) => result.status === 200).length, 1);
     assert.equal(results.filter((result) => result.status === 401).length, 1);
+  });
+
+  it('revokes the refresh session on logout', async () => {
+    const login = await request(app).post('/api/auth/login').send({ email, password });
+    const refreshCookie = login.headers['set-cookie'][0];
+    const logout = await request(app).post('/api/auth/logout').set('Cookie', refreshCookie);
+    assert.equal(logout.status, 200);
+
+    const refreshed = await request(app).post('/api/auth/refresh').set('Cookie', refreshCookie);
+    assert.equal(refreshed.status, 401);
+    assert.match(logout.headers['set-cookie'][0], /restaurantos_refresh=;.*Max-Age=0/);
   });
 
   it('should return readable validation messages', async () => {

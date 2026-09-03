@@ -118,10 +118,8 @@ export default function TenantSelector({
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-300">
-                  {isCustomer ? 'SaaS Multi-Tenant Mode' : 'Assigned Operating Branch'}
+                  {isCustomer ? 'Current dining location' : 'Assigned operating branch'}
                 </span>
-                <span className="rounded-md bg-amber-400/20 px-1.5 py-0.5 text-[9px] font-mono text-amber-200">REST: {restaurantId.slice(-6)}</span>
-                <span className="rounded-md bg-emerald-400/20 px-1.5 py-0.5 text-[9px] font-mono text-emerald-200">BR: {branchId.slice(-6)}</span>
                 {currentDistanceLabel && (
                   <span className="rounded-md bg-emerald-500/25 border border-emerald-400/40 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
                     📍 {currentDistanceLabel}
@@ -222,7 +220,7 @@ export default function TenantSelector({
         </svg>
       </button>
 
-      {/* SaaS Multi-Tenant Selection Modal - Only for Customers */}
+      {/* Location picker for customers */}
       {isCustomer && isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-end justify-center bg-neutral-950/75 p-0 backdrop-blur-sm sm:items-center sm:p-4">
             <div className="relative max-h-[94vh] w-full max-w-3xl overflow-y-auto rounded-t-[28px] border border-neutral-700 bg-[#121716] p-4 text-white shadow-2xl sm:rounded-[28px] sm:p-6">

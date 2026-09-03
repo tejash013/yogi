@@ -8,7 +8,6 @@ import type { User, UserRole, LoginCredentials, RegisterData } from '@/types';
 interface AuthState {
   user: User | null;
   token: string | null;
-  refreshToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
@@ -63,7 +62,6 @@ if (hasValidStoredSession && normalizedStoredUser && normalizedStoredUser.role !
 export const useAuthStore = create<AuthState>((set) => ({
   user: normalizedStoredUser,
   token: storedToken,
-  refreshToken: localStorage.getItem('restaurantos-refresh-token'),
   isAuthenticated: hasValidStoredSession,
   isLoading: false,
   error: null,
@@ -72,13 +70,12 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       localStorage.removeItem('restaurantos-token');
-      localStorage.removeItem('restaurantos-refresh-token');
       if (!credentials.email || !credentials.password) {
         throw new Error('Please enter email and password');
       }
 
       const response = await authApi.login(credentials);
-      const { user, token, refreshToken } = response.data.data;
+      const { user, token } = response.data.data;
       const normalizedUser = normalizeUser(user as (Partial<User> & { _id?: string }) | null);
 
       if (!normalizedUser) {
@@ -86,7 +83,6 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
 
       localStorage.setItem('restaurantos-token', token);
-      localStorage.setItem('restaurantos-refresh-token', refreshToken);
 
       // Lock tenant context for staff (non-customer) roles
       if (normalizedUser.role !== 'customer') {
@@ -98,7 +94,6 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({
         user: normalizedUser,
         token,
-        refreshToken,
         isAuthenticated: true,
         isLoading: false,
         error: null,
@@ -120,7 +115,6 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({
         user: null,
         token: null,
-        refreshToken: null,
         isAuthenticated: false,
         isLoading: false,
         error: message,
@@ -132,7 +126,6 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       localStorage.removeItem('restaurantos-token');
-      localStorage.removeItem('restaurantos-refresh-token');
       if (!data.firstName || !data.lastName || !data.email || !data.password || !data.confirmPassword) {
         throw new Error('Please fill in all required fields');
       }
@@ -144,7 +137,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
 
       const response = await authApi.register(data);
-      const { user, token, refreshToken } = response.data.data;
+      const { user, token } = response.data.data;
       const normalizedUser = normalizeUser(user as (Partial<User> & { _id?: string }) | null);
 
       if (!normalizedUser) {
@@ -152,12 +145,10 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
 
       localStorage.setItem('restaurantos-token', token);
-      localStorage.setItem('restaurantos-refresh-token', refreshToken);
 
       set({
         user: normalizedUser,
         token,
-        refreshToken,
         isAuthenticated: true,
         isLoading: false,
         error: null,
@@ -181,13 +172,12 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: () => {
+    void authApi.logout().catch(() => undefined);
     localStorage.removeItem('restaurantos-token');
-    localStorage.removeItem('restaurantos-refresh-token');
     socketService.disconnect();
     set({
       user: null,
       token: null,
-      refreshToken: null,
       isAuthenticated: false,
       error: null,
     });

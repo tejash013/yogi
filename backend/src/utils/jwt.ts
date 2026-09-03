@@ -4,8 +4,8 @@ const ACCESS_EXPIRES = process.env.ACCESS_TOKEN_EXPIRES ?? '15m';
 const REFRESH_EXPIRES = process.env.REFRESH_TOKEN_EXPIRES ?? '7d';
 function getSecret(name: string, developmentFallback: string) {
   const value = process.env[name];
-  if (process.env.NODE_ENV === 'production' && !value) {
-    throw new Error(`${name} must be configured in production`);
+  if (process.env.NODE_ENV === 'production' && (!value || value.length < 32)) {
+    throw new Error(`${name} must be configured with at least 32 characters in production`);
   }
   return value ?? developmentFallback;
 }

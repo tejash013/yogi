@@ -24,6 +24,8 @@ const branchSchema = z.object({
   longitude: z.number().optional(),
 }).strict();
 
+const router = Router();
+
 // GET /api/tenants/current - Get current tenant (restaurant & branch) details
 router.get('/current', optionalAuth, async (req: any, res) => {
   try {
@@ -44,7 +46,7 @@ router.get('/current', optionalAuth, async (req: any, res) => {
         'Tenant context loaded'
       )
     );
-  } catch (err) {
+  } catch {
     return res.status(400).json(failure('Could not load tenant context'));
   }
 });

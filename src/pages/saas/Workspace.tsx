@@ -31,6 +31,7 @@ export default function Workspace() {
   const [branchAddress, setBranchAddress] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
+  const [branchesLoading, setBranchesLoading] = useState(false);
 
   const activeRestaurant = useMemo(
     () => restaurants.find((restaurant) => restaurant._id === selectedRestaurant),
@@ -51,10 +52,15 @@ export default function Workspace() {
   }, [activeRestaurantId, selectedRestaurant]);
 
   useEffect(() => {
-    if (!selectedRestaurant) return;
+    if (!selectedRestaurant) {
+      setBranches([]);
+      return;
+    }
+    setBranchesLoading(true);
     tenantsApi.getBranches(selectedRestaurant)
       .then((response) => setBranches(response.data.data))
-      .catch(() => setMessage('Branches could not be loaded.'));
+      .catch(() => setMessage('Branches could not be loaded.'))
+      .finally(() => setBranchesLoading(false));
   }, [selectedRestaurant]);
 
   async function createRestaurant(event: React.FormEvent) {
@@ -104,11 +110,6 @@ export default function Workspace() {
               <p className="mt-4 max-w-xl text-sm leading-6 text-white/70">Provision restaurants, organize branches, and switch active operating context across all screens seamlessly.</p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur">
-                <p className="text-xs uppercase tracking-[0.2em] text-white/50">Active Context</p>
-                <p className="mt-1 font-medium">{activeRestaurant?.name || 'Grand Restaurant'}</p>
-                <p className="text-xs font-mono text-[#d6e85e]">REST: {activeRestaurantId.slice(-6)} | BR: {activeBranchId.slice(-6)}</p>
-              </div>
               <Link
                 to={isPlatformAdmin ? ROUTES.PLATFORM_ADMIN.DASHBOARD : ROUTES.ADMIN.DASHBOARD}
                 className="inline-flex h-11 min-w-40 items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20"
@@ -151,7 +152,7 @@ export default function Workspace() {
             <div className="rounded-[1.75rem] border border-[#dfd9cc] bg-white p-6 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#7d877f]">Tenant Directory</p>
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#7d877f]">Restaurant directory</p>
                   <h2 className="mt-2 text-2xl font-semibold">Restaurants</h2>
                 </div>
                 <span className="rounded-full bg-[#e8f1d2] px-3 py-1 text-xs font-bold text-[#526000]">{restaurants.length} workspaces</span>
@@ -175,7 +176,7 @@ export default function Workspace() {
                     >
                       <div>
                         <span className="block font-medium">{restaurant.name}</span>
-                        <span className="mt-1 block text-xs text-[#7d877f]">/{restaurant.slug}</span>
+                        <span className="mt-1 block text-xs text-[#7d877f]">Select to manage its branches</span>
                       </div>
                       {restaurant._id === activeRestaurantId && (
                         <span className="rounded-full bg-[#173c35] px-2.5 py-0.5 text-[10px] font-bold text-white">Active</span>
@@ -214,7 +215,11 @@ export default function Workspace() {
             </div>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              {branches.map((branch) => {
+              {branchesLoading ? (
+                <p className="text-sm text-[#7d877f]">Loading branches...</p>
+              ) : branches.length === 0 ? (
+                <p className="rounded-2xl border border-dashed border-[#ddd3c4] p-5 text-sm text-[#7d877f]">No branches configured for this restaurant yet.</p>
+              ) : branches.map((branch) => {
                 const isActive = branch._id === activeBranchId;
                 return (
                   <div
@@ -229,8 +234,6 @@ export default function Workspace() {
                     </div>
                     <h3 className="mt-4 font-bold text-base">{branch.name}</h3>
                     <p className="mt-1 text-sm text-[#7d877f]">{branch.address || 'Address not configured'}</p>
-                    <p className="mt-3 font-mono text-[11px] text-[#a0a79f]">{branch._id}</p>
-
                     <button
                       type="button"
                       onClick={() => {
@@ -243,7 +246,7 @@ export default function Workspace() {
                           : 'border border-[#ddd3c4] bg-white text-[#173c35] hover:bg-[#f4f1ea]'
                       }`}
                     >
-                      {isActive ? '✓ Operating In This Branch' : '⚡ Switch to This Branch'}
+                      {isActive ? 'Current branch' : 'Set as active branch'}
                     </button>
                   </div>
                 );

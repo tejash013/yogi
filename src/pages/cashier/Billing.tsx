@@ -153,7 +153,6 @@ export default function Billing() {
         }
       />
 
-      <TenantSelector variant="banner" showDetails={true} />
 
       <div className="grid gap-6 lg:grid-cols-12">
         {/* Left column (Tabs for Active Orders vs Menu Catalog) */}

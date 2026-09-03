@@ -1,85 +1,68 @@
+import { lazy } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ROUTES } from '@/constants';
 
-// Layouts
-import AuthLayout from '@/layouts/AuthLayout';
-import CustomerLayout from '@/layouts/CustomerLayout';
-import AdminLayout from '@/layouts/AdminLayout';
-import KitchenLayout from '@/layouts/KitchenLayout';
-import CashierLayout from '@/layouts/CashierLayout';
-import OwnerLayout from '@/layouts/OwnerLayout';
-import PlatformAdminLayout from '@/layouts/PlatformAdminLayout';
-
-import SplashScreen from '@/pages/SplashScreen';
-import WelcomeScreen from '@/pages/WelcomeScreen';
-
-// Auth Pages
-import { Login, Register, ForgotPassword } from '@/pages/auth';
-
-// Customer Pages
-import {
-  CustomerHome,
-  Menu,
-  FoodDetails,
-  Cart,
-  Checkout,
-  OrderSuccess,
-  OrderTracking,
-  MyOrders,
-  CustomerProfile,
-  Favorites,
-  Rewards,
-  Coupons,
-  Feedback,
-  CustomerTables,
-} from '@/pages/customer';
-
-// Admin Pages
-import {
-  AdminDashboard,
-  MenuManagement,
-  AdminCategories,
-  AdminOrders,
-  AdminCustomers,
-  AdminEmployees,
-  AdminTables,
-  AdminInventory,
-  AdminReports,
-  AdminSettings,
-  AdminUsers,
-} from '@/pages/admin';
-
-// Kitchen Pages
-import {
-  KitchenDashboard,
-  LiveOrders,
-  Preparing,
-  Ready,
-  Completed,
-} from '@/pages/kitchen';
-
-// Cashier Pages
-import {
-  CashierDashboard,
-  Billing,
-  Payments,
-  Invoices,
-} from '@/pages/cashier';
-
-// Owner Pages
-import {
-  OwnerDashboard,
-  Analytics,
-  Revenue,
-  Expenses,
-  OwnerReports,
-} from '@/pages/owner';
-
-// Error Pages
-import Error403 from '@/pages/errors/Error403';
 import ProtectedRoute from '@/components/common/ProtectedRoute';
-import { Workspace } from '@/pages/saas';
 import { useAuthStore } from '@/store';
+
+function lazyPage<T extends Record<string, React.ComponentType<any>>>(loader: () => Promise<T>, name: keyof T) {
+  return lazy(() => loader().then((module) => ({ default: module[name] })));
+}
+
+const AuthLayout = lazy(() => import('@/layouts/AuthLayout'));
+const CustomerLayout = lazy(() => import('@/layouts/CustomerLayout'));
+const AdminLayout = lazy(() => import('@/layouts/AdminLayout'));
+const KitchenLayout = lazy(() => import('@/layouts/KitchenLayout'));
+const CashierLayout = lazy(() => import('@/layouts/CashierLayout'));
+const OwnerLayout = lazy(() => import('@/layouts/OwnerLayout'));
+const PlatformAdminLayout = lazy(() => import('@/layouts/PlatformAdminLayout'));
+
+const SplashScreen = lazy(() => import('@/pages/SplashScreen'));
+const WelcomeScreen = lazy(() => import('@/pages/WelcomeScreen'));
+const Login = lazyPage(() => import('@/pages/auth'), 'Login');
+const Register = lazyPage(() => import('@/pages/auth'), 'Register');
+const ForgotPassword = lazyPage(() => import('@/pages/auth'), 'ForgotPassword');
+const CustomerHome = lazyPage(() => import('@/pages/customer'), 'CustomerHome');
+const Menu = lazyPage(() => import('@/pages/customer'), 'Menu');
+const FoodDetails = lazyPage(() => import('@/pages/customer'), 'FoodDetails');
+const Cart = lazyPage(() => import('@/pages/customer'), 'Cart');
+const Checkout = lazyPage(() => import('@/pages/customer'), 'Checkout');
+const OrderSuccess = lazyPage(() => import('@/pages/customer'), 'OrderSuccess');
+const OrderTracking = lazyPage(() => import('@/pages/customer'), 'OrderTracking');
+const MyOrders = lazyPage(() => import('@/pages/customer'), 'MyOrders');
+const CustomerProfile = lazyPage(() => import('@/pages/customer'), 'CustomerProfile');
+const Favorites = lazyPage(() => import('@/pages/customer'), 'Favorites');
+const Rewards = lazyPage(() => import('@/pages/customer'), 'Rewards');
+const Coupons = lazyPage(() => import('@/pages/customer'), 'Coupons');
+const Feedback = lazyPage(() => import('@/pages/customer'), 'Feedback');
+const CustomerTables = lazyPage(() => import('@/pages/customer'), 'CustomerTables');
+const AdminDashboard = lazyPage(() => import('@/pages/admin'), 'AdminDashboard');
+const MenuManagement = lazyPage(() => import('@/pages/admin'), 'MenuManagement');
+const AdminCategories = lazyPage(() => import('@/pages/admin'), 'AdminCategories');
+const AdminOrders = lazyPage(() => import('@/pages/admin'), 'AdminOrders');
+const AdminCustomers = lazyPage(() => import('@/pages/admin'), 'AdminCustomers');
+const AdminEmployees = lazyPage(() => import('@/pages/admin'), 'AdminEmployees');
+const AdminTables = lazyPage(() => import('@/pages/admin'), 'AdminTables');
+const AdminInventory = lazyPage(() => import('@/pages/admin'), 'AdminInventory');
+const AdminReports = lazyPage(() => import('@/pages/admin'), 'AdminReports');
+const AdminSettings = lazyPage(() => import('@/pages/admin'), 'AdminSettings');
+const AdminUsers = lazyPage(() => import('@/pages/admin'), 'AdminUsers');
+const KitchenDashboard = lazyPage(() => import('@/pages/kitchen'), 'KitchenDashboard');
+const LiveOrders = lazyPage(() => import('@/pages/kitchen'), 'LiveOrders');
+const Preparing = lazyPage(() => import('@/pages/kitchen'), 'Preparing');
+const Ready = lazyPage(() => import('@/pages/kitchen'), 'Ready');
+const Completed = lazyPage(() => import('@/pages/kitchen'), 'Completed');
+const CashierDashboard = lazyPage(() => import('@/pages/cashier'), 'CashierDashboard');
+const Billing = lazyPage(() => import('@/pages/cashier'), 'Billing');
+const Payments = lazyPage(() => import('@/pages/cashier'), 'Payments');
+const Invoices = lazyPage(() => import('@/pages/cashier'), 'Invoices');
+const OwnerDashboard = lazyPage(() => import('@/pages/owner'), 'OwnerDashboard');
+const Analytics = lazyPage(() => import('@/pages/owner'), 'Analytics');
+const Revenue = lazyPage(() => import('@/pages/owner'), 'Revenue');
+const Expenses = lazyPage(() => import('@/pages/owner'), 'Expenses');
+const OwnerReports = lazyPage(() => import('@/pages/owner'), 'OwnerReports');
+const Error403 = lazy(() => import('@/pages/errors/Error403'));
+const Workspace = lazyPage(() => import('@/pages/saas'), 'Workspace');
 
 const router = createBrowserRouter([
   // Root redirect

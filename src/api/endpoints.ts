@@ -31,8 +31,8 @@ export const authApi = {
 
   logout: () => apiClient.post<ApiResponse<null>>('/api/auth/logout'),
 
-  refreshToken: (refreshToken: string) =>
-    apiClient.post<ApiResponse<{ token: string }>>('/api/auth/refresh', { refreshToken }),
+  refreshToken: () =>
+    apiClient.post<ApiResponse<{ token: string }>>('/api/auth/refresh'),
 
   forgotPassword: (email: string) =>
     apiClient.post<ApiResponse<null>>('/api/auth/forgot-password', { email }),

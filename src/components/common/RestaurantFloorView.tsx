@@ -77,33 +77,8 @@ export default function RestaurantFloorView({
   const [guestPhone, setGuestPhone] = useState('');
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
-  // Normalize and map tables into minimum 6 layout slots (matching the photo)
-  const defaultSlotLayout = [
-    { number: 1, label: 'Table 1', location: 'Window View', capacity: 4, notes: 'Warm ambient lighting & glass garden view' },
-    { number: 2, label: 'Table 2', location: 'Center Hall', capacity: 4, notes: 'Under chef wall mural with prompt service' },
-    { number: 3, label: 'Table 3', location: 'Plant Corner', capacity: 4, notes: 'Surrounded by lush greenery and cozy lamps' },
-    { number: 4, label: 'Table 4', location: 'Window Front', capacity: 4, notes: 'Direct view of front terrace' },
-    { number: 5, label: 'Table 5', location: 'Center Prime', capacity: 4, notes: 'Prime spacious seating for family or friends' },
-    { number: 6, label: 'Table 6', location: 'Wood Slat Corner', capacity: 4, notes: 'Quiet ambiance near wooden partition' },
-  ];
-
-  const displayTables: TableItem[] = defaultSlotLayout.map((slot) => {
-    const matched = tables.find((t) => t.number === slot.number || t.label.toLowerCase() === slot.label.toLowerCase());
-    if (matched) return matched;
-    return {
-      id: `virtual-${slot.number}`,
-      number: slot.number,
-      label: slot.label,
-      capacity: slot.capacity,
-      status: 'available',
-      location: slot.location,
-      notes: slot.notes,
-    };
-  });
-
-  // Include any extra custom tables beyond table 6
-  const extraTables = tables.filter((t) => !defaultSlotLayout.some((s) => s.number === t.number || s.label.toLowerCase() === t.label.toLowerCase()));
-  const allVisualTables = [...displayTables, ...extraTables];
+  // Render only tables returned by the active branch's backend query.
+  const allVisualTables = tables;
 
   const filteredTables = allVisualTables.filter((t) => {
     if (activeFilter === 'all') return true;
@@ -117,12 +92,10 @@ export default function RestaurantFloorView({
 
   const handleSitAndOrder = async (table: TableItem) => {
     setStoreTableNumber(table.number);
-    if (!table.id.startsWith('virtual-')) {
-      try {
-        await tablesApi.updateStatus(table.id, 'occupied');
-      } catch (err) {
-        console.error('Failed to update table occupancy in database', err);
-      }
+    try {
+      await tablesApi.updateStatus(table.id, 'occupied');
+    } catch (err) {
+      console.error('Failed to update table occupancy in database', err);
     }
     if (onSelectTable) onSelectTable(table);
     setActiveModalTable(null);
@@ -134,15 +107,13 @@ export default function RestaurantFloorView({
     if (!activeModalTable) return;
     setIsUpdatingStatus(true);
     try {
-      if (!activeModalTable.id.startsWith('virtual-')) {
-        await tablesApi.reserve(activeModalTable.id);
-      }
-      if (onStatusChange && !activeModalTable.id.startsWith('virtual-')) {
+      await tablesApi.reserve(activeModalTable.id);
+      if (onStatusChange) {
         await onStatusChange(activeModalTable.id, 'reserved');
       }
       setReservationSuccess(true);
     } catch {
-      setReservationSuccess(true);
+      setReservationSuccess(false);
     } finally {
       setIsUpdatingStatus(false);
     }
@@ -153,7 +124,7 @@ export default function RestaurantFloorView({
     try {
       if (onStatusChange) {
         await onStatusChange(table.id, nextStatus);
-      } else if (!table.id.startsWith('virtual-')) {
+      } else {
         await tablesApi.updateStatus(table.id, nextStatus);
       }
       setActiveModalTable((prev) => (prev ? { ...prev, status: nextStatus } : null));
@@ -347,12 +318,19 @@ export default function RestaurantFloorView({
           </div>
         )}
 
-        {/* The 6 Tables Grid (Matching the Reference Photo 2 Rows x 3 Columns Layout) */}
+        {/* Tables returned by the active branch's live API */}
         <div className="relative mx-auto max-w-5xl px-4 sm:px-8">
           {isLoading ? (
             <div className="flex h-80 items-center justify-center text-sm font-medium text-amber-200">
               <span className="mr-2 inline-block h-5 w-5 animate-spin rounded-full border-2 border-amber-300 border-t-transparent" />
               Loading restaurant floor...
+            </div>
+          ) : filteredTables.length === 0 ? (
+            <div className="flex min-h-80 items-center justify-center rounded-2xl border border-dashed border-[#6b5138] bg-black/10 px-6 text-center">
+              <div>
+                <p className="text-base font-bold text-amber-100">No tables are configured for this branch</p>
+                <p className="mt-1 text-sm text-[#b6a795]">Live seating will appear here when tables are added in the admin panel.</p>
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-y-12 sm:grid-cols-2 lg:grid-cols-3 sm:gap-x-8 sm:gap-y-16">

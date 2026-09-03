@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FoodCard, CategoryCard, OfferBanner } from '@/components/customer';
-import { TenantSelector } from '@/components/common';
 import { ROUTES } from '@/constants';
 import { categoriesApi, menuApi, offersApi } from '@/api';
 import { useOrderSyncStore, useTenantStore } from '@/store';
@@ -191,7 +190,6 @@ export default function CustomerHome() {
   return (
     <div className="space-y-8">
       {/* SaaS Location & Branch Context Banner */}
-      <TenantSelector variant="banner" showDetails={true} />
 
       {/* Search Bar */}
       <form onSubmit={handleSearchSubmit} className="relative">

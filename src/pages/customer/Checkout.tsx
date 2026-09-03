@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Card, Input } from '@/components/ui';
-import { TenantSelector } from '@/components/common';
 import { ROUTES } from '@/constants';
 import { ordersApi, settingsApi, tablesApi } from '@/api';
 import { getApiErrorMessage } from '@/api/errors';
@@ -174,8 +173,6 @@ export default function Checkout() {
         <h1 className="text-2xl font-black text-neutral-900 dark:text-white">Order Checkout</h1>
         <p className="text-xs text-neutral-500">Quickly confirm your order without repetitive forms</p>
       </div>
-
-      <TenantSelector variant="banner" showDetails={true} />
 
       <form onSubmit={handlePlaceOrder}>
         <div className="grid gap-6 lg:grid-cols-3">

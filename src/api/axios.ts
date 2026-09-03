@@ -18,6 +18,7 @@ function readTokenPayload(token: string): { restaurantId?: string; branchId?: st
 const apiClient: AxiosInstance = axios.create({
   baseURL: config.api.baseUrl,
   timeout: config.api.timeout,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
@@ -84,26 +85,21 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const refreshToken = localStorage.getItem('restaurantos-refresh-token');
-        if (refreshToken) {
-          const response = await axios.post(
-            `${config.api.baseUrl}/api/auth/refresh`,
-            { refreshToken }
-          );
-          const { token, refreshToken: nextRefreshToken } = response.data.data;
-          localStorage.setItem('restaurantos-token', token);
-          if (nextRefreshToken) localStorage.setItem('restaurantos-refresh-token', nextRefreshToken);
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-          return apiClient(originalRequest);
-        }
+        const response = await axios.post(
+          `${config.api.baseUrl}/api/auth/refresh`,
+          undefined,
+          { withCredentials: true }
+        );
+        const { token } = response.data.data;
+        localStorage.setItem('restaurantos-token', token);
+        originalRequest.headers.Authorization = `Bearer ${token}`;
+        return apiClient(originalRequest);
       } catch {
         // Refresh token failed, clear auth
         localStorage.removeItem('restaurantos-token');
-        localStorage.removeItem('restaurantos-refresh-token');
         redirectToLoginIfNeeded();
       }
       localStorage.removeItem('restaurantos-token');
-      localStorage.removeItem('restaurantos-refresh-token');
       redirectToLoginIfNeeded();
     }
 

@@ -207,8 +207,6 @@ export default function AdminLayout() {
         />
         <main className="flex-1 bg-neutral-100 p-4 sm:p-6 lg:ml-64 lg:p-8 dark:bg-neutral-950">
           <div className="mx-auto w-full max-w-7xl">
-            <TenantSelector variant="banner" className="mb-6" />
-
             <div className="mb-6 hidden rounded-[1.75rem] border border-neutral-200 bg-white/90 p-5 shadow-soft backdrop-blur dark:border-neutral-700 dark:bg-neutral-900/90 lg:flex lg:items-center lg:justify-between">
               <div className="flex items-center gap-4">
                 <Logo size="sm" showText={true} />

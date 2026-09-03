@@ -38,7 +38,6 @@ const config = {
   auth: {
     storageKey: 'restaurantos-auth',
     tokenKey: 'restaurantos-token',
-    refreshTokenKey: 'restaurantos-refresh-token',
   },
 } as const;
 

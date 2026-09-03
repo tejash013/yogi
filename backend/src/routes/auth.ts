@@ -13,6 +13,27 @@ import { tenantIdsFromRequest } from '../utils/tenant.js';
 import { isSupportedRole } from '../auth/permissions.js';
 
 const router = Router();
+const REFRESH_COOKIE = 'restaurantos_refresh';
+const REFRESH_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
+
+function refreshCookieOptions() {
+  const production = process.env.NODE_ENV === 'production';
+  return `Path=/; Max-Age=${Math.floor(REFRESH_MAX_AGE / 1000)}; HttpOnly; SameSite=${production ? 'None' : 'Lax'}${production ? '; Secure' : ''}`;
+}
+
+function setRefreshCookie(res: any, token: string) {
+  res.setHeader('Set-Cookie', `${REFRESH_COOKIE}=${encodeURIComponent(token)}; ${refreshCookieOptions()}`);
+}
+
+function clearRefreshCookie(res: any) {
+  res.setHeader('Set-Cookie', `${REFRESH_COOKIE}=; Path=/; Max-Age=0; HttpOnly; SameSite=${process.env.NODE_ENV === 'production' ? 'None' : 'Lax'}${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`);
+}
+
+function getRefreshCookie(req: any) {
+  const cookies = String(req.headers.cookie ?? '').split(';');
+  const value = cookies.find((cookie) => cookie.trim().startsWith(`${REFRESH_COOKIE}=`));
+  return value ? decodeURIComponent(value.trim().slice(REFRESH_COOKIE.length + 1)) : undefined;
+}
 
 function hashPassword(password: string) {
   const salt = crypto.randomBytes(16).toString('hex');
@@ -93,6 +114,7 @@ router.post('/login', validateBody(loginSchema), async (req, res) => {
   const accessToken = signAccessToken(payload);
   const refreshToken = signRefreshToken({ id: user._id, jti: crypto.randomUUID() });
   await persistRefreshToken(user._id, refreshToken);
+  setRefreshCookie(res, refreshToken);
   await recordAudit({ actor: String(user._id), action: 'auth.login', resourceType: 'User', resourceId: String(user._id), ip: req.ip, userAgent: req.get('user-agent') });
 
   return res.json(
@@ -100,7 +122,6 @@ router.post('/login', validateBody(loginSchema), async (req, res) => {
       {
         user: sanitizeUser(user),
         token: accessToken,
-        refreshToken,
       },
       'Login successful'
     )
@@ -135,6 +156,7 @@ router.post('/register', validateBody(registerSchema), async (req, res) => {
   const accessToken = signAccessToken(payload);
   const refreshToken = signRefreshToken({ id: newUser._id, jti: crypto.randomUUID() });
   await persistRefreshToken(newUser._id, refreshToken);
+  setRefreshCookie(res, refreshToken);
   await recordAudit({ actor: String(newUser._id), action: 'auth.register', resourceType: 'User', resourceId: String(newUser._id), ip: req.ip, userAgent: req.get('user-agent') });
 
   return res.status(201).json(
@@ -142,7 +164,6 @@ router.post('/register', validateBody(registerSchema), async (req, res) => {
       {
         user: sanitizeUser(newUser),
         token: accessToken,
-        refreshToken,
       },
       'Registration successful'
     )
@@ -150,16 +171,17 @@ router.post('/register', validateBody(registerSchema), async (req, res) => {
 });
 
 router.post('/logout', validateBody(z.object({ refreshToken: z.string().min(1).optional() }).strict()), async (req, res) => {
-  const { refreshToken } = req.body;
+  const refreshToken = getRefreshCookie(req) ?? (process.env.NODE_ENV === 'production' ? undefined : req.body.refreshToken);
   if (refreshToken) {
     await RefreshToken.findOneAndUpdate({ token: hashRefreshToken(refreshToken) }, { revoked: true }).exec();
   }
+  clearRefreshCookie(res);
   await recordAudit({ action: 'auth.logout', resourceType: 'Session', ip: req.ip, userAgent: req.get('user-agent') });
   return res.json(success(null, 'Logged out successfully'));
 });
 
-router.post('/refresh', validateBody(z.object({ refreshToken: z.string().min(1) }).strict()), async (req, res) => {
-  const { refreshToken } = req.body;
+router.post('/refresh', validateBody(z.object({ refreshToken: z.string().min(1).optional() }).strict()), async (req, res) => {
+  const refreshToken = getRefreshCookie(req) ?? (process.env.NODE_ENV === 'production' ? undefined : req.body.refreshToken);
   if (!refreshToken) {
     return res.status(400).json(failure('Refresh token is required'));
   }
@@ -181,10 +203,11 @@ router.post('/refresh', validateBody(z.object({ refreshToken: z.string().min(1) 
 
     const newRefreshToken = signRefreshToken({ id: user._id, jti: crypto.randomUUID() });
     await persistRefreshToken(user._id, newRefreshToken);
+    setRefreshCookie(res, newRefreshToken);
     const accessToken = signAccessToken({ id: user._id, role: user.role, email: user.email, tokenVersion: user.tokenVersion, restaurantId: user.restaurantId, branchId: user.branchId });
     await recordAudit({ actor: String(user._id), action: 'auth.refresh', resourceType: 'Session', resourceId: String(stored._id), ip: req.ip, userAgent: req.get('user-agent') });
 
-    return res.json(success({ token: accessToken, refreshToken: newRefreshToken }, 'Token refreshed'));
+    return res.json(success({ token: accessToken }, 'Token refreshed'));
   } catch (err) {
     return res.status(401).json(failure('Invalid refresh token'));
   }

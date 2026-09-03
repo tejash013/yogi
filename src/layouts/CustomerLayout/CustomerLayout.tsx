@@ -36,7 +36,7 @@ export default function CustomerLayout() {
         items={navItems}
         rightContent={
           <>
-            <TenantSelector variant="pill" className="hidden sm:flex" />
+            <TenantSelector variant="pill" className="max-w-[180px] sm:max-w-none" />
 
             <Link
               to={ROUTES.CUSTOMER.CART}

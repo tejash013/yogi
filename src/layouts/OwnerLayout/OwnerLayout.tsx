@@ -149,8 +149,6 @@ export default function OwnerLayout() {
           onClose={() => setIsSidebarOpen(false)}
         />
         <main className="flex-1 p-4 sm:p-6 lg:ml-72 lg:p-8">
-          <TenantSelector variant="banner" showDetails={true} className="mb-6" />
-
           <div className="mb-6 rounded-[2rem] border border-neutral-200 bg-white/90 p-6 shadow-soft dark:border-neutral-700 dark:bg-neutral-900/90">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>

@@ -89,7 +89,9 @@ export const useCartStore = create<CartState>((set) => ({
   updateQuantity: (menuItemId: string, quantity: number) =>
     set((state) => {
       const existingItem = state.items.find((i) => i.menuItemId === menuItemId);
-      const maxAvailable = existingItem?.availableQty ?? Number.MAX_SAFE_INTEGER;
+      const maxAvailable = existingItem?.availableQty && existingItem.availableQty > 0
+        ? existingItem.availableQty
+        : 99;
 
       if (quantity <= 0) {
         const newItems = state.items.filter(

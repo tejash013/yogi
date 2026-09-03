@@ -60,6 +60,9 @@ const allowedOrigins = (process.env.FRONTEND_URL ?? defaultAllowedOrigins.join('
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
+if (process.env.NODE_ENV === 'production' && allowedOrigins.some((origin) => !origin.startsWith('https://'))) {
+  throw new Error('FRONTEND_URL must contain only HTTPS origins in production');
+}
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
