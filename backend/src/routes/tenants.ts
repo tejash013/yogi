@@ -27,9 +27,6 @@ const branchSchema = z.object({
   longitude: z.number().optional(),
 }).strict();
 
-<<<<<<< HEAD
-const router = Router();
-=======
 // Helper to ensure an item has latitude/longitude if resolvable from address
 function withResolvedCoords<T extends { address?: string; name?: string; latitude?: number; longitude?: number }>(
   item: T
@@ -47,7 +44,6 @@ function withResolvedCoords<T extends { address?: string; name?: string; latitud
   }
   return item;
 }
->>>>>>> e44c7870034ced4261f22539f3169716529ad4d3
 
 // GET /api/tenants/current - Get current tenant (restaurant & branch) details
 router.get('/current', optionalAuth, async (req: any, res) => {
