@@ -80,10 +80,10 @@ export const menuApi = {
   getById: (id: string) =>
     apiClient.get<ApiResponse<MenuItem>>(`/api/menu/${id}`),
 
-  create: (item: Partial<MenuItem> & { title?: string; category?: string; availableQty?: number }) =>
+  create: (item: Partial<MenuItem> & { title?: string; category?: string }) =>
     apiClient.post<ApiResponse<MenuItem>>('/api/menu', item),
 
-  update: (id: string, item: Partial<MenuItem> & { title?: string; category?: string; availableQty?: number }) =>
+  update: (id: string, item: Partial<MenuItem> & { title?: string; category?: string }) =>
     apiClient.patch<ApiResponse<MenuItem>>(`/api/menu/${id}`, item),
 
   getPopular: () =>

@@ -265,6 +265,25 @@ describe('Restaurant and Branch CRUD & Address Setup', () => {
       assert.equal(res.body.data.managerName, 'Rajesh P. (Senior)');
     });
 
+    it('assigns a matching manager account to the updated branch', async () => {
+      const otherBranch = await Branch.create({
+        restaurantId: testRestaurant._id,
+        name: 'Yogi Res',
+        slug: `yogi-res-${Date.now()}`,
+        addressDetails: { city: 'Bardoli', state: 'Gujarat' },
+      });
+
+      const res = await request(app)
+        .put(`/api/tenants/branches/${otherBranch._id}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ managerName: 'Branch Manager' });
+
+      assert.equal(res.status, 200);
+      const assignedManager = await User.findOne({ firstName: 'Branch', lastName: 'Manager' });
+      assert.equal(String(assignedManager.branchId), String(otherBranch._id));
+      assert.equal(assignedManager.tokenVersion, 1);
+    });
+
     it('forbids manager from updating a different branch', async () => {
       const res = await request(app)
         .put(`/api/tenants/branches/${createdBranchId}`)

@@ -60,7 +60,6 @@ export default function Billing() {
           discountPrice: it.discountPrice ? Number(it.discountPrice) : undefined,
           categoryId: String(it.category?._id ?? it.categoryId ?? it.category ?? ''),
           categoryName: it.categoryName ?? it.category?.name ?? 'General',
-          availableQty: Number(it.availableQty ?? 20),
           image: it.image ?? '/images/placeholder.jpg',
           images: [],
           ingredients: [],

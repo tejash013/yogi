@@ -88,11 +88,8 @@ export default function Login() {
   return (
     <div>
       <div className="mb-8 text-center animate-fade-in-up [animation-delay:80ms]">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-orange-600 shadow-lg shadow-primary-500/30 transition-transform duration-300 hover:rotate-3 hover:scale-105">
-          <span className="text-2xl font-bold text-white">R</span>
-        </div>
         <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Welcome Back</h1>
-        <p className="mt-1 text-sm text-neutral-500">Sign in to continue dining</p>
+        <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">Sign in to continue dining</p>
       </div>
 
       {error && (

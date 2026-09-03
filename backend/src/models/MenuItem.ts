@@ -22,7 +22,6 @@ const menuItemSchema = new Schema(
     isPopular: { type: Boolean, default: false },
     isRecommended: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
-    availableQty: { type: Number, default: 0 },
     rating: { type: Number, default: 0 },
     totalReviews: { type: Number, default: 0 },
     tags: [{ type: String, trim: true }],

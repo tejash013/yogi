@@ -64,6 +64,11 @@ const branchSchema = z.object({
 
 const branchUpdateSchema = branchSchema.partial().strict();
 
+function managerNamePattern(name: string): RegExp {
+  const escaped = name.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`^${escaped}$`, 'i');
+}
+
 // Helper to construct consolidated full address from addressDetails
 export function formatFullAddress(
   details?: { street?: string; landmark?: string; city?: string; state?: string; pincode?: string; country?: string },
@@ -397,6 +402,26 @@ router.put('/branches/:id', authenticate, requireRole(['platformAdmin', 'owner',
     { $set: payload },
     { new: true, runValidators: true }
   ).lean().exec();
+
+  if (payload.managerName) {
+    const manager = await User.findOne({
+      restaurantId: branch.restaurantId,
+      role: 'manager',
+      status: 'active',
+      $expr: {
+        $regexMatch: {
+          input: { $trim: { input: { $concat: ['$firstName', ' ', { $ifNull: ['$lastName', ''] }] } } },
+          regex: managerNamePattern(payload.managerName),
+        },
+      },
+    }).exec();
+
+    if (manager && String(manager.branchId) !== String(branch._id)) {
+      manager.branchId = branch._id;
+      manager.tokenVersion = (manager.tokenVersion ?? 0) + 1;
+      await manager.save();
+    }
+  }
 
   return res.json(success(withResolvedCoords(updated!), 'Branch updated successfully'));
 });

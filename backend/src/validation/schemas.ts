@@ -107,7 +107,6 @@ export const menuCreateSchema = z.object({
   image: z.string().trim().min(1).optional(),
   isPopular: z.boolean().optional(),
   isRecommended: z.boolean().optional(),
-  availableQty: z.coerce.number().int().nonnegative().optional(),
   tags: z.array(z.string().trim()).optional(),
 }).strict();
 export const menuUpdateSchema = menuCreateSchema.partial();

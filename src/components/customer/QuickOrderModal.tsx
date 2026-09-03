@@ -64,7 +64,6 @@ export default function QuickOrderModal({ item, isOpen, onClose }: QuickOrderMod
       name: item.name,
       price: unitPrice,
       quantity,
-      availableQty: item.availableQty ?? 50,
       image: item.image,
       specialInstructions: specialInstructions.trim() || undefined,
     };

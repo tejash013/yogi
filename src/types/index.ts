@@ -82,7 +82,6 @@ export interface MenuItem {
   discountPrice?: number;
   categoryId: string;
   categoryName: string;
-  availableQty: number;
   image: string;
   images: string[];
   ingredients: string[];
@@ -184,7 +183,6 @@ export interface CartItem {
   name: string;
   price: number;
   quantity: number;
-  availableQty?: number;
   image: string;
   specialInstructions?: string;
 }

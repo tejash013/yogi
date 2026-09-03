@@ -13,7 +13,6 @@ type MenuItemRow = {
   category: string;
   categoryId: string;
   price: number;
-  availableQty: number;
   image: string;
   tags: string[];
   isPopular: boolean;
@@ -36,7 +35,6 @@ export default function MenuManagement() {
     description: '',
     category: '',
     price: '0',
-    availableQty: '10',
     image: '',
     tags: '',
     isPopular: false,
@@ -57,7 +55,6 @@ export default function MenuManagement() {
         category: item.categoryName ?? item.category?.name ?? 'General',
         categoryId: item.category?._id ?? item.categoryId ?? item.category ?? '',
         price: Number(item.price ?? 0),
-        availableQty: Number(item.availableQty ?? 0),
         image: item.image ?? '',
         tags: Array.isArray(item.tags) ? item.tags : [],
         isPopular: Boolean(item.isPopular),
@@ -101,17 +98,11 @@ export default function MenuManagement() {
       if (!form.title || !form.category) {
         throw new Error('Menu name and category are required.');
       }
-      const availableQty = Number(form.availableQty);
-      if (!Number.isInteger(availableQty) || availableQty < 0) {
-        throw new Error('Availability quantity must be a whole number of zero or more.');
-      }
-
       const payload = {
         title: form.title,
         description: form.description || 'New menu item',
         category: form.category,
         price: Number(form.price || 0),
-        availableQty,
         image: form.image || undefined,
         tags: form.tags ? form.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : [],
         isPopular: form.isPopular,
@@ -130,7 +121,7 @@ export default function MenuManagement() {
         at: new Date().toISOString(),
       });
 
-      setForm({ title: '', description: '', category: '', price: '0', availableQty: '10', image: '', tags: '', isPopular: false, isRecommended: false });
+      setForm({ title: '', description: '', category: '', price: '0', image: '', tags: '', isPopular: false, isRecommended: false });
       setEditingId(undefined);
       setShowForm(false);
       await loadData();
@@ -142,7 +133,7 @@ export default function MenuManagement() {
   };
 
   const resetForm = () => {
-    setForm({ title: '', description: '', category: '', price: '0', availableQty: '10', image: '', tags: '', isPopular: false, isRecommended: false });
+    setForm({ title: '', description: '', category: '', price: '0', image: '', tags: '', isPopular: false, isRecommended: false });
     setEditingId(undefined);
     setShowForm(false);
   };
@@ -153,7 +144,6 @@ export default function MenuManagement() {
       description: item.description,
       category: item.categoryId,
       price: String(item.price),
-      availableQty: String(item.availableQty),
       image: item.image,
       tags: item.tags.join(', '),
       isPopular: item.isPopular,
@@ -190,7 +180,6 @@ export default function MenuManagement() {
       ),
     },
     { key: 'category', header: 'Category' },
-    { key: 'availableQty', header: 'Available Qty', render: (item) => `${item.availableQty} available` },
     { key: 'price', header: 'Price', render: (item) => `₹${item.price.toFixed(2)}` },
     {
       key: 'status',
@@ -239,10 +228,6 @@ export default function MenuManagement() {
               <div>
                 <label className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-200">Price</label>
                 <input type="number" min="0" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900" required />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-200">Availability quantity</label>
-                <input type="number" min="0" step="1" value={form.availableQty} onChange={(e) => setForm({ ...form, availableQty: e.target.value })} className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900" required />
               </div>
               <div className="md:col-span-2">
                 <label className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-200">Image URL</label>

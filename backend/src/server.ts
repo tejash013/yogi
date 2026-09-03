@@ -13,6 +13,7 @@ import { connectDatabase } from './db.js';
 import mongoose from 'mongoose';
 import { logger } from './utils/logger.js';
 import User from './models/User.js';
+import MenuItem from './models/MenuItem.js';
 import { seedDatabase } from './data/seed.js';
 
 const port = Number(process.env.PORT ?? 3000);
@@ -35,6 +36,13 @@ async function startServer() {
     );
     if (migratedPlatformAdmins.modifiedCount > 0) {
       logger.info({ count: migratedPlatformAdmins.modifiedCount }, 'Normalized platform administrator roles');
+    }
+    const migratedMenuItems = await MenuItem.updateMany(
+      { availableQty: { $exists: true } },
+      { $unset: { availableQty: 1 } },
+    );
+    if (migratedMenuItems.modifiedCount > 0) {
+      logger.info({ count: migratedMenuItems.modifiedCount }, 'Removed legacy menu availability quantities');
     }
     await seedDatabase();
     logger.info('Successfully connected to MongoDB');

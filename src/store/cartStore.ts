@@ -41,18 +41,6 @@ export const useCartStore = create<CartState>((set) => ({
 
   addItem: (item: CartItem) =>
     set((state) => {
-      const existingItem = state.items.find((i) => i.menuItemId === item.menuItemId);
-      // If availableQty is defined and > 0, respect it; otherwise allow up to 99
-      const maxAvailable = typeof item.availableQty === 'number' && item.availableQty > 0
-        ? item.availableQty
-        : 99;
-      const nextQuantity = (existingItem?.quantity ?? 0) + item.quantity;
-
-      if (nextQuantity > maxAvailable) {
-        useToastStore.getState().showToast(`Only ${maxAvailable} available in stock for ${item.name}.`, 'error');
-        return state;
-      }
-
       const existingIndex = state.items.findIndex(
         (i) => i.menuItemId === item.menuItemId
       );
@@ -88,22 +76,12 @@ export const useCartStore = create<CartState>((set) => ({
 
   updateQuantity: (menuItemId: string, quantity: number) =>
     set((state) => {
-      const existingItem = state.items.find((i) => i.menuItemId === menuItemId);
-      const maxAvailable = existingItem?.availableQty && existingItem.availableQty > 0
-        ? existingItem.availableQty
-        : 99;
-
       if (quantity <= 0) {
         const newItems = state.items.filter(
           (i) => i.menuItemId !== menuItemId
         );
         const totals = calculateTotals(newItems);
         return { items: newItems, ...totals };
-      }
-
-      if (quantity > maxAvailable) {
-        useToastStore.getState().showToast(`Only ${maxAvailable} left in stock for ${existingItem?.name ?? 'this item'}.`, 'error');
-        return state;
       }
 
       const newItems = state.items.map((i) =>
