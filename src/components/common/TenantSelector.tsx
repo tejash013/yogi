@@ -1,8 +1,13 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore, useTenantStore } from '@/store';
 import { ROUTES } from '@/constants';
-import { formatDistance } from '@/utils/geolocation';
+import {
+  formatDistance,
+  KNOWN_LOCATION_PRESETS,
+  searchLocationQuery,
+  type Coordinates,
+} from '@/utils/geolocation';
 
 interface TenantSelectorProps {
   variant?: 'pill' | 'banner' | 'card' | 'badge';
@@ -22,6 +27,7 @@ export default function TenantSelector({
     currentBranch,
     availableRestaurants,
     availableBranches,
+    nearestBranch,
     isLoading,
     isModalOpen,
     setModalOpen,
@@ -36,19 +42,24 @@ export default function TenantSelector({
     maxRadiusKm,
     setMaxRadiusKm,
     requestUserLocation,
+    setManualLocation,
   } = useTenantStore();
 
   const user = useAuthStore((s) => s.user);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Coordinates[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
   useEffect(() => {
     void loadTenants();
   }, [loadTenants]);
 
   const restaurantName = currentRestaurant?.name || 'Yogi Grand Restaurant';
-  const branchName = currentBranch?.name || 'Main Dining Hall (Downtown)';
+  const branchName = currentBranch?.name || 'Main Dining Hall';
   const isCustomer = !user || user.role === 'customer';
   const currentDistanceLabel = formatDistance(currentBranch?.distanceKm);
 
-  // Filter branches based on proximity setting
+  // Proximity filtering: strictly filter by maxRadiusKm when onlyNearby is enabled and location exists
   const displayedBranches =
     onlyNearby && userLocation
       ? availableBranches.filter((b) => (b.distanceKm ?? 9999) <= maxRadiusKm)
@@ -59,6 +70,37 @@ export default function TenantSelector({
       ? availableRestaurants.filter((r) => (r.distanceKm ?? 9999) <= maxRadiusKm)
       : availableRestaurants;
 
+  // Handle location search query
+  const handleLocationSearch = async (query: string) => {
+    setSearchQuery(query);
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    setIsSearching(true);
+    try {
+      const results = await searchLocationQuery(query);
+      setSearchResults(results);
+    } catch {
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSelectPreset = (preset: { latitude: number; longitude: number; name: string; state: string }) => {
+    setManualLocation({
+      latitude: preset.latitude,
+      longitude: preset.longitude,
+      city: preset.name,
+      state: preset.state,
+      displayName: `${preset.name}, ${preset.state}`,
+      source: 'manual',
+    });
+    setSearchQuery('');
+    setSearchResults([]);
+  };
+
   if (variant === 'badge') {
     return (
       <div className={`inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-50/90 px-3 py-1 text-xs dark:border-amber-500/20 dark:bg-amber-950/40 ${className}`}>
@@ -67,7 +109,7 @@ export default function TenantSelector({
         <span className="text-amber-400 dark:text-amber-600">•</span>
         <span className="text-amber-800 dark:text-amber-300">{branchName}</span>
         {currentDistanceLabel && (
-          <span className="rounded-full bg-amber-500/20 px-1.5 py-0.2 text-[10px] font-bold text-amber-800 dark:text-amber-300">
+          <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:text-emerald-300">
             📍 {currentDistanceLabel}
           </span>
         )}
@@ -118,11 +160,21 @@ export default function TenantSelector({
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-300">
+<<<<<<< HEAD
                   {isCustomer ? 'Current dining location' : 'Assigned operating branch'}
                 </span>
+=======
+                  {isCustomer ? 'Dining Location' : 'Assigned Operating Branch'}
+                </span>
+                {userLocation?.displayName && (
+                  <span className="rounded-md bg-emerald-500/20 border border-emerald-400/30 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
+                    📍 {userLocation.displayName}
+                  </span>
+                )}
+>>>>>>> e44c7870034ced4261f22539f3169716529ad4d3
                 {currentDistanceLabel && (
-                  <span className="rounded-md bg-emerald-500/25 border border-emerald-400/40 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
-                    📍 {currentDistanceLabel}
+                  <span className="rounded-md bg-amber-400/20 border border-amber-400/40 px-2 py-0.5 text-[10px] font-bold text-amber-300">
+                    {currentDistanceLabel}
                   </span>
                 )}
               </div>
@@ -142,7 +194,7 @@ export default function TenantSelector({
                 onClick={() => setModalOpen(true)}
                 className="rounded-xl border border-amber-400/40 bg-amber-400/10 px-3 py-1.5 text-xs font-bold text-amber-300 transition-all hover:bg-amber-400/20"
               >
-                🔄 Switch / Nearby Locations
+                🔄 Switch / Nearby Outlets
               </button>
             ) : (
               <span className="rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-neutral-300">
@@ -222,18 +274,18 @@ export default function TenantSelector({
 
       {/* Location picker for customers */}
       {isCustomer && isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-end justify-center bg-neutral-950/75 p-0 backdrop-blur-sm sm:items-center sm:p-4">
-            <div className="relative max-h-[94vh] w-full max-w-3xl overflow-y-auto rounded-t-[28px] border border-neutral-700 bg-[#121716] p-4 text-white shadow-2xl sm:rounded-[28px] sm:p-6">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-neutral-950/75 p-0 backdrop-blur-sm sm:items-center sm:p-4">
+          <div className="relative max-h-[94vh] w-full max-w-3xl overflow-y-auto rounded-t-[28px] border border-neutral-700 bg-[#121716] p-4 text-white shadow-2xl sm:rounded-[28px] sm:p-6">
             {/* Modal Header */}
             <div className="flex items-start justify-between gap-4 border-b border-neutral-800 pb-4">
               <div>
                 <div className="flex items-center gap-2 text-emerald-300">
                   <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-400/15 text-lg">⌖</span>
-                  <span className="text-[10px] font-bold uppercase tracking-[0.22em]">Your dining location</span>
+                  <span className="text-[10px] font-bold uppercase tracking-[0.22em]">Nearby Dining Outlets</span>
                 </div>
-                <h3 className="mt-3 text-xl font-bold tracking-tight sm:text-2xl">Choose a restaurant or branch</h3>
+                <h3 className="mt-2 text-xl font-bold tracking-tight sm:text-2xl">Select Nearby Restaurant & Branch</h3>
                 <p className="mt-1 max-w-xl text-xs leading-5 text-neutral-400">
-                  Pick where you want to order. Nearby locations are sorted first after you share your location.
+                  Only outlets close to your current location are displayed so you get hot food & instant table booking.
                 </p>
               </div>
               <button
@@ -246,7 +298,7 @@ export default function TenantSelector({
               </button>
             </div>
 
-            {/* HTML5 Geolocation Live Detection & Proximity Box */}
+            {/* Live Location Detection & Multi-Tier Location Box */}
             <div className="mt-4 rounded-2xl border border-emerald-500/25 bg-emerald-950/20 p-4 text-emerald-100">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
@@ -255,20 +307,18 @@ export default function TenantSelector({
                   </div>
                   <div>
                     <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-300">
-                      Find locations near you
+                      Your Current Location
                     </h4>
                     {userLocation ? (
-                      <p className="text-xs text-neutral-300">
-                        Location found <span className="font-mono text-emerald-300">{userLocation.latitude.toFixed(3)}, {userLocation.longitude.toFixed(3)}</span>
-                        {userLocation.accuracy !== undefined && (
-                          <span className="ml-2 text-neutral-400">
-                            (±{Math.round(userLocation.accuracy)} m)
-                          </span>
-                        )}
+                      <p className="text-xs text-neutral-200">
+                        Detected: <span className="font-bold text-emerald-300">{userLocation.displayName || userLocation.city || 'Located'}</span>
+                        <span className="ml-2 font-mono text-[11px] text-neutral-400">
+                          ({userLocation.latitude.toFixed(3)}, {userLocation.longitude.toFixed(3)})
+                        </span>
                       </p>
                     ) : (
                       <p className="text-xs text-neutral-400">
-                        Use your current location to sort restaurants and branches by distance.
+                        Share your location to display only nearby restaurants and branches.
                       </p>
                     )}
                   </div>
@@ -279,17 +329,17 @@ export default function TenantSelector({
                     type="button"
                     onClick={() => void requestUserLocation()}
                     disabled={isLocating}
-                    className="flex items-center gap-1.5 rounded-xl border border-emerald-400/40 bg-emerald-500/20 px-3 py-1.5 text-xs font-bold text-emerald-200 transition-all hover:bg-emerald-500/30 disabled:opacity-50"
+                    className="flex items-center gap-1.5 rounded-xl border border-emerald-400/40 bg-emerald-500/20 px-3.5 py-2 text-xs font-bold text-emerald-200 transition-all hover:bg-emerald-500/30 disabled:opacity-50"
                   >
                     {isLocating ? (
                       <>
                         <span className="h-3 w-3 animate-spin rounded-full border-2 border-emerald-300 border-t-transparent" />
-                        Detecting...
+                        Locating GPS / IP...
                       </>
                     ) : userLocation ? (
-                      '↻ Refresh location'
+                      '↻ Refresh Location'
                     ) : (
-                      '⌖ Use my location'
+                      '🎯 Detect My Location'
                     )}
                   </button>
                 </div>
@@ -308,49 +358,111 @@ export default function TenantSelector({
                 </div>
               )}
 
-              {/* Proximity Filter Toggle & Radius Selector */}
-              {userLocation && (
-                <div className="mt-3 pt-3 border-t border-emerald-500/20 flex flex-wrap items-center justify-between gap-3 text-xs">
-                  <label className="flex items-center gap-2 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={onlyNearby}
-                      onChange={(e) => setOnlyNearby(e.target.checked)}
-                      className="h-4 w-4 rounded border-neutral-700 bg-neutral-900 text-emerald-500 focus:ring-emerald-400"
-                    />
-                    <span className="font-semibold text-emerald-200">
-                      Only show locations within {maxRadiusKm} km
-                    </span>
-                  </label>
-
-                  {onlyNearby && (
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[11px] text-neutral-400">Radius:</span>
-                      {[5, 10, 15, 25, 50].map((radius) => (
+              {/* Quick City Presets */}
+              <div className="mt-3 pt-3 border-t border-emerald-500/20">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <span className="text-[11px] font-semibold text-neutral-300">Quick-Pick Area:</span>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {KNOWN_LOCATION_PRESETS.map((preset) => {
+                      const isCurrent =
+                        userLocation?.city?.toLowerCase() === preset.name.toLowerCase() ||
+                        userLocation?.displayName?.toLowerCase().includes(preset.name.toLowerCase());
+                      return (
                         <button
-                          key={radius}
+                          key={preset.id}
                           type="button"
-                          onClick={() => setMaxRadiusKm(radius)}
-                          className={`rounded-lg px-2 py-0.5 text-[10px] font-bold transition-all ${
-                            maxRadiusKm === radius
-                              ? 'bg-emerald-400 text-neutral-950'
-                              : 'bg-neutral-800 text-neutral-300 hover:bg-neutral-700'
+                          onClick={() => handleSelectPreset(preset)}
+                          className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition-all ${
+                            isCurrent
+                              ? 'bg-emerald-400 text-neutral-950 shadow-sm'
+                              : 'bg-neutral-900 text-neutral-300 hover:bg-neutral-800 hover:text-white'
                           }`}
                         >
-                          {radius}km
+                          📍 {preset.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Optional Manual Search input */}
+                <div className="mt-2 relative">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => void handleLocationSearch(e.target.value)}
+                    placeholder="Search city, town, or area (e.g., Bardoli, Surat, Vyara)..."
+                    className="w-full rounded-xl border border-neutral-700 bg-neutral-900/80 px-3 py-1.5 text-xs text-white placeholder-neutral-500 focus:border-emerald-400 focus:outline-none"
+                  />
+                  {isSearching && (
+                    <span className="absolute right-3 top-2 text-[10px] text-emerald-400 animate-pulse">
+                      Searching...
+                    </span>
+                  )}
+                  {searchResults.length > 0 && (
+                    <div className="absolute left-0 right-0 top-full z-20 mt-1 rounded-xl border border-neutral-700 bg-neutral-900 p-1 shadow-lg">
+                      {searchResults.map((res, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => {
+                            setManualLocation(res);
+                            setSearchQuery('');
+                            setSearchResults([]);
+                          }}
+                          className="w-full rounded-lg px-3 py-1.5 text-left text-xs text-neutral-200 hover:bg-neutral-800 hover:text-white"
+                        >
+                          📍 {res.displayName || `${res.city}, ${res.state}`}
                         </button>
                       ))}
                     </div>
                   )}
                 </div>
-              )}
+              </div>
+
+              {/* Proximity Filter Toggle & Radius Selector */}
+              <div className="mt-3 pt-3 border-t border-emerald-500/20 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={onlyNearby}
+                    onChange={(e) => setOnlyNearby(e.target.checked)}
+                    className="h-4 w-4 rounded border-neutral-700 bg-neutral-900 text-emerald-500 focus:ring-emerald-400"
+                  />
+                  <span className="font-semibold text-emerald-200">
+                    Only show outlets within {maxRadiusKm} km
+                  </span>
+                </label>
+
+                {onlyNearby && (
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[11px] text-neutral-400">Radius:</span>
+                    {[5, 15, 25, 50, 100].map((radius) => (
+                      <button
+                        key={radius}
+                        type="button"
+                        onClick={() => setMaxRadiusKm(radius)}
+                        className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition-all ${
+                          maxRadiusKm === radius
+                            ? 'bg-emerald-400 text-neutral-950'
+                            : 'bg-neutral-800 text-neutral-300 hover:bg-neutral-700'
+                        }`}
+                      >
+                        {radius} km
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Multi-Restaurant Switcher (if multiple available) */}
+            {/* Nearby Restaurants */}
             {displayedRestaurants.length > 0 && (
               <div className="mt-5">
                 <div className="mb-2 flex items-center justify-between">
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-neutral-300">Restaurants</p>
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-neutral-300">
+                    {onlyNearby ? 'Nearby Restaurants' : 'All Restaurants'}
+                  </p>
                   <span className="text-xs text-neutral-500">{displayedRestaurants.length} available</span>
                 </div>
                 <div className="grid gap-2 sm:grid-cols-2">
@@ -359,7 +471,7 @@ export default function TenantSelector({
                       key={rest._id}
                       type="button"
                       onClick={() => void switchRestaurant(rest._id)}
-                        className={`flex min-h-[68px] items-center justify-between rounded-2xl border p-3 text-left transition-all ${
+                      className={`flex min-h-[68px] items-center justify-between rounded-2xl border p-3 text-left transition-all ${
                         rest._id === restaurantId
                           ? 'border-amber-400 bg-amber-500/15 text-white shadow-sm'
                           : 'border-[#30261f] bg-[#1b1714] text-neutral-300 hover:border-amber-500/40 hover:bg-[#221c18]'
@@ -367,13 +479,15 @@ export default function TenantSelector({
                     >
                       <div>
                         <p className="font-bold">{rest.name}</p>
-                        <p className="mt-1 text-[11px] text-neutral-500">
-                          {rest.distanceKm !== undefined ? `📍 ${formatDistance(rest.distanceKm)}` : 'Restaurant location'}
+                        <p className="mt-1 text-[11px] text-neutral-400">
+                          {rest.distanceKm !== undefined
+                            ? `📍 ${formatDistance(rest.distanceKm)}`
+                            : 'Restaurant location'}
                         </p>
                       </div>
                       {rest._id === restaurantId && (
-                        <span className="rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-black text-neutral-950">
-                          Active
+                        <span className="rounded-full bg-amber-400 px-2.5 py-0.5 text-[10px] font-black text-neutral-950">
+                          Selected
                         </span>
                       )}
                     </button>
@@ -388,7 +502,9 @@ export default function TenantSelector({
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#d7c6b4]">
                   Branches for {restaurantName}
                 </p>
-                <span className="text-xs text-neutral-500">{displayedBranches.length} locations</span>
+                <span className="text-xs text-neutral-500">
+                  {displayedBranches.length} {onlyNearby ? 'nearby' : 'total'} locations
+                </span>
               </div>
 
               {isLoading ? (
@@ -397,18 +513,61 @@ export default function TenantSelector({
                   <p className="text-sm font-semibold">Loading locations...</p>
                 </div>
               ) : displayedBranches.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-neutral-700 bg-neutral-900/60 p-6 text-center text-neutral-400">
-                  <p className="text-sm font-semibold">No branches found nearby</p>
-                  <p className="mt-1 text-xs text-neutral-500">Expand your search radius or view all branches.</p>
-                  <button
-                    type="button"
-                    onClick={() => setOnlyNearby(false)}
-                    className="mt-3 rounded-xl bg-amber-400/20 px-3 py-1.5 text-xs font-bold text-amber-300 hover:bg-amber-400/30"
-                  >
-                    View All Branches
-                  </button>
+                /* Empty state when no branch is nearby within maxRadiusKm */
+                <div className="rounded-2xl border border-dashed border-neutral-700 bg-neutral-900/60 p-6 text-center text-neutral-300">
+                  <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-500/10 text-xl text-amber-400">
+                    📍
+                  </div>
+                  <p className="text-sm font-bold text-white">No branches found within {maxRadiusKm} km</p>
+                  <p className="mt-1 text-xs text-neutral-400">
+                    There are currently no active outlets within your chosen radius of {userLocation?.displayName || 'your location'}.
+                  </p>
+
+                  {nearestBranch && (
+                    <div className="mt-4 rounded-xl border border-neutral-800 bg-neutral-950/70 p-3 text-left">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-amber-400">
+                        Nearest Available Branch:
+                      </p>
+                      <div className="mt-1 flex items-center justify-between gap-2">
+                        <div>
+                          <p className="text-sm font-bold text-white">{nearestBranch.name}</p>
+                          <p className="text-xs text-neutral-400">
+                            📍 {nearestBranch.address || 'Dining Hall'} • {formatDistance(nearestBranch.distanceKm)}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            switchBranch(nearestBranch._id);
+                            setModalOpen(false);
+                          }}
+                          className="rounded-xl bg-emerald-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-600 shadow-sm"
+                        >
+                          Switch to this Branch
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="mt-4 flex items-center justify-center gap-2 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => setMaxRadiusKm(50)}
+                      className="rounded-xl border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-xs font-semibold text-neutral-200 hover:bg-neutral-700"
+                    >
+                      Expand to 50 km
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setOnlyNearby(false)}
+                      className="rounded-xl bg-amber-400/20 px-3 py-1.5 text-xs font-bold text-amber-300 hover:bg-amber-400/30"
+                    >
+                      Show All Outlets
+                    </button>
+                  </div>
                 </div>
               ) : (
+                /* Nearby branches list */
                 <div className="grid gap-3">
                   {displayedBranches.map((br, index) => {
                     const isSelected = br._id === branchId;
@@ -448,9 +607,11 @@ export default function TenantSelector({
                             </p>
                           </div>
                           <div className="flex flex-col items-end gap-1">
-                            <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
-                              isSelected ? 'bg-emerald-400 text-neutral-950' : 'bg-neutral-800 text-neutral-300'
-                            }`}>
+                            <span
+                              className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                                isSelected ? 'bg-emerald-400 text-neutral-950' : 'bg-neutral-800 text-neutral-300'
+                              }`}
+                            >
                               {isSelected ? '✓ Current' : 'Select'}
                             </span>
                           </div>
@@ -464,7 +625,7 @@ export default function TenantSelector({
 
             {/* Modal Footer */}
             <div className="mt-6 flex flex-col-reverse items-stretch gap-3 border-t border-neutral-800 pt-4 sm:flex-row sm:items-center sm:justify-between">
-              {(user?.role === 'platformAdmin' || user?.role === 'owner') ? (
+              {user?.role === 'platformAdmin' || user?.role === 'owner' ? (
                 <Link
                   to={ROUTES.WORKSPACE}
                   onClick={() => setModalOpen(false)}
@@ -473,7 +634,9 @@ export default function TenantSelector({
                   <span>🏢 Open Tenant Admin Console</span> &rarr;
                 </Link>
               ) : (
-                <span className="text-[11px] text-neutral-500">Your choice is saved for this device.</span>
+                <span className="text-[11px] text-neutral-500">
+                  {userLocation ? `Viewing outlets near ${userLocation.displayName || 'your location'}.` : 'Share location for proximity-based sorting.'}
+                </span>
               )}
 
               <button

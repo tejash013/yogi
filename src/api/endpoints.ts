@@ -48,9 +48,10 @@ export const tenantsApi = {
   getCurrent: () =>
     apiClient.get<ApiResponse<{ restaurantId: string; branchId: string; restaurant: Restaurant; branch: Branch }>>('/api/tenants/current'),
   getRestaurants: () => apiClient.get<ApiResponse<Restaurant[]>>('/api/tenants/restaurants'),
+  getAllBranches: () => apiClient.get<ApiResponse<Branch[]>>('/api/tenants/branches'),
   getBranches: (restaurantId: string) => apiClient.get<ApiResponse<Branch[]>>(`/api/tenants/restaurants/${restaurantId}/branches`),
-  createRestaurant: (payload: { name: string; slug: string }) => apiClient.post<ApiResponse<Restaurant>>('/api/tenants/restaurants', payload),
-  createBranch: (restaurantId: string, payload: { name: string; slug: string; address?: string }) => apiClient.post<ApiResponse<Branch>>(`/api/tenants/restaurants/${restaurantId}/branches`, payload),
+  createRestaurant: (payload: { name: string; slug: string; address?: string; latitude?: number; longitude?: number }) => apiClient.post<ApiResponse<Restaurant>>('/api/tenants/restaurants', payload),
+  createBranch: (restaurantId: string, payload: { name: string; slug: string; address?: string; latitude?: number; longitude?: number }) => apiClient.post<ApiResponse<Branch>>(`/api/tenants/restaurants/${restaurantId}/branches`, payload),
 };
 
 // Menu API

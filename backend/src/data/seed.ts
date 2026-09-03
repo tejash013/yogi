@@ -5,6 +5,7 @@ import Table from '../models/Table.js';
 import Restaurant from '../models/Restaurant.js';
 import Branch from '../models/Branch.js';
 import { DEFAULT_BRANCH_ID, DEFAULT_RESTAURANT_ID } from '../utils/tenant.js';
+import { geocodeAddress } from '../utils/geocoding.js';
 
 const tenant = {
   restaurantId: DEFAULT_RESTAURANT_ID,
@@ -259,6 +260,29 @@ export async function seedDatabase() {
   const tableCount = await Table.countDocuments({ ...tenant }).exec();
   if (tableCount === 0) {
     await Table.insertMany(defaultTables.map((table) => ({ ...tenant, ...table })));
+  }
+
+  // Backfill coordinates for any existing branches or restaurants missing them
+  const branchesWithoutCoords = await Branch.find({
+    $or: [{ latitude: { $exists: false } }, { latitude: null }, { longitude: { $exists: false } }, { longitude: null }],
+  }).exec();
+
+  for (const b of branchesWithoutCoords) {
+    const coords = geocodeAddress(b.address, b.name);
+    if (coords) {
+      await Branch.updateOne({ _id: b._id }, { $set: { latitude: coords.latitude, longitude: coords.longitude } });
+    }
+  }
+
+  const restaurantsWithoutCoords = await Restaurant.find({
+    $or: [{ latitude: { $exists: false } }, { latitude: null }, { longitude: { $exists: false } }, { longitude: null }],
+  }).exec();
+
+  for (const r of restaurantsWithoutCoords) {
+    const coords = geocodeAddress(r.address, r.name);
+    if (coords) {
+      await Restaurant.updateOne({ _id: r._id }, { $set: { latitude: coords.latitude, longitude: coords.longitude } });
+    }
   }
 
   await Offer.syncIndexes();
