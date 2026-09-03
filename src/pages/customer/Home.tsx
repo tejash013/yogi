@@ -77,13 +77,6 @@ export default function CustomerHome() {
   const setModalOpen = useTenantStore((s) => s.setModalOpen);
   const switchBranch = useTenantStore((s) => s.switchBranch);
 
-  // Auto-request location on initial mount if not yet known
-  useEffect(() => {
-    if (!userLocation) {
-      void requestUserLocation();
-    }
-  }, [userLocation, requestUserLocation]);
-
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {

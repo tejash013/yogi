@@ -1,6 +1,6 @@
 /**
  * Geolocation & Distance Calculation Utilities
- * Supports Multi-Tier Detection (High-Accuracy GPS -> Standard GPS -> IP Lookup -> Reverse Geocode)
+ * Uses browser-provided coordinates and reverse geocoding.
  */
 
 export interface Coordinates {
@@ -226,13 +226,11 @@ export async function searchLocationQuery(query: string): Promise<Coordinates[]>
 }
 
 /**
- * Requests location with progressive multi-tier fallback:
- * 1. High-accuracy HTML5 GPS (fast 5s timeout)
- * 2. Standard-accuracy HTML5 GPS (8s timeout, 5min cache)
- * 3. IP-based Geolocation fallback
+ * Requests a fresh browser position. IP and preset coordinates are intentionally
+ * not used here because they can point to a different city than the device.
  */
 export async function getCurrentBrowserLocation(): Promise<Coordinates> {
-  // Step 1: Try HTML5 geolocation with fallback to standard accuracy
+  // Ask the browser for a fresh position rather than reusing a cached fix.
   const html5Promise = new Promise<Coordinates>((resolve, reject) => {
     if (!('geolocation' in navigator)) {
       reject(new Error('Geolocation is not supported by your browser.'));
@@ -263,10 +261,10 @@ export async function getCurrentBrowserLocation(): Promise<Coordinates> {
           (err2) => {
             reject(err2);
           },
-          { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
+          { enableHighAccuracy: false, timeout: 10000, maximumAge: 0 }
         );
       },
-      { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 }
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   });
 
@@ -279,22 +277,7 @@ export async function getCurrentBrowserLocation(): Promise<Coordinates> {
       city: geo.city,
       displayName: geo.displayName || `${coords.latitude.toFixed(3)}, ${coords.longitude.toFixed(3)}`,
     };
-  } catch (err: any) {
-    // If HTML5 fails or is blocked/denied, try IP-based location
-    try {
-      const ipCoords = await getIpBasedLocation();
-      return ipCoords;
-    } catch {
-      // If even IP fails, default to user's nearest preset (e.g. Bardoli / Surat region)
-      const defaultFallback = KNOWN_LOCATION_PRESETS[0]; // Bardoli
-      return {
-        latitude: defaultFallback.latitude,
-        longitude: defaultFallback.longitude,
-        city: defaultFallback.name,
-        state: defaultFallback.state,
-        displayName: `${defaultFallback.name}, ${defaultFallback.state} (Default)`,
-        source: 'manual',
-      };
-    }
+  } catch (err) {
+    throw err;
   }
 }

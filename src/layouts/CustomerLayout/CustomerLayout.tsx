@@ -1,10 +1,9 @@
-import { useEffect } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { Navbar, Footer, TenantSelector } from '@/components/common';
 import type { NavItem } from '@/components/common/Navbar';
 import { BottomNav } from '@/components/customer';
 import { ROUTES } from '@/constants';
-import { useAuthStore, useCartStore, useTenantStore } from '@/store';
+import { useAuthStore, useCartStore } from '@/store';
 
 const navItems: NavItem[] = [
   { label: 'Home', href: ROUTES.CUSTOMER.HOME },
@@ -24,17 +23,6 @@ export default function CustomerLayout() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
-
-  const userLocation = useTenantStore((s) => s.userLocation);
-  const isLocating = useTenantStore((s) => s.isLocating);
-  const requestUserLocation = useTenantStore((s) => s.requestUserLocation);
-
-  // Non-blocking auto location resolution for customers
-  useEffect(() => {
-    if (!userLocation && !isLocating) {
-      void requestUserLocation();
-    }
-  }, [userLocation, isLocating, requestUserLocation]);
 
   const handleLogout = () => {
     logout();
