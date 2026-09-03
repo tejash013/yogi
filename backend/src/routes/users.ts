@@ -4,11 +4,12 @@ import User from '../models/User.js';
 import { authenticate, requireRole } from '../middleware/auth.js';
 import { validateBody, validateParams, validateQuery } from '../middleware/validate.js';
 import { failure, paginated, success } from '../utils/response.js';
-import { idParamSchema, userAccessUpdateSchema, userQuerySchema } from '../validation/schemas.js';
+import { idParamSchema, userAccessUpdateSchema, userCreateSchema, userQuerySchema } from '../validation/schemas.js';
 import { recordAudit } from '../utils/audit.js';
 import { tenantFilter } from '../utils/tenant.js';
 import Branch from '../models/Branch.js';
 import Restaurant from '../models/Restaurant.js';
+import { hashPassword } from '../utils/password.js';
 
 const router = Router();
 
@@ -17,6 +18,15 @@ function publicUser(user: any) {
   delete value.password;
   delete value.resetToken;
   delete value.resetTokenExpires;
+  return value;
+}
+
+function publicUserForRole(user: any, role: string) {
+  const value = publicUser(user);
+  if (role === 'manager' && value.role === 'customer') {
+    value.email = value.email.replace(/^(.{2}).*(@.*)$/, '$1***$2');
+    value.phone = value.phone ? `${value.phone.slice(0, 3)}***${value.phone.slice(-2)}` : value.phone;
+  }
   return value;
 }
 
@@ -49,7 +59,11 @@ router.get('/', authenticate, requireRole(['owner', 'manager', 'platformAdmin'])
   const page = Number(req.query.page ?? 1);
   const limit = Number(req.query.limit ?? 20);
   const q = String(req.query.q ?? '').trim();
-  const filter: any = req.user.role === 'platformAdmin' ? {} : { ...tenantFilter(req) };
+  const filter: any = req.user.role === 'platformAdmin'
+    ? {}
+    : req.user.role === 'owner'
+      ? { restaurantId: req.user.restaurantId, role: { $in: ['customer', 'cashier', 'chef'] } }
+      : { ...tenantFilter(req), role: { $in: ['customer', 'cashier', 'chef'] } };
 
   if (q) {
     filter.$or = [
@@ -65,25 +79,52 @@ router.get('/', authenticate, requireRole(['owner', 'manager', 'platformAdmin'])
     User.countDocuments(filter).exec(),
   ]);
 
-  return res.json(paginated(users, total, page, limit, 'Users loaded'));
+  return res.json(paginated(users.map((user) => publicUserForRole(user, req.user.role)), total, page, limit, 'Users loaded'));
+});
+
+router.post('/', authenticate, requireRole('platformAdmin'), validateBody(userCreateSchema), async (req: any, res) => {
+  const { firstName, lastName, email, phone, password, role, restaurantId, branchId } = req.body;
+  const [existing, restaurant, branch] = await Promise.all([
+    User.findOne({ email: email.toLowerCase() }).exec(),
+    Restaurant.findOne({ _id: restaurantId, isActive: true }).exec(),
+    Branch.findOne({ _id: branchId, restaurantId, isActive: true }).exec(),
+  ]);
+  if (existing) return res.status(409).json(failure('Email already registered'));
+  if (!restaurant || !branch) return res.status(400).json(failure('Invalid restaurant or branch assignment'));
+
+  const user = await User.create({
+    firstName,
+    lastName,
+    email: email.toLowerCase(),
+    phone,
+    password: hashPassword(password),
+    role,
+    restaurantId,
+    branchId,
+  });
+  return res.status(201).json(success(publicUser(user), 'Administrative user created successfully'));
 });
 
 router.patch('/:id/access', authenticate, requireRole(['owner', 'manager', 'platformAdmin']), validateParams(idParamSchema), validateBody(userAccessUpdateSchema), async (req: any, res) => {
-  const targetFilter = req.user.role === 'platformAdmin' ? { _id: req.params.id } : { _id: req.params.id, ...tenantFilter(req) };
-  const target = await User.findOne(targetFilter).exec();
+  const target = await User.findById(req.params.id).exec();
   if (!target) return res.status(404).json(failure('User not found'));
 
   if (String(target._id) === req.user.id) {
     return res.status(403).json(failure('You cannot change your own access level'));
   }
 
-  if (req.user.role === 'owner' && ['manager', 'platformAdmin'].includes(target.role)) {
+  const { role, status, branch, restaurantId, branchId } = req.body;
+  if (req.user.role !== 'platformAdmin' && !['customer', 'cashier', 'chef'].includes(target.role)) {
     return res.status(403).json(failure('Owners cannot modify administrative accounts'));
   }
-
-  const { role, status, branch, restaurantId, branchId } = req.body;
-  if ((role === 'manager' || role === 'platformAdmin' || ['manager', 'platformAdmin'].includes(target.role)) && req.user.role !== 'platformAdmin') {
-    return res.status(403).json(failure('Only a platform administrator can manage administrative accounts'));
+  if (req.user.role !== 'platformAdmin') {
+    const sameScope = req.user.role === 'owner'
+      ? String(target.restaurantId) === String(req.user.restaurantId)
+      : String(target.restaurantId) === String(req.user.restaurantId) && String(target.branchId) === String(req.user.branchId);
+    if (!sameScope) return res.status(404).json(failure('User not found'));
+  }
+  if (req.user.role !== 'platformAdmin' && role && !['customer', 'cashier', 'chef'].includes(role)) {
+    return res.status(403).json(failure('Only a platform administrator can assign administrative roles'));
   }
 
   if ((restaurantId || branchId) && req.user.role !== 'platformAdmin') return res.status(403).json(failure('Only a platform admin can move users between tenants'));

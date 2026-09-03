@@ -1,14 +1,15 @@
+import { useEffect } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
-import { Navbar, Footer, TenantSelector } from '@/components/common';
+import { Navbar, Footer } from '@/components/common';
 import type { NavItem } from '@/components/common/Navbar';
 import { BottomNav } from '@/components/customer';
 import { ROUTES } from '@/constants';
-import { useAuthStore, useCartStore } from '@/store';
+import { useAuthStore, useCartStore, useTenantStore } from '@/store';
 
 const navItems: NavItem[] = [
   { label: 'Home', href: ROUTES.CUSTOMER.HOME },
   { label: 'Menu', href: ROUTES.CUSTOMER.MENU },
-  { label: 'Tables 🪑', href: ROUTES.CUSTOMER.TABLES },
+  { label: 'Tables', href: ROUTES.CUSTOMER.TABLES },
   { label: 'My Orders', href: ROUTES.CUSTOMER.MY_ORDERS },
   { label: 'Favorites', href: ROUTES.CUSTOMER.FAVORITES },
   { label: 'Rewards', href: ROUTES.CUSTOMER.REWARDS },
@@ -23,6 +24,11 @@ export default function CustomerLayout() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+  const loadTenants = useTenantStore((state) => state.loadTenants);
+
+  useEffect(() => {
+    void loadTenants();
+  }, [loadTenants]);
 
   const handleLogout = () => {
     logout();
@@ -36,8 +42,6 @@ export default function CustomerLayout() {
         items={navItems}
         rightContent={
           <>
-            <TenantSelector variant="pill" className="max-w-[180px] sm:max-w-none" />
-
             <Link
               to={ROUTES.CUSTOMER.CART}
               className="relative rounded-lg p-2 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-neutral-800 dark:hover:text-neutral-300"

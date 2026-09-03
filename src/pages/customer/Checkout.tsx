@@ -208,7 +208,6 @@ export default function Checkout() {
                 <div className="mt-4 rounded-2xl bg-amber-50/60 p-4 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40">
                   <label className="mb-1.5 flex items-center justify-between text-xs font-bold text-amber-900 dark:text-amber-300">
                     <span>Restaurant Table 🍽️ (Required for Dine-in)</span>
-                    <span className="text-[11px] font-normal text-amber-700 dark:text-amber-400">Select from database</span>
                   </label>
                   <select
                     value={tableId}

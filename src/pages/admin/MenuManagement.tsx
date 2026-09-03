@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Button, Card, CardHeader, CardContent, Table, Badge, Search } from '@/components/ui';
 import { PageHeader } from '@/components/common';
 import { categoriesApi, menuApi } from '@/api';
+import { APP_CONFIG } from '@/constants';
 import { useOrderSyncStore } from '@/store';
 import type { Column } from '@/components/ui';
 
@@ -168,8 +169,8 @@ export default function MenuManagement() {
       setError('Please select an image file.');
       return;
     }
-    if (file.size > 700 * 1024) {
-      setError('Please choose an image smaller than 700 KB.');
+    if (file.size > APP_CONFIG.MAX_UPLOAD_SIZE) {
+      setError('Please choose an image smaller than 5 MB.');
       return;
     }
     const reader = new FileReader();

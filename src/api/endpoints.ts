@@ -188,6 +188,17 @@ export const usersApi = {
   getAll: (params?: PaginationParams) =>
     apiClient.get<PaginatedResponse<User>>('/api/users', { params }),
 
+  create: (payload: {
+    firstName: string;
+    lastName?: string;
+    email: string;
+    phone: string;
+    password: string;
+    role: 'owner' | 'manager';
+    restaurantId: string;
+    branchId: string;
+  }) => apiClient.post<ApiResponse<User>>('/api/users', payload),
+
   getProfile: () =>
     apiClient.get<ApiResponse<User>>('/api/users/profile'),
 

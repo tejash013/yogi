@@ -172,6 +172,15 @@ export async function seedDatabase() {
     // Ignore missing index issues while cleaning stale duplicates.
   }
 
+  await Category.updateMany(
+    { $or: [{ restaurantId: { $exists: false } }, { branchId: { $exists: false } }] },
+    { $set: tenant }
+  ).catch(() => undefined);
+  await MenuItem.updateMany(
+    { $or: [{ restaurantId: { $exists: false } }, { branchId: { $exists: false } }] },
+    { $set: tenant }
+  ).catch(() => undefined);
+
   await Offer.updateMany(
     { $or: [{ offerType: { $ne: 'coupon' }, code: { $exists: true } }, { offerType: 'coupon', code: { $in: [null, ''] } }] },
     { $unset: { code: '' } }

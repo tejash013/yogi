@@ -87,8 +87,8 @@ export default function Login() {
 
   return (
     <div>
-      <div className="mb-8 text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 shadow-lg shadow-primary-500/30">
+      <div className="mb-8 text-center animate-fade-in-up [animation-delay:80ms]">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-orange-600 shadow-lg shadow-primary-500/30 transition-transform duration-300 hover:rotate-3 hover:scale-105">
           <span className="text-2xl font-bold text-white">R</span>
         </div>
         <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Welcome Back</h1>
@@ -107,7 +107,7 @@ export default function Login() {
         </div>
       )}
 
-      <div className="mb-6 flex rounded-xl bg-neutral-100 p-1 dark:bg-neutral-800">
+      <div className="mb-6 flex rounded-xl bg-neutral-100 p-1 shadow-inner animate-fade-in-up [animation-delay:160ms] dark:bg-neutral-800">
         <button
           type="button"
           onClick={() => { setLoginMethod('email'); setValidationErrors({}); }}
@@ -130,7 +130,7 @@ export default function Login() {
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4 animate-fade-in-up [animation-delay:220ms]">
         {loginMethod === 'email' ? (
           <Input
             label="Email Address"
@@ -209,7 +209,7 @@ export default function Login() {
 
       <button
         type="button"
-        className="flex w-full items-center justify-center gap-3 rounded-xl border-2 border-neutral-200 bg-white px-4 py-3 text-sm font-medium text-neutral-700 transition-all hover:border-neutral-300 hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:border-neutral-500"
+        className="flex w-full items-center justify-center gap-3 rounded-xl border-2 border-neutral-200 bg-white px-4 py-3 text-sm font-medium text-neutral-700 transition-all hover:-translate-y-0.5 hover:border-neutral-300 hover:bg-neutral-50 hover:shadow-sm dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:border-neutral-500"
       >
         <svg className="h-5 w-5" viewBox="0 0 24 24">
           <path fill="#EA4335" d="M5.266 9.765A7.077 7.077 0 0112 4.91c1.665 0 3.158.613 4.303 1.626l3.196-3.196A11.954 11.954 0 0012 0C7.667 0 3.855 2.322 1.8 5.715l3.466 4.05z" />

@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore, useTenantStore } from '@/store';
 import { ROUTES } from '@/constants';
-import { formatDistance, searchLocationQuery, type Coordinates } from '@/utils/geolocation';
+import { formatDistance } from '@/utils/geolocation';
 
 interface TenantSelectorProps {
   variant?: 'pill' | 'banner' | 'card' | 'badge';
@@ -22,7 +22,6 @@ export default function TenantSelector({
     currentBranch,
     availableRestaurants,
     availableBranches,
-    nearestBranch,
     isLoading,
     isModalOpen,
     setModalOpen,
@@ -30,20 +29,9 @@ export default function TenantSelector({
     switchBranch,
     switchRestaurant,
     userLocation,
-    isLocating,
-    locationError,
-    requestUserLocation,
-    onlyNearby,
-    setOnlyNearby,
-    maxRadiusKm,
-    setMaxRadiusKm,
-    setManualLocation,
   } = useTenantStore();
 
   const user = useAuthStore((s) => s.user);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<Coordinates[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     void loadTenants();
@@ -54,32 +42,8 @@ export default function TenantSelector({
   const isCustomer = !user || user.role === 'customer';
   const currentDistanceLabel = formatDistance(currentBranch?.distanceKm);
 
-  const handleLocationSearch = async (query: string) => {
-    setSearchQuery(query);
-    if (!query.trim()) {
-      setSearchResults([]);
-      return;
-    }
-    setIsSearching(true);
-    try {
-      setSearchResults(await searchLocationQuery(query));
-    } catch {
-      setSearchResults([]);
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  // Proximity filtering: strictly filter by maxRadiusKm when onlyNearby is enabled and location exists
-  const displayedBranches =
-    onlyNearby && userLocation
-      ? availableBranches.filter((b) => (b.distanceKm ?? 9999) <= maxRadiusKm)
-      : availableBranches;
-
-  const displayedRestaurants =
-    onlyNearby && userLocation
-      ? availableRestaurants.filter((r) => (r.distanceKm ?? 9999) <= maxRadiusKm)
-      : availableRestaurants;
+  const displayedBranches = availableBranches;
+  const displayedRestaurants = availableRestaurants;
 
   if (variant === 'badge') {
     return (
@@ -273,60 +237,12 @@ export default function TenantSelector({
               </button>
             </div>
 
-            <div className="mt-4">
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <div className="relative min-w-0 flex-1">
-                  <input
-                    type="search"
-                    value={searchQuery}
-                    onChange={(event) => void handleLocationSearch(event.target.value)}
-                    placeholder="Search city, area, or pincode"
-                    aria-label="Search restaurant location"
-                    className="w-full rounded-xl border border-neutral-700 bg-neutral-900 px-3.5 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/20"
-                  />
-                  {isSearching && <span className="absolute right-3 top-3 text-[10px] text-emerald-300">Searching...</span>}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => void requestUserLocation()}
-                  disabled={isLocating}
-                  className="rounded-xl bg-emerald-400 px-4 py-2.5 text-sm font-bold text-neutral-950 transition hover:bg-emerald-300 disabled:cursor-wait disabled:opacity-60"
-                >
-                  {isLocating ? 'Finding kitchens...' : '📍 Find kitchens near me'}
-                </button>
-              </div>
-              {searchResults.length > 0 && (
-                <div className="relative z-20 mt-1 rounded-xl border border-neutral-700 bg-neutral-900 p-1 shadow-lg">
-                  {searchResults.map((result, index) => (
-                    <button
-                      key={`${result.latitude}-${result.longitude}-${index}`}
-                      type="button"
-                      onClick={() => {
-                        setManualLocation(result);
-                        setSearchQuery('');
-                        setSearchResults([]);
-                      }}
-                      className="w-full rounded-lg px-3 py-2 text-left text-xs text-neutral-200 hover:bg-neutral-800 hover:text-white"
-                    >
-                      📍 {result.displayName || `${result.city || 'Selected area'}${result.state ? `, ${result.state}` : ''}`}
-                    </button>
-                  ))}
-                </div>
-              )}
-              {locationError && <p className="mt-2 text-xs text-amber-300">{locationError}</p>}
-              {userLocation && !isLocating && (
-                <p className="mt-2 text-xs text-neutral-400">
-                  Using {userLocation.displayName || userLocation.city || 'your selected location'}{userLocation.source === 'gps' ? ' from your device' : ' manually'}.
-                </p>
-              )}
-            </div>
-
             {/* Nearby Restaurants */}
             {displayedRestaurants.length > 0 && (
               <div className="mt-5">
                 <div className="mb-2 flex items-center justify-between">
                   <p className="text-xs font-bold uppercase tracking-[0.18em] text-neutral-300">
-                    {onlyNearby ? 'Nearby Restaurants' : 'All Restaurants'}
+                    Restaurants
                   </p>
                   <span className="text-xs text-neutral-500">{displayedRestaurants.length} available</span>
                 </div>
@@ -368,7 +284,7 @@ export default function TenantSelector({
                   Branches for {restaurantName}
                 </p>
                 <span className="text-xs text-neutral-500">
-                  {displayedBranches.length} {onlyNearby ? 'nearby' : 'total'} locations
+                  {displayedBranches.length} locations
                 </span>
               </div>
 
@@ -378,58 +294,15 @@ export default function TenantSelector({
                   <p className="text-sm font-semibold">Loading locations...</p>
                 </div>
               ) : displayedBranches.length === 0 ? (
-                /* Empty state when no branch is nearby within maxRadiusKm */
+                /* Empty state when the selected restaurant has no branches */
                 <div className="rounded-2xl border border-dashed border-neutral-700 bg-neutral-900/60 p-6 text-center text-neutral-300">
                   <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-500/10 text-xl text-amber-400">
                     📍
                   </div>
-                  <p className="text-sm font-bold text-white">No branches found within {maxRadiusKm} km</p>
+                  <p className="text-sm font-bold text-white">No branches configured</p>
                   <p className="mt-1 text-xs text-neutral-400">
-                    There are currently no active outlets within your chosen radius of {userLocation?.displayName || 'your location'}.
+                    This restaurant does not have any active branches yet.
                   </p>
-
-                  {nearestBranch && (
-                    <div className="mt-4 rounded-xl border border-neutral-800 bg-neutral-950/70 p-3 text-left">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-amber-400">
-                        Nearest Available Branch:
-                      </p>
-                      <div className="mt-1 flex items-center justify-between gap-2">
-                        <div>
-                          <p className="text-sm font-bold text-white">{nearestBranch.name}</p>
-                          <p className="text-xs text-neutral-400">
-                            📍 {nearestBranch.address || 'Dining Hall'} • {formatDistance(nearestBranch.distanceKm)}
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            switchBranch(nearestBranch._id);
-                            setModalOpen(false);
-                          }}
-                          className="rounded-xl bg-emerald-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-600 shadow-sm"
-                        >
-                          Switch to this Branch
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="mt-4 flex items-center justify-center gap-2 flex-wrap">
-                    <button
-                      type="button"
-                      onClick={() => setMaxRadiusKm(50)}
-                      className="rounded-xl border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-xs font-semibold text-neutral-200 hover:bg-neutral-700"
-                    >
-                      Expand to 50 km
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setOnlyNearby(false)}
-                      className="rounded-xl bg-amber-400/20 px-3 py-1.5 text-xs font-bold text-amber-300 hover:bg-amber-400/30"
-                    >
-                      Show All Outlets
-                    </button>
-                  </div>
                 </div>
               ) : (
                 /* Nearby branches list */

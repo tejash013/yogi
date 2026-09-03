@@ -7,4 +7,5 @@ export { default as PageHeader } from './PageHeader';
 export { default as ProtectedRoute } from './ProtectedRoute';
 export { default as LoadingScreen } from './LoadingScreen';
 export { default as TenantSelector } from './TenantSelector';
+export { default as LocationPickerModal } from './LocationPickerModal';
 

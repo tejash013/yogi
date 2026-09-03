@@ -1,15 +1,29 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Card } from '@/components/ui';
-import { PageHeader, TenantSelector } from '@/components/common';
+import { LocationPickerModal, PageHeader, TenantSelector } from '@/components/common';
 import RestaurantFloorView, { type TableItem } from '@/components/common/RestaurantFloorView';
 import { tablesApi } from '@/api';
 import { ROUTES } from '@/constants';
 import { useCartStore, useTenantStore } from '@/store';
+import { formatDistance } from '@/utils/geolocation';
 
 export default function CustomerTables() {
   const navigate = useNavigate();
-  const { branchId, currentBranch } = useTenantStore();
+  const {
+    branchId,
+    currentBranch,
+    allBranches,
+    nearestBranch,
+    userLocation,
+    onlyNearby,
+    maxRadiusKm,
+    setMaxRadiusKm,
+    setOnlyNearby,
+    isLocating,
+    requestUserLocation,
+    switchBranch,
+  } = useTenantStore();
   const activeTableNumber = useCartStore((s) => s.tableNumber);
   const setTableNumber = useCartStore((s) => s.setTableNumber);
 
@@ -17,6 +31,7 @@ export default function CustomerTables() {
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'floor' | 'grid'>('floor');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isLocationPanelOpen, setIsLocationPanelOpen] = useState(false);
 
   const loadTables = async () => {
     setIsLoading(true);
@@ -127,6 +142,107 @@ export default function CustomerTables() {
           </Button>
         </div>
       </div>
+
+      <section className="rounded-3xl border border-neutral-200/80 bg-gradient-to-b from-white to-neutral-50/80 p-5 shadow-sm dark:border-neutral-800 dark:from-neutral-900 dark:to-neutral-950">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                GPS Location Powered
+              </span>
+            </div>
+            <h2 className="text-lg font-bold tracking-tight text-neutral-900 dark:text-white sm:text-xl">
+              Nearby Branches & Outlets 📍
+            </h2>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">
+              {userLocation
+                ? `Showing outlets near ${userLocation.displayName || userLocation.city} (within ${maxRadiusKm} km)`
+                : 'Select your nearest branch for fastest table seating & hot delivery'}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void requestUserLocation()}
+              disabled={isLocating}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 transition-all hover:bg-emerald-100 dark:border-emerald-500/20 dark:bg-emerald-950/40 dark:text-emerald-300"
+            >
+              {isLocating ? 'Finding kitchens...' : userLocation ? <>🎯 {userLocation.city || 'Located'} <span className="text-[10px] opacity-75">(Refresh)</span></> : '📍 Find kitchens near me'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsLocationPanelOpen(true)}
+              className="rounded-xl border border-neutral-200 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200"
+            >
+              Change Location / Filter
+            </button>
+          </div>
+        </div>
+
+        {(() => {
+          const displayedNearbyBranches = onlyNearby && userLocation
+            ? allBranches.filter((branch) => (branch.distanceKm ?? 9999) <= maxRadiusKm)
+            : allBranches;
+
+          if (displayedNearbyBranches.length === 0) {
+            return (
+              <div className="rounded-2xl border border-dashed border-neutral-300 bg-neutral-50/50 p-6 text-center dark:border-neutral-800 dark:bg-neutral-900/50">
+                <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-500/10 text-xl text-amber-500">📍</div>
+                <h4 className="text-sm font-bold text-neutral-900 dark:text-white">No outlets found within {maxRadiusKm} km</h4>
+                <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+                  {userLocation?.displayName ? `No active branches within ${maxRadiusKm} km of ${userLocation.displayName}.` : 'No active branches found nearby.'}
+                </p>
+                {nearestBranch && (
+                  <div className="mx-auto mt-4 max-w-md rounded-xl border border-neutral-200 bg-white p-3 text-left shadow-sm dark:border-neutral-800 dark:bg-neutral-850">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Closest Available Outlet:</p>
+                    <div className="mt-1 flex items-center justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-bold text-neutral-900 dark:text-white">{nearestBranch.name}</p>
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400">📍 {nearestBranch.address || 'Dining Hall'} • {formatDistance(nearestBranch.distanceKm)}</p>
+                      </div>
+                      <button type="button" onClick={() => switchBranch(nearestBranch._id)} className="rounded-xl bg-emerald-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-600">Select Branch</button>
+                    </div>
+                  </div>
+                )}
+                <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                  <button type="button" onClick={() => setMaxRadiusKm(50)} className="rounded-xl border border-neutral-300 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200">Expand to 50 km</button>
+                  <button type="button" onClick={() => setOnlyNearby(false)} className="rounded-xl bg-amber-500/10 px-3 py-1.5 text-xs font-bold text-amber-700 hover:bg-amber-500/20 dark:text-amber-300">View All Outlets</button>
+                </div>
+              </div>
+            );
+          }
+
+          return (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {displayedNearbyBranches.slice(0, 6).map((branch, index) => {
+                const isSelected = branch._id === branchId;
+                const isClosest = index === 0 && Boolean(userLocation) && branch.distanceKm !== undefined;
+                return (
+                  <div key={branch._id} onClick={() => switchBranch(branch._id)} className={`group cursor-pointer rounded-2xl border p-4 transition-all ${isSelected ? 'border-emerald-500 bg-emerald-50/50 shadow-sm dark:border-emerald-500/60 dark:bg-emerald-950/20' : 'border-neutral-200/80 bg-white hover:border-neutral-300 hover:shadow-sm dark:border-neutral-800 dark:bg-neutral-850 dark:hover:border-neutral-700'}`}>
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-1.5"><span className={`h-2 w-2 rounded-full ${isSelected ? 'bg-emerald-500' : 'bg-neutral-400'}`} /><h4 className="text-sm font-bold text-neutral-900 dark:text-white">{branch.name}</h4></div>
+                        <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">📍 {branch.address || 'Dining Hall & Takeaway Counter'}</p>
+                      </div>
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${isSelected ? 'bg-emerald-500 text-white' : 'bg-neutral-100 font-medium text-neutral-600 group-hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300'}`}>{isSelected ? 'Active' : 'Select'}</span>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between border-t border-neutral-100 pt-2 dark:border-neutral-800/80">
+                      <div className="flex items-center gap-1.5">{branch.distanceKm !== undefined ? <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">📍 {formatDistance(branch.distanceKm)}</span> : <span className="text-[10px] text-neutral-400">Outlet Location</span>}{isClosest && <span className="rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">⭐ Nearest</span>}</div>
+                      <span className="text-[11px] font-semibold text-primary-600 dark:text-primary-400">{isSelected ? 'Currently Selected' : 'Switch Branch →'}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
+      </section>
+
+      <LocationPickerModal
+        isOpen={isLocationPanelOpen}
+        onClose={() => setIsLocationPanelOpen(false)}
+      />
 
       {/* Live Floor Stat Chips */}
       <div className="flex flex-wrap items-center gap-3">

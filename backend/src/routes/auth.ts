@@ -11,6 +11,7 @@ import { sendEmail } from '../utils/email.js';
 import { recordAudit } from '../utils/audit.js';
 import { tenantIdsFromRequest } from '../utils/tenant.js';
 import { isSupportedRole } from '../auth/permissions.js';
+import { hashPassword, verifyPassword } from '../utils/password.js';
 
 const router = Router();
 const REFRESH_COOKIE = 'restaurantos_refresh';
@@ -33,19 +34,6 @@ function getRefreshCookie(req: any) {
   const cookies = String(req.headers.cookie ?? '').split(';');
   const value = cookies.find((cookie) => cookie.trim().startsWith(`${REFRESH_COOKIE}=`));
   return value ? decodeURIComponent(value.trim().slice(REFRESH_COOKIE.length + 1)) : undefined;
-}
-
-function hashPassword(password: string) {
-  const salt = crypto.randomBytes(16).toString('hex');
-  const derivedKey = crypto.scryptSync(password, salt, 64).toString('hex');
-  return `${salt}:${derivedKey}`;
-}
-
-function verifyPassword(password: string, stored: string) {
-  const [salt, derivedKey] = stored.split(':');
-  if (!salt || !derivedKey) return false;
-  const hash = crypto.scryptSync(password, salt, 64).toString('hex');
-  return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(derivedKey, 'hex'));
 }
 
 function hashRefreshToken(token: string) {

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FoodCard, CategoryCard, OfferBanner } from '@/components/customer';
+import { LocationPickerModal } from '@/components/common';
 import { ROUTES } from '@/constants';
 import { categoriesApi, menuApi, offersApi } from '@/api';
 import { useOrderSyncStore, useTenantStore } from '@/store';
@@ -62,19 +63,19 @@ export default function CustomerHome() {
   const categoryScrollRef = useRef<HTMLDivElement>(null);
   const offerScrollRef = useRef<HTMLDivElement>(null);
   const [activeOfferIndex, setActiveOfferIndex] = useState(0);
+  const [isLocationPanelOpen, setIsLocationPanelOpen] = useState(false);
 
   // Top-level Tenant & Location Hooks
   const branchId = useTenantStore((s) => s.branchId);
   const allBranches = useTenantStore((s) => s.allBranches);
   const nearestBranch = useTenantStore((s) => s.nearestBranch);
   const userLocation = useTenantStore((s) => s.userLocation);
-  const isLocating = useTenantStore((s) => s.isLocating);
   const onlyNearby = useTenantStore((s) => s.onlyNearby);
   const maxRadiusKm = useTenantStore((s) => s.maxRadiusKm);
   const setMaxRadiusKm = useTenantStore((s) => s.setMaxRadiusKm);
   const setOnlyNearby = useTenantStore((s) => s.setOnlyNearby);
+  const isLocating = useTenantStore((s) => s.isLocating);
   const requestUserLocation = useTenantStore((s) => s.requestUserLocation);
-  const setModalOpen = useTenantStore((s) => s.setModalOpen);
   const switchBranch = useTenantStore((s) => s.switchBranch);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -268,24 +269,19 @@ export default function CustomerHome() {
               className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 transition-all hover:bg-emerald-100 dark:border-emerald-500/20 dark:bg-emerald-950/40 dark:text-emerald-300"
             >
               {isLocating ? (
-                <>
-                  <span className="h-3 w-3 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
-                  <span>Detecting GPS...</span>
-                </>
+                <span>Finding kitchens...</span>
               ) : userLocation ? (
                 <>
                   <span>🎯 {userLocation.city || 'Located'}</span>
                   <span className="text-[10px] opacity-75">(Refresh)</span>
                 </>
               ) : (
-                <>
-                  <span>🎯 Use My Location</span>
-                </>
+                <span>📍 Find kitchens near me</span>
               )}
             </button>
             <button
               type="button"
-              onClick={() => setModalOpen(true)}
+              onClick={() => setIsLocationPanelOpen(true)}
               className="rounded-xl border border-neutral-200 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200"
             >
               Change Location / Filter
@@ -422,6 +418,11 @@ export default function CustomerHome() {
           );
         })()}
       </section>
+
+      <LocationPickerModal
+        isOpen={isLocationPanelOpen}
+        onClose={() => setIsLocationPanelOpen(false)}
+      />
 
       {/* Offers Banner */}
       <section>

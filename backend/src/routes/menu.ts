@@ -7,12 +7,53 @@ import { idParamSchema, menuCreateSchema, menuQuerySchema, menuUpdateSchema } fr
 import { authenticate, requirePermission } from '../middleware/auth.js';
 import { permissions } from '../auth/permissions.js';
 import { tenantFilter } from '../utils/tenant.js';
+import { uploadImage } from '../utils/cloudinaryUpload.js';
 
 const router = Router();
 
 function paginate(items: any[], page: number, limit: number) {
   const start = (page - 1) * limit;
   return paginated(items.slice(start, start + limit), items.length, page, limit);
+}
+
+async function resolveMenuImage(image: unknown, tenant: { restaurantId: string; branchId: string }) {
+  if (typeof image !== 'string') return { value: image };
+
+  const isDataUrl = image.startsWith('data:image/');
+  const isRemoteUrl = /^https?:\/\//i.test(image);
+  if (!isDataUrl && !isRemoteUrl) {
+    return { value: image, metadata: { provider: 'local' } };
+  }
+
+  const hasCloudinaryConfig = process.env.CLOUDINARY_URL || (
+    process.env.CLOUDINARY_CLOUD_NAME &&
+    process.env.CLOUDINARY_API_KEY &&
+    process.env.CLOUDINARY_API_SECRET
+  );
+  if (!hasCloudinaryConfig) {
+    if (isDataUrl) {
+      throw Object.assign(new Error('Cloudinary is required for device image uploads.'), { status: 503 });
+    }
+    return { value: image, metadata: { provider: 'external' } };
+  }
+
+  const result = await uploadImage(
+    image,
+    undefined,
+    `restaurants/${tenant.restaurantId}/branches/${tenant.branchId}/menu-items`
+  );
+  return {
+    value: result.secure_url,
+    metadata: {
+      provider: 'cloudinary',
+      publicId: result.public_id,
+      resourceType: result.resource_type,
+      format: result.format,
+      bytes: result.bytes,
+      width: result.width,
+      height: result.height,
+    },
+  };
 }
 
 router.get('/', validateQuery(menuQuerySchema), async (req, res) => {
@@ -85,6 +126,7 @@ router.post('/', authenticate, requirePermission(permissions.menuCreate), valida
     : 10;
 
   const tenant = tenantFilter(req);
+  const resolvedImage = await resolveMenuImage(image, tenant);
   const categoryExists = await Category.findOne({ _id: category, ...tenant }).exec();
   if (!categoryExists) {
     return res.status(404).json(failure('Category not found'));
@@ -96,7 +138,8 @@ router.post('/', authenticate, requirePermission(permissions.menuCreate), valida
     description,
     category,
     price,
-    image,
+    image: resolvedImage.value,
+    imageMetadata: resolvedImage.metadata,
     isPopular: Boolean(isPopular),
     isRecommended: Boolean(isRecommended),
     availableQty: normalizedAvailableQty,
@@ -111,7 +154,14 @@ router.patch('/:id', authenticate, requirePermission(permissions.menuUpdate), va
   if (req.body.category && !(await Category.exists({ _id: req.body.category, ...tenantFilter(req) }))) {
     return res.status(400).json(failure('Category belongs to another branch'));
   }
-  const item = await MenuItem.findOneAndUpdate({ _id: req.params.id, ...tenantFilter(req) }, req.body, { new: true }).populate('category', 'name').exec();
+  const tenant = tenantFilter(req);
+  const update = { ...req.body };
+  if (Object.prototype.hasOwnProperty.call(update, 'image')) {
+    const resolvedImage = await resolveMenuImage(update.image, tenant);
+    update.image = resolvedImage.value;
+    update.imageMetadata = resolvedImage.metadata;
+  }
+  const item = await MenuItem.findOneAndUpdate({ _id: req.params.id, ...tenant }, update, { new: true }).populate('category', 'name').exec();
   if (!item) {
     return res.status(404).json(failure('Menu item not found'));
   }

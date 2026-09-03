@@ -163,6 +163,7 @@ export const useTenantStore = create<TenantState>((set, get) => ({
 
   setManualLocation: (coords: Coordinates) => {
     localStorage.setItem('restaurantos-user-location', JSON.stringify(coords));
+    localStorage.setItem('restaurantos-only-nearby', 'true');
     set({ userLocation: coords, isLocating: false, locationError: null });
 
     // Re-enrich and re-sort
@@ -189,6 +190,7 @@ export const useTenantStore = create<TenantState>((set, get) => ({
 
     set({
       userLocation: coords,
+      onlyNearby: true,
       availableRestaurants: enrichedRestaurants,
       availableBranches: currentRestBranches,
       allBranches: enrichedBranches,

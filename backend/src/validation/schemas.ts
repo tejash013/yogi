@@ -132,6 +132,16 @@ export const reportQuerySchema = z.object({
 });
 
 export const userQuerySchema = paginationQuerySchema;
+export const userCreateSchema = z.object({
+  firstName: z.string().trim().min(2).max(50),
+  lastName: z.string().trim().max(50).optional().or(z.literal('')),
+  email: z.string().email(),
+  phone: z.string().trim().min(7),
+  password: z.string().min(6).max(72),
+  role: z.enum(['owner', 'manager']),
+  restaurantId: objectId,
+  branchId: objectId,
+}).strict();
 export const userAccessUpdateSchema = z.object({
   role: z.enum(['customer', 'cashier', 'chef', 'manager', 'owner', 'platformAdmin']).optional(),
   status: z.enum(['active', 'inactive', 'suspended']).optional(),
