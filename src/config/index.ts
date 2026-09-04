@@ -9,7 +9,7 @@ const config = {
   },
   api: {
     baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:3000',
-    timeout: 30000,
+    timeout: 60000,
     retryAttempts: 3,
     retryDelay: 1000,
   },
