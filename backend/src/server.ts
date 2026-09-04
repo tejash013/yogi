@@ -54,8 +54,8 @@ async function startServer() {
   const server = http.createServer(app);
   attachSocketHandlers(server);
 
-  server.listen(port, () => {
-    logger.info({ port }, 'Backend server listening');
+  server.listen(port, '0.0.0.0', () => {
+    logger.info({ port, host: '0.0.0.0' }, 'Backend server listening');
   });
 
   const shutdown = async (signal: string) => {
