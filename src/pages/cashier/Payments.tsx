@@ -10,9 +10,6 @@ const methodOptions: { value: string; label: string }[] = [
   { value: 'all', label: 'All Methods' },
   { value: 'cash', label: 'Cash' },
   { value: 'upi', label: 'UPI' },
-  { value: 'card', label: 'Card' },
-  { value: 'wallet', label: 'Wallet' },
-  { value: 'online', label: 'Online' },
 ];
 
 const statusOptions: { value: string; label: string }[] = [

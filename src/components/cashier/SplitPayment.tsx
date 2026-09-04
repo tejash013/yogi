@@ -4,7 +4,7 @@ import type { CashierPaymentMethod } from '@/types/cashier';
 import { PAYMENT_METHOD_LABELS } from '@/types/cashier';
 import { formatINR, useCashierStore } from '@/store';
 
-const methods: CashierPaymentMethod[] = ['cash', 'upi', 'card', 'wallet', 'online'];
+const methods: CashierPaymentMethod[] = ['cash', 'upi'];
 
 export default function SplitPayment() {
   const splitPayments = useCashierStore((s) => s.splitPayments);

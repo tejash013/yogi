@@ -201,7 +201,7 @@ export default function CashierDashboard() {
                 </Card>
               ))}
               <div className="rounded-xl bg-neutral-100 p-3 text-xs text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
-                {PAYMENT_METHOD_LABELS.cash} · {PAYMENT_METHOD_LABELS.upi} · {PAYMENT_METHOD_LABELS.card} · {PAYMENT_METHOD_LABELS.wallet} · {PAYMENT_METHOD_LABELS.online}
+                Accepted: {PAYMENT_METHOD_LABELS.cash} · {PAYMENT_METHOD_LABELS.upi}
               </div>
             </div>
           )}

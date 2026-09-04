@@ -134,7 +134,7 @@ export interface Category {
 // Order Types
 export type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'completed' | 'cancelled';
 export type PaymentStatus = 'pending' | 'unpaid' | 'paid' | 'failed' | 'refunded' | 'partially_paid';
-export type PaymentMethod = 'cash' | 'card' | 'upi' | 'wallet' | 'online';
+export type PaymentMethod = 'cash' | 'upi';
 
 export interface CreateOrderPayload {
   userId: string;

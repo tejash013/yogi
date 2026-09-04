@@ -29,7 +29,7 @@ const normalizeOrder = (item: any): Order => ({
   total: Number(item.total ?? 0),
   status: item.status ?? 'pending',
   paymentStatus: item.paymentStatus ?? 'pending',
-  paymentMethod: item.paymentMethod ?? 'card',
+  paymentMethod: (item.paymentMethod === 'upi' ? 'upi' : 'cash'),
   deliveryType: item.deliveryType ?? 'dine-in',
   createdAt: item.createdAt ?? new Date().toISOString(),
   updatedAt: item.updatedAt ?? item.createdAt ?? new Date().toISOString(),

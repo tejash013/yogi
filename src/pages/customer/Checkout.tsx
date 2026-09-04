@@ -7,7 +7,7 @@ import { getApiErrorMessage } from '@/api/errors';
 import { useAuthStore, useCartStore, useOrderSyncStore } from '@/store';
 
 type DiningType = 'dine-in' | 'takeaway' | 'delivery';
-type PaymentMethod = 'card' | 'cash' | 'upi' | 'wallet';
+type PaymentMethod = 'cash' | 'upi';
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -18,7 +18,7 @@ export default function Checkout() {
   const [tableNumber, setTableNumber] = useState(cartTableNumber ? String(cartTableNumber) : '');
   const [tableId, setTableId] = useState('');
   const [tables, setTables] = useState<Array<{ id: string; label: string }>>([]);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [showEditCustomer, setShowEditCustomer] = useState(false);
   const [formData, setFormData] = useState({
     name: user ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Customer' : '',
@@ -306,30 +306,52 @@ export default function Checkout() {
 
             {/* Payment Method */}
             <Card>
-              <h3 className="mb-3 font-bold text-neutral-900 dark:text-white">3. Payment Option</h3>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <h3 className="mb-1 font-bold text-neutral-900 dark:text-white">3. Payment Option</h3>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-3.5">
+                Select your payment method (Cash or UPI)
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {([
-                  { id: 'card' as const, label: 'Credit/Debit Card', icon: '💳' },
-                  { id: 'cash' as const, label: 'Cash', icon: '💵' },
-                  { id: 'upi' as const, label: 'UPI', icon: '📱' },
-                  { id: 'wallet' as const, label: 'Wallet', icon: '👛' },
+                  {
+                    id: 'cash' as const,
+                    label: 'Cash Payment',
+                    desc: 'Pay with cash at the billing counter or delivery',
+                    icon: '💵',
+                  },
+                  {
+                    id: 'upi' as const,
+                    label: 'UPI / QR Code',
+                    desc: 'Instant Google Pay, PhonePe, Paytm QR',
+                    icon: '📱',
+                  },
                 ]).map((method) => (
                   <button
                     key={method.id}
                     type="button"
                     onClick={() => setPaymentMethod(method.id)}
-                    className={`flex items-center gap-3 rounded-xl border-2 p-4 transition-all ${
+                    className={`flex items-center gap-3.5 rounded-2xl border-2 p-4 text-left transition-all ${
                       paymentMethod === method.id
-                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                        : 'border-neutral-200 hover:border-neutral-300 dark:border-neutral-600'
+                        ? 'border-primary-500 bg-primary-50/80 dark:bg-primary-950/40 ring-2 ring-primary-500/20'
+                        : 'border-neutral-200 hover:border-neutral-300 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800/40'
                     }`}
                   >
-                    <span className="text-2xl">{method.icon}</span>
-                    <span className={`text-sm font-medium ${
-                      paymentMethod === method.id ? 'text-primary-600' : 'text-neutral-600 dark:text-neutral-300'
-                    }`}>
-                      {method.label}
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm dark:bg-neutral-800 text-2xl">
+                      {method.icon}
                     </span>
+                    <div>
+                      <p
+                        className={`text-sm font-bold ${
+                          paymentMethod === method.id
+                            ? 'text-primary-600 dark:text-primary-400'
+                            : 'text-neutral-900 dark:text-white'
+                        }`}
+                      >
+                        {method.label}
+                      </p>
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                        {method.desc}
+                      </p>
+                    </div>
                   </button>
                 ))}
               </div>

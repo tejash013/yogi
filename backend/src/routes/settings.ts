@@ -28,35 +28,25 @@ const settingsSchema = z.object({
 router.use(authenticate);
 
 router.get('/', requirePermission(permissions.settingsRead), async (req, res) => {
-  let restaurant = await Restaurant.findById(tenantFilter(req).restaurantId).lean().exec();
-  if (!restaurant) {
-    // Return default restaurant configuration for graceful operation
-    return res.json(success({
-      name: 'RestaurantOS',
-      email: 'contact@restaurantos.com',
-      phone: '+91 80 4112 9090',
-      address: '12, MG Road, Indiranagar, Bengaluru, Karnataka 560038',
-      gstNumber: '29ABCDE1234F1Z5',
-      tagline: 'Authentic Dining Experience',
-      currency: 'INR',
-      taxRate: 5,
-      deliveryFee: 40,
-      businessHours: {},
-    }, 'Restaurant settings loaded'));
-  }
-
+  const tenant = tenantFilter(req);
+  let restaurant = await Restaurant.findById(tenant.restaurantId).lean().exec();
+  
   const defaults = {
-    name: 'RestaurantOS',
-    email: 'contact@restaurantos.com',
-    phone: '+91 80 4112 9090',
-    address: '12, MG Road, Indiranagar, Bengaluru, Karnataka 560038',
-    gstNumber: '29ABCDE1234F1Z5',
-    tagline: 'Authentic Dining Experience',
+    name: 'Yogi Restaurant',
+    email: 'contact@yogirestaurant.com',
+    phone: '+91 98251 23456',
+    address: 'Station Road, Near Sardar Patel Ashram, Bardoli, Gujarat 394601, India',
+    gstNumber: '24AABCY1234F1Z8',
+    tagline: 'Authentic Dining & Smart Kitchen',
     currency: 'INR',
     taxRate: 5,
     deliveryFee: 40,
     businessHours: {},
   };
+
+  if (!restaurant) {
+    return res.json(success(defaults, 'Restaurant settings loaded'));
+  }
 
   const merged = {
     ...defaults,

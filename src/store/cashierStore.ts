@@ -14,6 +14,7 @@ import type {
   TaxRule,
 } from '@/types/cashier';
 import { useToastStore } from '@/store/toastStore';
+import { useTenantStore } from '@/store/tenantStore';
 
 export interface RestaurantInfo {
   name: string;
@@ -25,12 +26,12 @@ export interface RestaurantInfo {
 }
 
 export const defaultRestaurantInfo: RestaurantInfo = {
-  name: 'RestaurantOS',
-  address: '12, MG Road, Indiranagar, Bengaluru, Karnataka 560038',
-  phone: '+91 80 4112 9090',
-  email: 'care@restaurantos.com',
-  gstNumber: '29ABCDE1234F1Z5',
-  tagline: 'Authentic Indian Flavours',
+  name: 'Yogi Restaurant',
+  address: 'Station Road, Near Sardar Patel Ashram, Bardoli, Gujarat 394601, India',
+  phone: '+91 98251 23456',
+  email: 'contact@yogirestaurant.com',
+  gstNumber: '24AABCY1234F1Z8',
+  tagline: 'Authentic Dining & Smart Kitchen',
 };
 
 // ---- Currency formatter (INR) ----
@@ -299,14 +300,18 @@ const hydrateCashierData = async () => {
     const orderList = Array.isArray(ordersResponse?.data?.data) ? ordersResponse.data.data : [];
     const invoiceList = Array.isArray(invoicesResponse?.data?.data) ? invoicesResponse.data.data : [];
     const couponList = Array.isArray(couponResponse?.data?.data) ? couponResponse.data.data : [];
+    const tenantState = useTenantStore.getState();
+    const activeBranch = tenantState.currentBranch;
+    const activeRestaurant = tenantState.currentRestaurant;
     const rawSettings = settingsResponse?.data?.data ?? {};
+
     const restaurantInfo: RestaurantInfo = {
-      name: rawSettings.name || defaultRestaurantInfo.name,
-      address: rawSettings.address || defaultRestaurantInfo.address,
-      phone: rawSettings.phone || defaultRestaurantInfo.phone,
-      email: rawSettings.email || defaultRestaurantInfo.email,
-      gstNumber: rawSettings.gstNumber || defaultRestaurantInfo.gstNumber,
-      tagline: rawSettings.tagline || defaultRestaurantInfo.tagline,
+      name: activeBranch?.name || activeRestaurant?.name || rawSettings.name || defaultRestaurantInfo.name,
+      address: activeBranch?.address || activeRestaurant?.address || rawSettings.address || defaultRestaurantInfo.address,
+      phone: activeBranch?.phone || activeRestaurant?.phone || rawSettings.phone || defaultRestaurantInfo.phone,
+      email: activeBranch?.email || activeRestaurant?.email || rawSettings.email || defaultRestaurantInfo.email,
+      gstNumber: activeRestaurant?.gstNumber || rawSettings.gstNumber || defaultRestaurantInfo.gstNumber,
+      tagline: activeRestaurant?.tagline || rawSettings.tagline || defaultRestaurantInfo.tagline,
     };
 
     const taxPercent = typeof (rawSettings as any).taxRate === 'number' ? (rawSettings as any).taxRate : 5;
@@ -373,8 +378,19 @@ const hydrateCashierData = async () => {
     }));
   } catch {
     const storedActiveBill = getActiveBillFromStorage();
+    const tenantState = useTenantStore.getState();
+    const activeBranch = tenantState.currentBranch;
+    const activeRestaurant = tenantState.currentRestaurant;
+    const fallbackInfo: RestaurantInfo = {
+      name: activeBranch?.name || activeRestaurant?.name || defaultRestaurantInfo.name,
+      address: activeBranch?.address || activeRestaurant?.address || defaultRestaurantInfo.address,
+      phone: activeBranch?.phone || activeRestaurant?.phone || defaultRestaurantInfo.phone,
+      email: activeBranch?.email || activeRestaurant?.email || defaultRestaurantInfo.email,
+      gstNumber: activeRestaurant?.gstNumber || defaultRestaurantInfo.gstNumber,
+      tagline: activeRestaurant?.tagline || defaultRestaurantInfo.tagline,
+    };
     useCashierStore.setState((prev) => ({
-      restaurantInfo: defaultRestaurantInfo,
+      restaurantInfo: fallbackInfo,
       orders: storedActiveBill ? [storedActiveBill] : [],
       payments: [],
       invoices: [],

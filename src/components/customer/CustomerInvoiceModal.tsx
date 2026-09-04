@@ -4,6 +4,7 @@ import { Button } from '@/components/ui';
 import { formatDateTime } from '@/utils';
 import type { Order } from '@/types';
 import { FiX, FiDownload } from 'react-icons/fi';
+import { useTenantStore } from '@/store/tenantStore';
 
 interface CustomerInvoiceModalProps {
   order: Order | null;
@@ -17,6 +18,15 @@ export default function CustomerInvoiceModal({
   onClose,
 }: CustomerInvoiceModalProps) {
   const invoiceRef = useRef<HTMLDivElement>(null);
+  const currentRestaurant = useTenantStore((s) => s.currentRestaurant);
+  const currentBranch = useTenantStore((s) => s.currentBranch);
+
+  const restaurantName = currentBranch?.name || currentRestaurant?.name || 'Yogi Restaurant';
+  const restaurantTagline = currentRestaurant?.tagline || 'Authentic Dining & Smart Kitchen';
+  const restaurantAddress = currentBranch?.address || currentRestaurant?.address || 'Station Road, Near Sardar Patel Ashram, Bardoli, Gujarat 394601, India';
+  const restaurantGst = currentRestaurant?.gstNumber || '24AABCY1234F1Z8';
+  const restaurantPhone = currentBranch?.phone || currentRestaurant?.phone || '+91 98251 23456';
+  const restaurantEmail = currentBranch?.email || currentRestaurant?.email || 'contact@yogirestaurant.com';
 
   // Close on Escape key
   useEffect(() => {
@@ -91,20 +101,20 @@ export default function CustomerInvoiceModal({
               <div>
                 <div className="flex items-center gap-2">
                   <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-500 text-white text-lg font-black shadow-md">
-                    R
+                    Y
                   </span>
                   <span className="text-xl font-black text-neutral-900 dark:text-white tracking-tight">
-                    Restaurant<span className="text-primary-500">OS</span>
+                    {restaurantName}
                   </span>
                 </div>
                 <p className="mt-1 text-xs text-neutral-500 font-medium">
-                  Authentic Dining Experience & Smart Kitchen
+                  {restaurantTagline}
                 </p>
                 <p className="text-[11px] text-neutral-400 mt-0.5">
-                  12, MG Road, Indiranagar, Bengaluru, Karnataka 560038
+                  {restaurantAddress}
                 </p>
                 <p className="text-[11px] text-neutral-400">
-                  GSTIN: <span className="font-semibold text-neutral-600 dark:text-neutral-300">29ABCDE1234F1Z5</span> | Phone: +91 80 4112 9090
+                  GSTIN: <span className="font-semibold text-neutral-600 dark:text-neutral-300">{restaurantGst}</span> | Phone: {restaurantPhone}
                 </p>
               </div>
 
@@ -142,7 +152,7 @@ export default function CustomerInvoiceModal({
                   Payment Details
                 </p>
                 <p className="text-xs font-bold text-neutral-800 dark:text-neutral-200 mt-0.5">
-                  Method: <span className="capitalize text-neutral-900 dark:text-white">{order.paymentMethod || 'Online'}</span>
+                  Method: <span className="uppercase text-neutral-900 dark:text-white">{order.paymentMethod ? String(order.paymentMethod).toUpperCase() : 'CASH'}</span>
                 </p>
                 <p className="text-xs font-semibold text-green-600 dark:text-green-400">
                   Status: {order.paymentStatus.toUpperCase()}
@@ -224,10 +234,10 @@ export default function CustomerInvoiceModal({
             {/* Footer note */}
             <div className="mt-8 rounded-xl bg-neutral-50 p-4 text-center text-xs text-neutral-500 dark:bg-neutral-800/50 border border-neutral-100 dark:border-neutral-800">
               <p className="font-bold text-neutral-800 dark:text-neutral-200">
-                Thank you for your order! 🍽️
+                Thank you for dining with {restaurantName}! 🍽️
               </p>
               <p className="text-[11px] text-neutral-400 mt-0.5">
-                For any queries regarding this bill, please contact support@restaurantos.com or call +91 80 4112 9090.
+                For any queries regarding this bill, please contact {restaurantEmail} or call {restaurantPhone}.
               </p>
             </div>
           </div>

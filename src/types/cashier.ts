@@ -21,7 +21,7 @@ export type CashierPaymentStatus =
   | 'refunded'
   | 'failed';
 
-export type CashierPaymentMethod = 'cash' | 'upi' | 'card' | 'wallet' | 'online';
+export type CashierPaymentMethod = 'cash' | 'upi';
 
 export type ShiftStatus = 'active' | 'break' | 'closed';
 
@@ -142,9 +142,6 @@ export interface Invoice {
 export const PAYMENT_METHOD_LABELS: Record<CashierPaymentMethod, string> = {
   cash: 'Cash',
   upi: 'UPI',
-  card: 'Card',
-  wallet: 'Wallet',
-  online: 'Online',
 };
 
 export const PAYMENT_STATUS_LABELS: Record<CashierPaymentStatus, string> = {
