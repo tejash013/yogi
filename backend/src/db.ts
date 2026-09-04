@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
 
 export async function connectDatabase() {
   let uri = process.env.MONGODB_URI;
@@ -13,6 +12,7 @@ export async function connectDatabase() {
   // In-memory MongoDB is opt-in for local development and tests only.
   if (!uri) {
     if (process.env.ALLOW_IN_MEMORY_DB !== 'true') throw new Error('MONGODB_URI is not defined in environment variables');
+    const { MongoMemoryServer } = await import('mongodb-memory-server');
     const mongod = await MongoMemoryServer.create();
     uri = mongod.getUri();
     console.warn('No MONGODB_URI provided — using in-memory MongoDB for development');
