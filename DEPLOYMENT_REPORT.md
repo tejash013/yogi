@@ -116,7 +116,8 @@ Because cloud providers require your personal account authorization to provision
 | Key | Value |
 | :--- | :--- |
 | `VITE_API_URL` | Your Render Backend URL (e.g., `https://restaurantos-backend.onrender.com`) |
-| `VITE_GOOGLE_CLIENT_ID` | *(Optional, if using 1-click Google Sign-in)* |
+| `VITE_GOOGLE_CLIENT_ID` | `701643326789-u2ro7qsscjs586a3eipv8m6o57ifhul3.apps.googleusercontent.com` |
+| `GOOGLE_CLIENT_ID` | `701643326789-u2ro7qsscjs586a3eipv8m6o57ifhul3.apps.googleusercontent.com` |
 
 5. Click **Deploy**.
 6. Vercel will build and assign your live URL:  
@@ -129,6 +130,16 @@ Because cloud providers require your personal account authorization to provision
 1. In the **Render Dashboard** ➔ Go to `restaurantos-backend` ➔ **Environment**:
    - Set `FRONTEND_URL` = `https://yogi-restaurantos.vercel.app` (your actual Vercel URL).
    - Click **Save Changes**. (Render will automatically redeploy with CORS restricted to your frontend).
+
+---
+
+## 7. Google 1-Click Authentication Status
+
+✅ **Configured & Live!**
+- **Client ID:** `701643326789-u2ro7qsscjs586a3eipv8m6o57ifhul3.apps.googleusercontent.com`
+- **Frontend Integration:** Deployed on Vercel at `https://yogi-tau.vercel.app/login`
+- **Backend Verification:** Deployed on Render at `https://yogi-0a5s.onrender.com/api/auth/google`
+- **Database:** Auto-syncs and creates user accounts in MongoDB Atlas with Google Profile (name, email, avatar).
 
 ---
 
