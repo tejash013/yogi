@@ -5,9 +5,28 @@ import { verifyAccessToken } from '../utils/jwt.js';
 import User from '../models/User.js';
 
 export function attachSocketHandlers(server: HttpServer) {
+  const configuredOrigins = process.env.FRONTEND_URL
+    ? process.env.FRONTEND_URL.split(',').map((origin) => origin.trim()).filter(Boolean)
+    : [];
+
   const io = new SocketIOServer(server, {
     cors: {
-      origin: (process.env.FRONTEND_URL ?? 'http://localhost:5173').split(',').map((origin) => origin.trim()),
+      origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        if (configuredOrigins.length > 0 && configuredOrigins.includes(origin)) {
+          return callback(null, true);
+        }
+        if (origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1')) {
+          return callback(null, true);
+        }
+        if (origin.startsWith('https://') && origin.endsWith('.vercel.app')) {
+          return callback(null, true);
+        }
+        if (configuredOrigins.length === 0) {
+          return callback(null, true);
+        }
+        return callback(new Error('Origin is not allowed'));
+      },
       methods: ['GET', 'POST'],
       credentials: true,
     },

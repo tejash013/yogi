@@ -56,16 +56,26 @@ const defaultAllowedOrigins = [
   'http://127.0.0.1:5176',
   'http://localhost:3000',
 ];
-const allowedOrigins = (process.env.FRONTEND_URL ?? defaultAllowedOrigins.join(','))
-  .split(',')
-  .map((origin) => origin.trim())
-  .filter(Boolean);
-if (process.env.NODE_ENV === 'production' && allowedOrigins.some((origin) => !origin.startsWith('https://'))) {
-  throw new Error('FRONTEND_URL must contain only HTTPS origins in production');
+const configuredOrigins = process.env.FRONTEND_URL
+  ? process.env.FRONTEND_URL.split(',').map((origin) => origin.trim()).filter(Boolean)
+  : [];
+
+if (process.env.NODE_ENV === 'production' && configuredOrigins.length > 0) {
+  if (configuredOrigins.some((origin) => !origin.startsWith('https://') && !origin.includes('localhost'))) {
+    throw new Error('FRONTEND_URL must contain only HTTPS origins in production');
+  }
 }
+
+const allowedOrigins = configuredOrigins.length > 0 ? configuredOrigins : defaultAllowedOrigins;
+
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    // Allow any Vercel deployment if FRONTEND_URL is not strictly configured or matches vercel.app
+    if (origin.startsWith('https://') && origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
     return callback(new Error('Origin is not allowed'));
   },
   credentials: true,
@@ -122,7 +132,7 @@ app.get('/ready', async (_req, res) => {
   try {
     await checkDbConnection();
     res.json({ status: 'ready', database: 'ok' });
-  } catch (error) {
+  } catch (_error) {
     res.status(503).json({
       status: 'not_ready',
       message: 'Database health check failed',

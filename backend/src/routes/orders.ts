@@ -217,22 +217,18 @@ router.post('/', authenticate, requirePermission(permissions.orderCreate), valid
   }
 
   let order;
-  try {
-    order = await orderRepo.create({
-      user: user._id,
-      ...tenant,
-      table: resolvedTableId,
-      items: resolvedItems,
-      orderType: orderType || 'dine-in',
-      paymentStatus: authenticatedUser.role === 'customer' ? 'pending' : paymentStatus || 'pending',
-      subtotal,
-      taxes,
-      total,
-      notes,
-    });
-  } catch (error) {
-    throw error;
-  }
+  order = await orderRepo.create({
+    ...tenant,
+    user: user._id,
+    table: resolvedTableId,
+    items: resolvedItems,
+    orderType: orderType || 'dine-in',
+    paymentStatus: authenticatedUser.role === 'customer' ? 'pending' : paymentStatus || 'pending',
+    subtotal,
+    taxes,
+    total,
+    notes,
+  });
 
   emitOrderEvent('order:created', order, { id: order.id, user: order.user, total: order.total });
   await recordAudit({
@@ -291,6 +287,7 @@ router.put('/:id', authenticate, requirePermission(permissions.orderCreate), asy
     req.params.id,
     {
       ...(Array.isArray(orderItems) ? { items: resolvedItems, subtotal, taxes, total } : {}),
+      ...(tableId ? { table: tableId } : {}),
       ...(orderType ? { orderType } : {}),
       ...(paymentStatus ? { paymentStatus } : {}),
       ...(notes !== undefined ? { notes } : {}),

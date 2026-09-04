@@ -11,11 +11,6 @@ import { uploadImage } from '../utils/cloudinaryUpload.js';
 
 const router = Router();
 
-function paginate(items: any[], page: number, limit: number) {
-  const start = (page - 1) * limit;
-  return paginated(items.slice(start, start + limit), items.length, page, limit);
-}
-
 async function resolveMenuImage(image: unknown, tenant: { restaurantId: string; branchId: string }) {
   if (typeof image !== 'string') return { value: image };
 
