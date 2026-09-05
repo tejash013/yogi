@@ -103,7 +103,7 @@ export default function MenuManagement() {
         description: form.description || 'New menu item',
         category: form.category,
         price: Number(form.price || 0),
-        image: form.image || undefined,
+        image: form.image ? form.image.trim() : undefined,
         tags: form.tags ? form.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : [],
         isPopular: form.isPopular,
         isRecommended: form.isRecommended,
@@ -125,8 +125,9 @@ export default function MenuManagement() {
       setEditingId(undefined);
       setShowForm(false);
       await loadData();
-    } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'Unable to create menu item.');
+    } catch (submitError: any) {
+      const serverMessage = submitError?.response?.data?.message || submitError?.response?.data?.error;
+      setError(serverMessage || (submitError instanceof Error ? submitError.message : 'Unable to save menu item.'));
     } finally {
       setIsSaving(false);
     }

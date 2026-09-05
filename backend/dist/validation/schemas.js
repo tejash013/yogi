@@ -92,7 +92,7 @@ export const menuCreateSchema = z.object({
     description: z.string().trim().optional(),
     category: objectId,
     price: nonNegativeNumber,
-    image: z.string().trim().min(1).optional(),
+    image: z.string().trim().optional().nullable(),
     isPopular: z.boolean().optional(),
     isRecommended: z.boolean().optional(),
     tags: z.array(z.string().trim()).optional(),
