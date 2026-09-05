@@ -35,7 +35,8 @@ export default function OrderCard({
   onRepeatOrder,
   onInvoice,
 }: OrderCardProps) {
-  const config = statusConfig[status] || { label: status, variant: 'neutral' as const };
+  const statusStr = typeof status === 'object' && status !== null ? String((status as any).status || (status as any).label || 'pending') : String(status || 'pending');
+  const config = statusConfig[statusStr.toLowerCase()] || { label: statusStr, variant: 'neutral' as const };
 
   return (
     <Link to={ROUTES.CUSTOMER.ORDER_TRACKING.replace(':orderId', id)}>

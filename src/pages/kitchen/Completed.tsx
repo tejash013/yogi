@@ -136,7 +136,13 @@ export default function Completed() {
                 </div>
 
                 <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-neutral-500 dark:text-neutral-400">
-                  {order.tableNumber && <span>Table {order.tableNumber}</span>}
+                  {order.tableNumber && (
+                    <span>
+                      {typeof order.tableNumber === 'object'
+                        ? ((order.tableNumber as any).label || ((order.tableNumber as any).number ? `Table ${(order.tableNumber as any).number}` : 'Table'))
+                        : `Table ${order.tableNumber}`}
+                    </span>
+                  )}
                   <span className="uppercase">{order.orderType}</span>
                   <span>Started: {formattedDateTimeShort(order.startedAt ?? order.createdAt)}</span>
                   <span>Completed: {formattedDateTimeShort(order.completedAt ?? '')}</span>

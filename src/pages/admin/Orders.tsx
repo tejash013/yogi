@@ -31,7 +31,17 @@ type StatusFilter = typeof statusOptions[number];
 const columns: Column<OrderRow>[] = [
   { key: 'order', header: 'Order' },
   { key: 'customer', header: 'Customer' },
-  { key: 'table', header: 'Table', render: (item) => (item.table ? `#${item.table}` : '—') },
+  {
+    key: 'table',
+    header: 'Table',
+    render: (item) => {
+      if (!item.table) return '—';
+      if (typeof item.table === 'object') {
+        return (item.table as any).label ? `#${(item.table as any).label}` : '—';
+      }
+      return `#${item.table}`;
+    },
+  },
   { key: 'items', header: 'Items' },
   { key: 'total', header: 'Total', render: (item) => `₹${item.total.toFixed(2)}` },
   {

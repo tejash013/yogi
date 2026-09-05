@@ -33,7 +33,20 @@ const orderSchema = new Schema(
     total: { type: Number, required: true, default: 0 },
     notes: { type: String, trim: true },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
 );
+
+orderSchema.virtual('tableNumber').get(function () {
+  if (!this.table) return undefined;
+  if (typeof this.table === 'object' && (this.table as any).label) {
+    const num = parseInt(String((this.table as any).label).replace(/\D/g, ''), 10);
+    return Number.isFinite(num) ? num : undefined;
+  }
+  return undefined;
+});
 
 export default model('Order', orderSchema);

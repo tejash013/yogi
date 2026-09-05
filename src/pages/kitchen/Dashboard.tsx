@@ -128,7 +128,11 @@ export default function KitchenDashboard() {
                       </div>
                       <div className="mt-1.5 text-xs text-neutral-600 dark:text-neutral-300 truncate">
                         {order.customerName ? <span className="font-semibold text-neutral-800 dark:text-neutral-200">{order.customerName} · </span> : ''}
-                        {order.tableNumber ? `Table ${order.tableNumber} · ` : ''}
+                        {order.tableNumber
+                          ? `${typeof order.tableNumber === 'object'
+                              ? ((order.tableNumber as any).label || ((order.tableNumber as any).number ? `Table ${(order.tableNumber as any).number}` : 'Table'))
+                              : `Table ${order.tableNumber}`} · `
+                          : ''}
                         <span className="capitalize">{order.orderType}</span> · {' '}
                         {order.items.reduce((s, i) => s + i.quantity, 0)} items (
                         {order.items.map((it) => `${it.quantity}x ${it.name}`).join(', ')})

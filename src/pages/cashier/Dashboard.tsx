@@ -146,7 +146,11 @@ export default function CashierDashboard() {
                     {recentOrders.map((o) => (
                       <tr key={o.id} className="text-sm">
                         <td className="px-4 py-3 font-medium text-neutral-900 dark:text-white">{o.orderNumber}</td>
-                        <td className="px-4 py-3 text-neutral-700 dark:text-neutral-300">{o.tableNumber ?? '—'}</td>
+                        <td className="px-4 py-3 text-neutral-700 dark:text-neutral-300">
+                          {typeof o.tableNumber === 'object'
+                            ? ((o.tableNumber as any).label || ((o.tableNumber as any).number ? `Table ${(o.tableNumber as any).number}` : '—'))
+                            : (o.tableNumber ?? '—')}
+                        </td>
                         <td className="px-4 py-3 text-neutral-700 dark:text-neutral-300">{o.customer.name}</td>
                         <td className="px-4 py-3 text-neutral-700 dark:text-neutral-300">{ORDER_TYPE_LABELS[o.orderType]}</td>
                         <td className="px-4 py-3 font-semibold text-neutral-900 dark:text-white">{formatINR(o.total)}</td>
@@ -187,7 +191,11 @@ export default function CashierDashboard() {
                       <p className="font-semibold text-neutral-900 dark:text-white">{o.orderNumber}</p>
                       <p className="text-xs text-neutral-500 dark:text-neutral-400">
                         {o.customer.name}
-                        {o.tableNumber ? ` · Table ${o.tableNumber}` : ''} · {ORDER_TYPE_LABELS[o.orderType]}
+                        {o.tableNumber
+                          ? ` · ${typeof o.tableNumber === 'object'
+                              ? ((o.tableNumber as any).label || `Table ${(o.tableNumber as any).number ?? ''}`)
+                              : `Table ${o.tableNumber}`}`
+                          : ''} · {ORDER_TYPE_LABELS[o.orderType]}
                       </p>
                     </div>
                     <PaymentStatusBadge status={o.paymentStatus} />

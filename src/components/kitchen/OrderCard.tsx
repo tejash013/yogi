@@ -128,7 +128,13 @@ export default function OrderCard({ order, onOpen }: Props) {
 
       {/* Meta row */}
       <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-500 dark:text-neutral-400">
-        {order.tableNumber && <span>Table {order.tableNumber}</span>}
+        {order.tableNumber && (
+          <span>
+            {typeof order.tableNumber === 'object'
+              ? ((order.tableNumber as any).label || ((order.tableNumber as any).number ? `Table ${(order.tableNumber as any).number}` : 'Table'))
+              : `Table ${order.tableNumber}`}
+          </span>
+        )}
         <span className="uppercase">{orderTypeLabel[order.orderType]}</span>
         <span>{getRelativeTime(order.createdAt)}</span>
         {order.status !== 'new' && <span>- {elapsed} min elapsed</span>}

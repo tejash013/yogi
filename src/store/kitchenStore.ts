@@ -90,7 +90,20 @@ const normalizeKitchenOrder = (order: any): KitchenOrder => {
       order?.user?.firstName || order?.user?.name
         ? `${order?.user?.firstName ?? ''} ${order?.user?.lastName ?? ''}`.trim() || order?.user?.name || 'Guest Customer'
         : 'Guest Customer',
-    tableNumber: order?.table ?? order?.tableNumber ?? undefined,
+    tableNumber: (() => {
+      const rawTable = order?.table ?? order?.tableNumber;
+      if (typeof rawTable === 'number' && Number.isFinite(rawTable)) return rawTable;
+      if (typeof rawTable === 'string') {
+        const num = Number.parseInt(rawTable.replace(/\D/g, ''), 10);
+        return Number.isFinite(num) ? num : undefined;
+      }
+      if (typeof rawTable === 'object' && rawTable !== null) {
+        const label = rawTable.label || rawTable.name || rawTable.number || '';
+        const num = Number.parseInt(String(label).replace(/\D/g, ''), 10);
+        return Number.isFinite(num) ? num : undefined;
+      }
+      return undefined;
+    })(),
     orderType: (order?.orderType ?? 'dine-in') as KitchenOrder['orderType'],
     status: kitchenStatus,
     priority: /urgent|high/i.test(String(order?.notes ?? '')) ? 'urgent' : 'normal',

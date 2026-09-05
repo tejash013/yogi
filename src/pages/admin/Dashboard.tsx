@@ -198,9 +198,11 @@ export default function AdminDashboard() {
           ) : (
             filteredOrders.slice(0, 8).map((order) => {
               const orderNum = order.orderNumber || `ORD-${String(order._id || order.id).slice(-6).toUpperCase()}`;
-              const tableNum = typeof order.table === 'object'
+              const tableNum = typeof order.table === 'object' && order.table !== null
                 ? order.table?.label || '—'
-                : order.table || order.tableNumber || '—';
+                : typeof order.tableNumber === 'object' && order.tableNumber !== null
+                  ? (order.tableNumber as any)?.label || '—'
+                  : String(order.table || order.tableNumber || '—');
               const statusStr = String(order.status || 'pending');
               const amount = Number(order.total || 0);
               return (

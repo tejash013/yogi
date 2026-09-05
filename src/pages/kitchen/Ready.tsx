@@ -65,7 +65,13 @@ export default function Ready() {
                 </div>
 
                 <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-500 dark:text-neutral-400">
-                  {order.tableNumber && <span>Table {order.tableNumber}</span>}
+                  {order.tableNumber && (
+                    <span>
+                      {typeof order.tableNumber === 'object'
+                        ? ((order.tableNumber as any).label || ((order.tableNumber as any).number ? `Table ${(order.tableNumber as any).number}` : 'Table'))
+                        : `Table ${order.tableNumber}`}
+                    </span>
+                  )}
                   <span className="uppercase">{order.orderType}</span>
                   <PriorityBadge priority={order.priority} />
                 </div>

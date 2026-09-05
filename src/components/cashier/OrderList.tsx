@@ -136,7 +136,11 @@ export default function OrderList({ orders, onSelect }: Props) {
             <div className="mt-1 flex items-center justify-between gap-2 text-sm">
               <span className="truncate text-neutral-600 dark:text-neutral-300">
                 {o.customer.name}
-                {o.tableNumber ? ` · Table ${o.tableNumber}` : ''} · {ORDER_TYPE_LABELS[o.orderType]}
+                {o.tableNumber
+                  ? ` · ${typeof o.tableNumber === 'object'
+                      ? ((o.tableNumber as any).label || `Table ${(o.tableNumber as any).number ?? ''}`)
+                      : `Table ${o.tableNumber}`}`
+                  : ''} · {ORDER_TYPE_LABELS[o.orderType]}
               </span>
               <span className="font-semibold text-neutral-900 dark:text-white">{formatINR(o.total)}</span>
             </div>

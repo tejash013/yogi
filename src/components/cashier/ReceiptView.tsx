@@ -31,7 +31,13 @@ export default function ReceiptView({ invoice }: Props) {
       <div className="space-y-0.5">
         <p>Invoice: {invoice.invoiceNumber}</p>
         <p>Order: {invoice.orderNumber}</p>
-        {invoice.tableNumber && <p>Table: {invoice.tableNumber}</p>}
+        {invoice.tableNumber && (
+          <p>
+            {typeof invoice.tableNumber === 'object'
+              ? ((invoice.tableNumber as any).label || ((invoice.tableNumber as any).number ? `Table ${(invoice.tableNumber as any).number}` : 'Table'))
+              : `Table ${invoice.tableNumber}`}
+          </p>
+        )}
         <p>Date: {dateStr}</p>
         <p>Customer: {invoice.customer.name}</p>
       </div>

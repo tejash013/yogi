@@ -63,7 +63,11 @@ export default function OrderDetails({ order, onClose }: Props) {
           <div>
             <p className="text-neutral-500 dark:text-neutral-400">Table</p>
             <p className="font-medium text-neutral-900 dark:text-white">
-              {order.tableNumber ? `Table ${order.tableNumber}` : '—'}
+              {order.tableNumber
+                ? (typeof order.tableNumber === 'object'
+                    ? ((order.tableNumber as any).label || ((order.tableNumber as any).number ? `Table ${(order.tableNumber as any).number}` : 'Table'))
+                    : `Table ${order.tableNumber}`)
+                : '—'}
             </p>
           </div>
           <div>

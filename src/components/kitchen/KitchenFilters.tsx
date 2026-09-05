@@ -52,7 +52,18 @@ export default function KitchenFilters({
 
   // Unique table numbers present in the orders.
   const tables = Array.from(
-    new Set(orders.map((o) => o.tableNumber).filter((t): t is number => !!t))
+    new Set(
+      orders
+        .map((o) => {
+          if (typeof o.tableNumber === 'number' && Number.isFinite(o.tableNumber)) return o.tableNumber;
+          if (typeof o.tableNumber === 'object' && o.tableNumber !== null) {
+            const num = Number.parseInt(String((o.tableNumber as any).label || (o.tableNumber as any).number).replace(/\D/g, ''), 10);
+            return Number.isFinite(num) ? num : null;
+          }
+          return null;
+        })
+        .filter((t): t is number => t !== null && !!t)
+    )
   ).sort((a, b) => a - b);
 
   const tableOptions = [

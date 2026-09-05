@@ -139,8 +139,21 @@ const normalizeCashierOrder = (order: any): CashierOrder => {
   return {
     id: orderId,
     orderNumber: order?.orderNumber ?? `ORD-${orderId.slice(-6).toUpperCase()}`,
-    tableId: order?.table?._id ?? order?.tableId,
-    tableNumber: order?.table?.label ? Number(String(order.table.label).replace(/\D/g, '')) || undefined : order?.tableNumber ?? undefined,
+    tableId: order?.table?._id ?? (typeof order?.tableId === 'string' ? order.tableId : undefined),
+    tableNumber: (() => {
+      const rawTable = order?.table ?? order?.tableNumber;
+      if (typeof rawTable === 'number' && Number.isFinite(rawTable)) return rawTable;
+      if (typeof rawTable === 'string') {
+        const num = Number.parseInt(rawTable.replace(/\D/g, ''), 10);
+        return Number.isFinite(num) ? num : undefined;
+      }
+      if (typeof rawTable === 'object' && rawTable !== null) {
+        const label = rawTable.label || rawTable.name || rawTable.number || '';
+        const num = Number.parseInt(String(label).replace(/\D/g, ''), 10);
+        return Number.isFinite(num) ? num : undefined;
+      }
+      return undefined;
+    })(),
     customer: normalizeCashierCustomer(order?.user),
     orderType: (order?.orderType ?? 'dine-in') as CashierOrder['orderType'],
     status: mapStatus(statusValue),
@@ -175,7 +188,20 @@ const normalizeInvoice = (invoice: any): Invoice => {
     id: invoiceId,
     invoiceNumber: `INV-${invoiceId.slice(-6).toUpperCase()}`,
     orderNumber: order?.orderNumber ?? `ORD-${invoiceId.slice(-6).toUpperCase()}`,
-    tableNumber: order?.table ?? undefined,
+    tableNumber: (() => {
+      const rawTable = order?.table ?? order?.tableNumber ?? invoice?.tableNumber;
+      if (typeof rawTable === 'number' && Number.isFinite(rawTable)) return rawTable;
+      if (typeof rawTable === 'string') {
+        const num = Number.parseInt(rawTable.replace(/\D/g, ''), 10);
+        return Number.isFinite(num) ? num : undefined;
+      }
+      if (typeof rawTable === 'object' && rawTable !== null) {
+        const label = rawTable.label || rawTable.name || rawTable.number || '';
+        const num = Number.parseInt(String(label).replace(/\D/g, ''), 10);
+        return Number.isFinite(num) ? num : undefined;
+      }
+      return undefined;
+    })(),
     orderType: (order?.orderType ?? 'dine-in') as Invoice['orderType'],
     customer: { id: 'guest-user', name: 'Guest Customer', phone: '', email: '' },
     items: [],

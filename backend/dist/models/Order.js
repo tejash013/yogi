@@ -26,5 +26,18 @@ const orderSchema = new Schema({
     taxes: { type: Number, required: true, default: 0 },
     total: { type: Number, required: true, default: 0 },
     notes: { type: String, trim: true },
-}, { timestamps: true });
+}, {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+});
+orderSchema.virtual('tableNumber').get(function () {
+    if (!this.table)
+        return undefined;
+    if (typeof this.table === 'object' && this.table.label) {
+        const num = parseInt(String(this.table.label).replace(/\D/g, ''), 10);
+        return Number.isFinite(num) ? num : undefined;
+    }
+    return undefined;
+});
 export default model('Order', orderSchema);

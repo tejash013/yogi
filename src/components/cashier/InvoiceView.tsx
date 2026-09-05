@@ -60,7 +60,11 @@ export default function InvoiceView({ invoice, onClose, onPrint }: Props) {
               Order: {invoice.orderNumber}
             </p>
             {invoice.tableNumber && (
-              <p className="text-neutral-500">Table: {invoice.tableNumber} · {ORDER_TYPE_LABELS[invoice.orderType]}</p>
+              <p className="text-neutral-500">
+                {typeof invoice.tableNumber === 'object'
+                  ? ((invoice.tableNumber as any).label || ((invoice.tableNumber as any).number ? `Table ${(invoice.tableNumber as any).number}` : 'Table'))
+                  : `Table ${invoice.tableNumber}`} · {ORDER_TYPE_LABELS[invoice.orderType]}
+              </p>
             )}
             {!invoice.tableNumber && (
               <p className="text-neutral-500">{ORDER_TYPE_LABELS[invoice.orderType]}</p>
