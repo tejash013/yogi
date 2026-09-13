@@ -30,6 +30,7 @@ export interface Customer {
   name: string;
   phone: string;
   email?: string;
+  address?: string;
 }
 
 export interface CashierOrderItem {
@@ -51,6 +52,7 @@ export interface CashierOrder {
   tableNumber?: number;
   customer: Customer;
   orderType: CashierOrderType;
+  deliveryAddress?: string;
   status: CashierOrderStatus;
   paymentStatus: CashierPaymentStatus;
   items: CashierOrderItem[];
@@ -125,6 +127,7 @@ export interface Invoice {
   orderNumber: string;
   tableNumber?: number;
   orderType: CashierOrderType;
+  deliveryAddress?: string;
   customer: Customer;
   items: CashierOrderItem[];
   subtotal: number;

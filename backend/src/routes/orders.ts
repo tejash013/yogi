@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { userRepo, orderRepo } from '../repos/index.js';
 import Table from '../models/Table.js';
 import MenuItem from '../models/MenuItem.js';
+import Branch from '../models/Branch.js';
+import { geocodeAddress } from '../utils/geocoding.js';
 import { paginated, success, failure } from '../utils/response.js';
 import { getIO } from '../socket/socketServer.js';
 import { validateBody, validateParams, validateQuery } from '../middleware/validate.js';
@@ -12,6 +14,20 @@ import { recordAudit } from '../utils/audit.js';
 import { tenantFilter } from '../utils/tenant.js';
 
 const router = Router();
+
+function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c * 10) / 10;
+}
 
 function emitOrderEvent(event: string, order: any, payload: Record<string, unknown>) {
   try {
@@ -161,6 +177,34 @@ router.post('/', authenticate, requirePermission(permissions.orderCreate), valid
     return res.status(404).json(failure('User not found'));
   }
 
+  // Location & Distance Delivery Enforcement
+  if (orderType === 'delivery' || orderType === 'takeaway') {
+    const activeBranchId = (req as any).branchId || req.headers['x-branch-id'];
+    const deliveryAddress = req.body.deliveryAddress || notes || '';
+
+    if (activeBranchId && String(activeBranchId).match(/^[a-fA-F0-9]{24}$/)) {
+      const targetBranch = await Branch.findById(activeBranchId).exec();
+      if (targetBranch && targetBranch.latitude && targetBranch.longitude && deliveryAddress) {
+        const addressCoords = geocodeAddress(deliveryAddress, '');
+        if (addressCoords) {
+          const dist = calculateDistanceKm(
+            addressCoords.latitude,
+            addressCoords.longitude,
+            targetBranch.latitude,
+            targetBranch.longitude
+          );
+          if (dist > 25) {
+            return res.status(400).json(
+              failure(
+                `Selected branch (${targetBranch.name}) is outside your delivery area (${dist.toFixed(1)} km away). Please switch to a nearby branch.`
+              )
+            );
+          }
+        }
+      }
+    }
+  }
+
   let resolvedTableId = undefined;
   if (tableId) {
     let table = null;
@@ -212,8 +256,8 @@ router.post('/', authenticate, requirePermission(permissions.orderCreate), valid
 
     resolvedItems = items.filter((item): item is NonNullable<typeof item> => item !== null);
     subtotal = resolvedItems.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
-    taxes = Number((subtotal * 0.05).toFixed(2));
-    total = Number((subtotal + taxes).toFixed(2));
+    taxes = 0;
+    total = Number(subtotal.toFixed(2));
   }
 
   let order;
@@ -223,6 +267,7 @@ router.post('/', authenticate, requirePermission(permissions.orderCreate), valid
     table: resolvedTableId,
     items: resolvedItems,
     orderType: orderType || 'dine-in',
+    deliveryAddress: req.body.deliveryAddress ? String(req.body.deliveryAddress).trim() : undefined,
     paymentStatus: authenticatedUser.role === 'customer' ? 'pending' : paymentStatus || 'pending',
     subtotal,
     taxes,
@@ -279,8 +324,8 @@ router.put('/:id', authenticate, requirePermission(permissions.orderCreate), asy
     );
     resolvedItems = items.filter((item): item is NonNullable<typeof item> => item !== null);
     subtotal = resolvedItems.reduce((sum: number, item: any) => sum + item.quantity * item.unitPrice, 0);
-    taxes = Number((subtotal * 0.05).toFixed(2));
-    total = Number((subtotal + taxes).toFixed(2));
+    taxes = 0;
+    total = Number(subtotal.toFixed(2));
   }
 
   const updatedOrder = await orderRepo.updateById(
@@ -289,6 +334,7 @@ router.put('/:id', authenticate, requirePermission(permissions.orderCreate), asy
       ...(Array.isArray(orderItems) ? { items: resolvedItems, subtotal, taxes, total } : {}),
       ...(tableId ? { table: tableId } : {}),
       ...(orderType ? { orderType } : {}),
+      ...(req.body.deliveryAddress !== undefined ? { deliveryAddress: String(req.body.deliveryAddress).trim() } : {}),
       ...(paymentStatus ? { paymentStatus } : {}),
       ...(notes !== undefined ? { notes } : {}),
     },

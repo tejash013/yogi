@@ -32,10 +32,9 @@ export default function InvoiceView({ invoice, onClose, onPrint }: Props) {
             <p className="text-sm text-neutral-500">
               {restaurantInfo.phone} · {restaurantInfo.email}
             </p>
-            <p className="text-sm text-neutral-500">GST: {restaurantInfo.gstNumber}</p>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-bold text-primary-500">TAX INVOICE</p>
+            <p className="text-2xl font-bold text-primary-500">INVOICE</p>
             <p className="mt-1 text-sm font-medium text-neutral-700 dark:text-neutral-200">
               {invoice.invoiceNumber}
             </p>
@@ -49,8 +48,13 @@ export default function InvoiceView({ invoice, onClose, onPrint }: Props) {
               Billed To
             </p>
             <p className="mt-1 font-medium text-neutral-900 dark:text-white">{invoice.customer.name}</p>
-            <p className="text-neutral-500">{invoice.customer.phone}</p>
+            {invoice.customer.phone && <p className="text-neutral-500">{invoice.customer.phone}</p>}
             {invoice.customer.email && <p className="text-neutral-500">{invoice.customer.email}</p>}
+            {(invoice.customer.address || invoice.deliveryAddress) && (
+              <p className="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
+                📍 {invoice.customer.address || invoice.deliveryAddress}
+              </p>
+            )}
           </div>
           <div>
             <p className="font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
@@ -107,7 +111,7 @@ export default function InvoiceView({ invoice, onClose, onPrint }: Props) {
           <div className="w-full max-w-xs space-y-1.5 text-sm">
             <Row label="Subtotal" value={formatINR(invoice.subtotal)} />
             <Row label="Discount" value={`−${formatINR(invoice.discount)}`} />
-            <Row label="Tax" value={formatINR(invoice.tax)} />
+            {invoice.tax > 0 && <Row label="Tax" value={formatINR(invoice.tax)} />}
             {invoice.additionalCharges > 0 && (
               <Row label="Additional Charges" value={formatINR(invoice.additionalCharges)} />
             )}

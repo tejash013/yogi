@@ -4,7 +4,7 @@ import { Badge, Button, Card } from '@/components/ui';
 import { QuantitySelector, Rating, FoodCard } from '@/components/customer';
 import { ROUTES } from '@/constants';
 import { menuApi, reviewsApi } from '@/api';
-import { useCartStore } from '@/store';
+import { useCartStore, useTenantStore } from '@/store';
 import type { MenuItem, CartItem, MenuReview } from '@/types';
 
 const FAVORITES_STORAGE_KEY = 'yogi_favorites';
@@ -35,6 +35,7 @@ const normalizeMenuItem = (item: any): MenuItem => ({
 export default function FoodDetails() {
   const { id } = useParams();
   const addItem = useCartStore((s) => s.addItem);
+  const { isViewOnlyBranch, currentBranch, setModalOpen } = useTenantStore();
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -126,6 +127,17 @@ export default function FoodDetails() {
   const totalPrice = (basePrice + variantPrice + addonPrice) * quantity;
 
   const handleAddToCart = () => {
+    if (isViewOnlyBranch) {
+      if (
+        window.confirm(
+          `This dish belongs to "${currentBranch?.name || 'this branch'}", which is outside your location radius.\n\nWould you like to open the location selector to switch to a deliverable outlet?`
+        )
+      ) {
+        setModalOpen(true);
+      }
+      return;
+    }
+
     const cartItem: CartItem = {
       menuItemId: item.id,
       name: `${item.name} (${selectedVariant})`,
@@ -331,10 +343,20 @@ export default function FoodDetails() {
             />
             <Button
               size="lg"
-              className={`flex-1 transition-all ${addedToCart ? '!bg-green-500' : ''}`}
+              className={`flex-1 transition-all ${
+                isViewOnlyBranch
+                  ? '!bg-amber-500 !text-neutral-950 font-bold hover:!bg-amber-400'
+                  : addedToCart
+                  ? '!bg-green-500'
+                  : ''
+              }`}
               onClick={handleAddToCart}
             >
-              {addedToCart ? (
+              {isViewOnlyBranch ? (
+                <>
+                  <span>📍 Out of Delivery Range — View Menu Only</span>
+                </>
+              ) : addedToCart ? (
                 <>
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />

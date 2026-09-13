@@ -37,10 +37,12 @@ export default function BillSummary() {
         </div>
       )}
 
-      <div className="flex items-center justify-between text-sm">
-        <span className="text-neutral-500 dark:text-neutral-400">Tax</span>
-        <span className="font-medium text-neutral-900 dark:text-white">{formatINR(totals.taxAmount)}</span>
-      </div>
+      {totals.taxAmount > 0 && (
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-neutral-500 dark:text-neutral-400">Tax</span>
+          <span className="font-medium text-neutral-900 dark:text-white">{formatINR(totals.taxAmount)}</span>
+        </div>
+      )}
 
       <div className="flex items-center justify-between text-sm">
         <span className="text-neutral-500 dark:text-neutral-400">Additional Charges</span>

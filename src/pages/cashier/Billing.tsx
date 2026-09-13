@@ -10,7 +10,6 @@ import {
   PaymentSelector,
   PaymentSuccess,
   SplitPayment,
-  TaxSummary,
 } from '@/components/cashier';
 import { formatINR, useCashierStore } from '@/store';
 import { ReceiptView } from '@/components/cashier';
@@ -383,17 +382,11 @@ export default function Billing() {
                 )}
               </Card>
 
-              {/* Discount + Tax */}
-              <div className="grid gap-4 md:grid-cols-2">
-                <Card padding="md">
-                  <h3 className="mb-3 text-sm font-bold text-neutral-900 dark:text-white">Discounts & Coupons</h3>
-                  <DiscountSelector />
-                </Card>
-                <Card padding="md">
-                  <h3 className="mb-3 text-sm font-bold text-neutral-900 dark:text-white">Tax & GST Breakdown</h3>
-                  <TaxSummary />
-                </Card>
-              </div>
+              {/* Discounts & Coupons */}
+              <Card padding="md">
+                <h3 className="mb-3 text-sm font-bold text-neutral-900 dark:text-white">Discounts & Coupons</h3>
+                <DiscountSelector />
+              </Card>
 
               {/* Summary */}
               <Card padding="md">

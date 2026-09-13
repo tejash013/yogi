@@ -21,7 +21,7 @@ const restaurantSchema = new Schema({
   gstNumber: { type: String, trim: true },
   tagline: { type: String, trim: true },
   currency: { type: String, default: 'INR' },
-  taxRate: { type: Number, default: 5 },
+  taxRate: { type: Number, default: 0 },
   deliveryFee: { type: Number, default: 40 },
   businessHours: { type: Schema.Types.Mixed, default: {} },
   isActive: { type: Boolean, default: true },

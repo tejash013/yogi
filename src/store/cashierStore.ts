@@ -15,13 +15,14 @@ import type {
 } from '@/types/cashier';
 import { useToastStore } from '@/store/toastStore';
 import { useTenantStore } from '@/store/tenantStore';
+import { formatProperAddress } from '@/utils';
 
 export interface RestaurantInfo {
   name: string;
   address: string;
   phone: string;
   email: string;
-  gstNumber: string;
+  gstNumber?: string;
   tagline: string;
 }
 
@@ -30,7 +31,7 @@ export const defaultRestaurantInfo: RestaurantInfo = {
   address: 'Station Road, Near Sardar Patel Ashram, Bardoli, Gujarat 394601, India',
   phone: '+91 98251 23456',
   email: 'contact@yogirestaurant.com',
-  gstNumber: '24AABCY1234F1Z8',
+  gstNumber: '',
   tagline: 'Authentic Dining & Smart Kitchen',
 };
 
@@ -114,11 +115,12 @@ interface CashierState {
 
 const uid = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
-const normalizeCashierCustomer = (user: any) => ({
+const normalizeCashierCustomer = (user: any, fallbackAddress?: string) => ({
   id: String(user?._id ?? user?.id ?? 'guest-user'),
   name: user?.firstName || user?.name ? `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim() || user?.name || 'Guest Customer' : 'Guest Customer',
   phone: user?.phone ?? '',
   email: user?.email ?? '',
+  address: user?.address || fallbackAddress || undefined,
 });
 
 const normalizeCashierOrder = (order: any): CashierOrder => {
@@ -154,7 +156,8 @@ const normalizeCashierOrder = (order: any): CashierOrder => {
       }
       return undefined;
     })(),
-    customer: normalizeCashierCustomer(order?.user),
+    deliveryAddress: order?.deliveryAddress || undefined,
+    customer: normalizeCashierCustomer(order?.user, order?.deliveryAddress),
     orderType: (order?.orderType ?? 'dine-in') as CashierOrder['orderType'],
     status: mapStatus(statusValue),
     paymentStatus: (order?.paymentStatus ?? 'pending') as CashierOrder['paymentStatus'],
@@ -171,9 +174,9 @@ const normalizeCashierOrder = (order: any): CashierOrder => {
     })),
     subtotal: Number(order?.subtotal ?? 0),
     discount: Number(order?.discount ?? 0),
-    tax: Number(order?.tax ?? order?.taxes ?? 0),
+    tax: 0,
     additionalCharges: 0,
-    total: Number(order?.total ?? 0),
+    total: Number(order?.total ?? order?.subtotal ?? 0),
     createdAt: order?.createdAt ?? new Date().toISOString(),
     cashierName: 'Store',
   };
@@ -217,11 +220,7 @@ const normalizeInvoice = (invoice: any): Invoice => {
   };
 };
 
-const defaultTaxes: TaxRule[] = [
-  { id: 'tax-001', name: 'CGST', percentage: 2.5 },
-  { id: 'tax-002', name: 'SGST', percentage: 2.5 },
-  { id: 'tax-003', name: 'Service Charge', percentage: 5 },
-];
+const defaultTaxes: TaxRule[] = [];
 
 const POS_CURRENT_BILL_KEY = 'restaurantos_pos_current_bill';
 
@@ -331,21 +330,21 @@ const hydrateCashierData = async () => {
     const activeRestaurant = tenantState.currentRestaurant;
     const rawSettings = settingsResponse?.data?.data ?? {};
 
+    const resolvedAddress = formatProperAddress(
+      activeBranch?.address ? activeBranch : activeRestaurant?.address ? activeRestaurant : { address: rawSettings.address },
+      defaultRestaurantInfo.address
+    );
+
     const restaurantInfo: RestaurantInfo = {
       name: activeBranch?.name || activeRestaurant?.name || rawSettings.name || defaultRestaurantInfo.name,
-      address: activeBranch?.address || activeRestaurant?.address || rawSettings.address || defaultRestaurantInfo.address,
+      address: resolvedAddress,
       phone: activeBranch?.phone || activeRestaurant?.phone || rawSettings.phone || defaultRestaurantInfo.phone,
       email: activeBranch?.email || activeRestaurant?.email || rawSettings.email || defaultRestaurantInfo.email,
-      gstNumber: activeRestaurant?.gstNumber || rawSettings.gstNumber || defaultRestaurantInfo.gstNumber,
+      gstNumber: '',
       tagline: activeRestaurant?.tagline || rawSettings.tagline || defaultRestaurantInfo.tagline,
     };
 
-    const taxPercent = typeof (rawSettings as any).taxRate === 'number' ? (rawSettings as any).taxRate : 5;
-    const dynamicTaxes: TaxRule[] = [
-      { id: 'tax-001', name: 'CGST', percentage: round2(taxPercent / 2) },
-      { id: 'tax-002', name: 'SGST', percentage: round2(taxPercent / 2) },
-      { id: 'tax-003', name: 'Service Charge', percentage: 5 },
-    ];
+    const dynamicTaxes: TaxRule[] = [];
 
     const storedActiveBill = getActiveBillFromStorage();
     const fetchedOrders = orderList.map(normalizeCashierOrder);
@@ -407,12 +406,16 @@ const hydrateCashierData = async () => {
     const tenantState = useTenantStore.getState();
     const activeBranch = tenantState.currentBranch;
     const activeRestaurant = tenantState.currentRestaurant;
+    const resolvedAddress = formatProperAddress(
+      activeBranch?.address ? activeBranch : activeRestaurant?.address ? activeRestaurant : undefined,
+      defaultRestaurantInfo.address
+    );
     const fallbackInfo: RestaurantInfo = {
       name: activeBranch?.name || activeRestaurant?.name || defaultRestaurantInfo.name,
-      address: activeBranch?.address || activeRestaurant?.address || defaultRestaurantInfo.address,
+      address: resolvedAddress,
       phone: activeBranch?.phone || activeRestaurant?.phone || defaultRestaurantInfo.phone,
       email: activeBranch?.email || activeRestaurant?.email || defaultRestaurantInfo.email,
-      gstNumber: activeRestaurant?.gstNumber || defaultRestaurantInfo.gstNumber,
+      gstNumber: '',
       tagline: activeRestaurant?.tagline || defaultRestaurantInfo.tagline,
     };
     useCashierStore.setState((prev) => ({
@@ -794,11 +797,9 @@ splitPayments: [],
     );
     const discountAmount = round2(state.discount?.amount ?? 0);
     const taxable = Math.max(0, subtotal - discountAmount);
-    const taxAmount = round2(
-      state.taxes.reduce((s, t) => s + (taxable * t.percentage) / 100, 0)
-    );
+    const taxAmount = 0;
     const additionalCharges = round2(state.additionalCharges ?? 0);
-    const grandTotal = round2(taxable + taxAmount + additionalCharges);
+    const grandTotal = round2(taxable + additionalCharges);
     return { subtotal, discountAmount, taxAmount, additionalCharges, grandTotal };
   },
 
@@ -1080,11 +1081,12 @@ splitPayments: [],
       orderNumber: bill.orderNumber,
       tableNumber: bill.tableNumber,
       orderType: bill.orderType,
+      deliveryAddress: bill.deliveryAddress,
       customer: { ...bill.customer },
       items: bill.items.map((i) => ({ ...i })),
       subtotal: totals.subtotal,
       discount: totals.discountAmount,
-      tax: totals.taxAmount,
+      tax: 0,
       additionalCharges: totals.additionalCharges,
       grandTotal: totals.grandTotal,
       paidAmount: totals.grandTotal,
@@ -1136,6 +1138,27 @@ if (typeof window !== 'undefined') {
       void hydrateCashierData();
     }
   });
+
+  useTenantStore.subscribe((tenantState) => {
+    const activeBranch = tenantState.currentBranch;
+    const activeRestaurant = tenantState.currentRestaurant;
+    if (activeBranch || activeRestaurant) {
+      const resolvedAddress = formatProperAddress(
+        activeBranch?.address ? activeBranch : activeRestaurant?.address ? activeRestaurant : undefined,
+        defaultRestaurantInfo.address
+      );
+      useCashierStore.setState((prev) => ({
+        restaurantInfo: {
+          ...prev.restaurantInfo,
+          name: activeBranch?.name || activeRestaurant?.name || prev.restaurantInfo.name,
+          address: resolvedAddress,
+          phone: activeBranch?.phone || activeRestaurant?.phone || prev.restaurantInfo.phone,
+          email: activeBranch?.email || activeRestaurant?.email || prev.restaurantInfo.email,
+          tagline: activeRestaurant?.tagline || prev.restaurantInfo.tagline,
+        },
+      }));
+    }
+  });
 }
 
 // ---- Selector helpers ----
@@ -1143,3 +1166,4 @@ export const selectUnpaidOrders = (state: CashierState) =>
   state.orders.filter(
     (o) => o.paymentStatus === 'unpaid' || o.paymentStatus === 'pending' || o.paymentStatus === 'partially_paid'
   );
+

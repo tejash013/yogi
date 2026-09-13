@@ -36,10 +36,10 @@ router.get('/', requirePermission(permissions.settingsRead), async (req, res) =>
     email: 'contact@yogirestaurant.com',
     phone: '+91 98251 23456',
     address: 'Station Road, Near Sardar Patel Ashram, Bardoli, Gujarat 394601, India',
-    gstNumber: '24AABCY1234F1Z8',
+    gstNumber: '',
     tagline: 'Authentic Dining & Smart Kitchen',
     currency: 'INR',
-    taxRate: 5,
+    taxRate: 0,
     deliveryFee: 40,
     businessHours: {},
   };

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui';
 import { ROUTES } from '@/constants';
 import type { MenuItem } from '@/types';
 import QuickOrderModal from './QuickOrderModal';
+import { useTenantStore } from '@/store';
 
 interface FoodCardProps {
   item: MenuItem;
@@ -14,9 +15,22 @@ interface FoodCardProps {
 export default function FoodCard({ item, onFavoriteToggle, isFavorite }: FoodCardProps) {
   const [imgError, setImgError] = useState(false);
   const [showOrderModal, setShowOrderModal] = useState(false);
+  const isViewOnlyBranch = useTenantStore((s) => s.isViewOnlyBranch);
+  const currentBranch = useTenantStore((s) => s.currentBranch);
+  const setModalOpen = useTenantStore((s) => s.setModalOpen);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (isViewOnlyBranch) {
+      if (
+        window.confirm(
+          `This item belongs to "${currentBranch?.name || 'this branch'}", which is outside your location's delivery radius.\n\nWould you like to open the location picker to switch to a nearby deliverable outlet?`
+        )
+      ) {
+        setModalOpen(true);
+      }
+      return;
+    }
     setShowOrderModal(true);
   };
 
@@ -139,12 +153,23 @@ export default function FoodCard({ item, onFavoriteToggle, isFavorite }: FoodCar
         <Button
           size="sm"
           onClick={handleAddToCart}
-          className="shadow-sm hover:shadow-md"
+          variant={isViewOnlyBranch ? 'outline' : 'default'}
+          className={
+            isViewOnlyBranch
+              ? 'border-amber-500/50 text-amber-600 dark:text-amber-300 hover:bg-amber-500/10 text-xs font-bold'
+              : 'shadow-sm hover:shadow-md'
+          }
         >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Add
+          {isViewOnlyBranch ? (
+            <span>👁 View Only</span>
+          ) : (
+            <>
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Add
+            </>
+          )}
         </Button>
       </div>
 

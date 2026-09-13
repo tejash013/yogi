@@ -4,7 +4,7 @@ import { Button, Card, Input } from '@/components/ui';
 import { ROUTES } from '@/constants';
 import { ordersApi, settingsApi, tablesApi } from '@/api';
 import { getApiErrorMessage } from '@/api/errors';
-import { useAuthStore, useCartStore, useOrderSyncStore } from '@/store';
+import { useAuthStore, useCartStore, useOrderSyncStore, useTenantStore } from '@/store';
 
 type DiningType = 'dine-in' | 'takeaway' | 'delivery';
 type PaymentMethod = 'cash' | 'upi';
@@ -14,6 +14,7 @@ export default function Checkout() {
   const user = useAuthStore((state) => state.user);
   const cartTableNumber = useCartStore((state) => state.tableNumber);
   const { items, subtotal, clearCart } = useCartStore();
+  const { isViewOnlyBranch, currentBranch, userLocation, setModalOpen } = useTenantStore();
   const [diningType, setDiningType] = useState<DiningType>('dine-in');
   const [tableNumber, setTableNumber] = useState(cartTableNumber ? String(cartTableNumber) : '');
   const [tableId, setTableId] = useState('');
@@ -24,12 +25,12 @@ export default function Checkout() {
     name: user ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Customer' : '',
     email: user?.email ?? '',
     phone: user?.phone ?? '',
+    address: (user as any)?.address ?? '',
     notes: '',
   });
   const [useRewardPoints, setUseRewardPoints] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [taxPercent, setTaxPercent] = useState<number>(5);
   const [standardDeliveryFee, setStandardDeliveryFee] = useState<number>(40);
 
   useEffect(() => {
@@ -54,7 +55,6 @@ export default function Checkout() {
       .then((res) => {
         const s = res.data?.data;
         if (s) {
-          if (typeof s.taxRate === 'number') setTaxPercent(s.taxRate);
           if (typeof s.deliveryFee === 'number') setStandardDeliveryFee(s.deliveryFee);
         }
       })
@@ -85,9 +85,8 @@ export default function Checkout() {
   }, [cartTableNumber]);
 
   const deliveryFee = diningType === 'delivery' ? standardDeliveryFee : 0;
-  const actualTax = subtotal * (taxPercent / 100);
   const rewardDiscount = useRewardPoints ? Math.min(50, subtotal * 0.2) : 0;
-  const finalTotal = Math.max(0, subtotal + actualTax + deliveryFee - rewardDiscount);
+  const finalTotal = Math.max(0, subtotal + deliveryFee - rewardDiscount);
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,6 +112,18 @@ export default function Checkout() {
       return;
     }
 
+    if (diningType === 'delivery' && !formData.address.trim()) {
+      setSubmitError('Please enter your delivery address for delivery orders.');
+      return;
+    }
+
+    if (isViewOnlyBranch && diningType !== 'dine-in') {
+      setSubmitError(
+        `The outlet "${currentBranch?.name || 'this branch'}" is outside your delivery area and does not accept online delivery/takeaway for your location. Please switch to a nearby deliverable outlet.`
+      );
+      return;
+    }
+
     setIsProcessing(true);
     setSubmitError(null);
 
@@ -120,12 +131,14 @@ export default function Checkout() {
       const notes = [
         formData.notes,
         diningType === 'dine-in' && tableNumber ? `Table ${tableNumber}` : '',
+        diningType === 'delivery' && formData.address ? `Delivery: ${formData.address.trim()}` : '',
         paymentMethod ? `Payment: ${paymentMethod}` : '',
       ].filter(Boolean).join(' | ');
 
       const response = await ordersApi.create({
         userId: String(customerId),
         tableId: diningType === 'dine-in' ? tableId : undefined,
+        deliveryAddress: diningType === 'delivery' ? formData.address.trim() : undefined,
         items: items.map((item) => ({
           menuItem: item.menuItemId,
           quantity: item.quantity,
@@ -222,6 +235,22 @@ export default function Checkout() {
                     <option value="">Select an available table</option>
                     {tables.map((table) => <option key={table.id} value={table.id}>{table.label}</option>)}
                   </select>
+                </div>
+              )}
+
+              {diningType === 'delivery' && (
+                <div className="mt-4 rounded-2xl bg-blue-50/60 p-4 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/40">
+                  <label className="mb-1.5 flex items-center justify-between text-xs font-bold text-blue-900 dark:text-blue-300">
+                    <span>📍 Delivery Address (Required for Delivery)</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    placeholder="Enter complete delivery street, house/flat, area, city, pincode..."
+                    className="w-full rounded-xl border border-blue-300 bg-white px-3.5 py-2.5 text-xs font-medium text-neutral-900 shadow-sm focus:border-primary-500 focus:outline-none dark:border-blue-700 dark:bg-neutral-800 dark:text-white"
+                  />
                 </div>
               )}
             </Card>
@@ -381,10 +410,6 @@ export default function Checkout() {
                 <div className="flex justify-between text-sm">
                   <span className="text-neutral-500">Subtotal</span>
                   <span>₹{subtotal.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-neutral-500">GST / Tax ({taxPercent}%)</span>
-                  <span>₹{actualTax.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-neutral-500">Delivery Fee</span>

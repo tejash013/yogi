@@ -69,6 +69,7 @@ export const orderCreateSchema = z.object({
         quantity: z.coerce.number().int().positive('Number must be greater than 0'),
     })).optional().default([]),
     orderType: z.enum(['dine-in', 'takeaway', 'delivery']).optional(),
+    deliveryAddress: z.string().trim().optional(),
     paymentStatus: z.enum(['pending', 'paid', 'failed', 'refunded']).optional(),
     notes: z.string().trim().optional(),
 }).strict();

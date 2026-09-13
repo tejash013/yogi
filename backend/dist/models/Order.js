@@ -22,6 +22,7 @@ const orderSchema = new Schema({
         default: 'pending',
     },
     orderType: { type: String, enum: ['dine-in', 'takeaway', 'delivery'], default: 'dine-in' },
+    deliveryAddress: { type: String, trim: true },
     subtotal: { type: Number, required: true, default: 0 },
     taxes: { type: Number, required: true, default: 0 },
     total: { type: Number, required: true, default: 0 },

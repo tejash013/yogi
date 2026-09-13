@@ -152,7 +152,7 @@ export default function OrderSuccess() {
             onClick={() => setShowInvoiceModal(true)}
             className="border-primary-500 text-primary-600 dark:text-primary-400 font-bold"
           >
-            <FiDownload className="mr-2 h-4 w-4" /> Download / View Tax Invoice
+            <FiDownload className="mr-2 h-4 w-4" /> Download / View Invoice
           </Button>
 
           <Button

@@ -220,10 +220,12 @@ export default function OrderTracking() {
             <span>Subtotal</span>
             <span>{formatCurrency(order.subtotal)}</span>
           </div>
-          <div className="flex justify-between text-neutral-500">
-            <span>Tax</span>
-            <span>{formatCurrency(order.tax)}</span>
-          </div>
+          {order.tax > 0 && (
+            <div className="flex justify-between text-neutral-500">
+              <span>Tax</span>
+              <span>{formatCurrency(order.tax)}</span>
+            </div>
+          )}
           {order.discount > 0 && (
             <div className="flex justify-between text-green-600">
               <span>Discount</span>
@@ -253,7 +255,7 @@ export default function OrderTracking() {
           onClick={() => setShowInvoiceModal(true)}
           className="border-primary-500 text-primary-600 dark:text-primary-400 font-bold"
         >
-          <FiDownload className="mr-2 h-4 w-4" /> Download / Print Tax Invoice
+          <FiDownload className="mr-2 h-4 w-4" /> Download / Print Invoice
         </Button>
 
         <div className="flex gap-3">

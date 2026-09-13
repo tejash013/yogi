@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui';
-import { formatDateTime } from '@/utils';
+import { formatDateTime, formatProperAddress } from '@/utils';
 import type { Order } from '@/types';
 import { FiX, FiDownload } from 'react-icons/fi';
 import { useTenantStore } from '@/store/tenantStore';
@@ -23,8 +23,7 @@ export default function CustomerInvoiceModal({
 
   const restaurantName = currentBranch?.name || currentRestaurant?.name || 'Yogi Restaurant';
   const restaurantTagline = currentRestaurant?.tagline || 'Authentic Dining & Smart Kitchen';
-  const restaurantAddress = currentBranch?.address || currentRestaurant?.address || 'Station Road, Near Sardar Patel Ashram, Bardoli, Gujarat 394601, India';
-  const restaurantGst = currentRestaurant?.gstNumber || '24AABCY1234F1Z8';
+  const restaurantAddress = formatProperAddress(currentBranch?.address ? currentBranch : currentRestaurant);
   const restaurantPhone = currentBranch?.phone || currentRestaurant?.phone || '+91 98251 23456';
   const restaurantEmail = currentBranch?.email || currentRestaurant?.email || 'contact@yogirestaurant.com';
 
@@ -42,12 +41,9 @@ export default function CustomerInvoiceModal({
   if (!isOpen || !order) return null;
 
   const subtotal = order.subtotal || order.items.reduce((s, i) => s + (i.unitPrice || 0) * (i.quantity || 1), 0);
-  const tax = order.tax || Math.round(subtotal * 0.05 * 100) / 100;
   const deliveryFee = order.deliveryType === 'delivery' ? 40 : 0;
   const discount = order.discount || 0;
-  const total = order.total || (subtotal + tax + deliveryFee - discount);
-  const cgst = (tax / 2).toFixed(2);
-  const sgst = (tax / 2).toFixed(2);
+  const total = order.total || (subtotal + deliveryFee - discount);
 
   const handlePrint = () => {
     window.print();
@@ -69,7 +65,7 @@ export default function CustomerInvoiceModal({
             </span>
             <div>
               <h3 className="text-base font-black text-neutral-900 dark:text-white">
-                Tax Invoice
+                Invoice
               </h3>
               <p className="text-xs text-neutral-500">#{order.orderNumber}</p>
             </div>
@@ -110,17 +106,17 @@ export default function CustomerInvoiceModal({
                 <p className="mt-1 text-xs text-neutral-500 font-medium">
                   {restaurantTagline}
                 </p>
-                <p className="text-[11px] text-neutral-400 mt-0.5">
+                <p className="text-[11px] text-neutral-500 mt-0.5">
                   {restaurantAddress}
                 </p>
-                <p className="text-[11px] text-neutral-400">
-                  GSTIN: <span className="font-semibold text-neutral-600 dark:text-neutral-300">{restaurantGst}</span> | Phone: {restaurantPhone}
+                <p className="text-[11px] text-neutral-500">
+                  Phone: {restaurantPhone} · {restaurantEmail}
                 </p>
               </div>
 
               <div className="text-left sm:text-right">
                 <span className="inline-block rounded-lg bg-green-100 px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-green-800 dark:bg-green-950/60 dark:text-green-300">
-                  {order.paymentStatus === 'paid' ? 'TAX INVOICE · PAID' : 'TAX INVOICE'}
+                  {order.paymentStatus === 'paid' ? 'INVOICE · PAID' : 'INVOICE'}
                 </span>
                 <p className="mt-2 text-xs font-bold text-neutral-800 dark:text-neutral-200">
                   Invoice #: INV-{order.orderNumber}
@@ -146,6 +142,11 @@ export default function CustomerInvoiceModal({
                 <p className="text-neutral-500">
                   Order Mode: <span className="font-bold uppercase text-primary-600 dark:text-primary-400">{order.deliveryType || 'Dine In'}</span>
                 </p>
+                {order.deliveryAddress && (
+                  <p className="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
+                    📍 {order.deliveryAddress}
+                  </p>
+                )}
               </div>
               <div className="text-right">
                 <p className="font-bold text-neutral-400 uppercase tracking-wider text-[10px]">
@@ -197,20 +198,12 @@ export default function CustomerInvoiceModal({
               </table>
             </div>
 
-            {/* Totals & Tax Calculation */}
+            {/* Totals Calculation */}
             <div className="border-t border-neutral-200 pt-4 text-xs dark:border-neutral-800">
               <div className="space-y-1.5 ml-auto max-w-xs">
                 <div className="flex justify-between text-neutral-600 dark:text-neutral-400">
                   <span>Subtotal</span>
                   <span className="font-semibold text-neutral-900 dark:text-white">₹{subtotal.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-neutral-600 dark:text-neutral-400">
-                  <span>CGST (2.5%)</span>
-                  <span>₹{cgst}</span>
-                </div>
-                <div className="flex justify-between text-neutral-600 dark:text-neutral-400">
-                  <span>SGST (2.5%)</span>
-                  <span>₹{sgst}</span>
                 </div>
                 {deliveryFee > 0 && (
                   <div className="flex justify-between text-neutral-600 dark:text-neutral-400">
@@ -246,7 +239,7 @@ export default function CustomerInvoiceModal({
         {/* Modal Footer (hidden in print) */}
         <div className="flex items-center justify-between border-t border-neutral-100 bg-neutral-50 px-6 py-4 dark:border-neutral-800 dark:bg-neutral-900 print:hidden">
           <span className="text-xs text-neutral-500">
-            This is a computer-generated tax invoice.
+            This is a computer-generated invoice.
           </span>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="md" onClick={onClose}>

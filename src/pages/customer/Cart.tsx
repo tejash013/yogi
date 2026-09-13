@@ -7,7 +7,6 @@ import { ROUTES } from '@/constants';
 import { offersApi, tablesApi } from '@/api';
 import { useCartStore } from '@/store';
 
-const TAX_RATE = 0.08;
 const DELIVERY_FEE = 2.99;
 
 export default function Cart() {
@@ -72,8 +71,7 @@ export default function Cart() {
     }
   };
 
-  const actualTax = subtotal * TAX_RATE;
-  const finalTotal = Math.max(0, subtotal + actualTax + DELIVERY_FEE - couponDiscount);
+  const finalTotal = Math.max(0, subtotal + DELIVERY_FEE - couponDiscount);
 
   if (items.length === 0) {
     return (
@@ -213,10 +211,6 @@ export default function Cart() {
               <div className="flex justify-between text-sm">
                 <span className="text-neutral-500 dark:text-neutral-400">Subtotal</span>
                 <span className="font-semibold text-neutral-800 dark:text-neutral-200">₹{subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-neutral-500 dark:text-neutral-400">Tax (8%)</span>
-                <span className="font-semibold text-neutral-800 dark:text-neutral-200">₹{actualTax.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-neutral-500 dark:text-neutral-400">Delivery Fee</span>

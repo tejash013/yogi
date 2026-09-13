@@ -82,6 +82,10 @@ interface TenantState {
   onlyNearby: boolean;
   maxRadiusKm: number;
 
+  // View-only flag for out-of-range branches
+  isViewOnlyBranch: boolean;
+  isBranchInDeliveryRange: (branch?: Branch | null) => boolean;
+
   setModalOpen: (open: boolean) => void;
   setTenant: (restaurantId: string, branchId: string) => Promise<void>;
   switchRestaurant: (restaurantId: string) => Promise<void>;
@@ -123,6 +127,7 @@ export const useTenantStore = create<TenantState>((set, get) => ({
     _id: initialRestaurantId,
     name: 'Yogi Restaurant',
     slug: 'yogi',
+    address: 'Station Road, Near Sardar Patel Ashram, Bardoli, Gujarat 394601, India',
     latitude: 21.1197,
     longitude: 73.1167,
     isActive: true,
@@ -132,7 +137,7 @@ export const useTenantStore = create<TenantState>((set, get) => ({
     restaurantId: initialRestaurantId,
     name: 'Yogi Res (Bardoli)',
     slug: 'yogi-res',
-    address: 'Bardoli',
+    address: 'Station Road, Near Sardar Patel Ashram, Bardoli, Gujarat 394601, India',
     latitude: 21.1197,
     longitude: 73.1167,
     isActive: true,
@@ -150,6 +155,22 @@ export const useTenantStore = create<TenantState>((set, get) => ({
   locationError: null,
   onlyNearby: storedOnlyNearby,
   maxRadiusKm: Number.isFinite(storedRadius) && storedRadius > 0 ? storedRadius : 25,
+
+  // View-only default state & distance check helper
+  isViewOnlyBranch: false,
+
+  isBranchInDeliveryRange: (branch?: Branch | null) => {
+    const target = branch ?? get().currentBranch;
+    if (!target) return true;
+    const userLoc = get().userLocation;
+    if (!userLoc) return true;
+    let dist = target.distanceKm;
+    if (dist === undefined && target.latitude !== undefined && target.longitude !== undefined) {
+      dist = calculateDistanceKm(userLoc.latitude, userLoc.longitude, target.latitude, target.longitude);
+    }
+    if (dist === undefined) return true;
+    return dist <= get().maxRadiusKm;
+  },
 
   setOnlyNearby: (enabled: boolean) => {
     localStorage.setItem('restaurantos-only-nearby', String(enabled));
@@ -188,6 +209,8 @@ export const useTenantStore = create<TenantState>((set, get) => ({
     let targetBranch = currentRestBranches.find((b) => b._id === branchId) || currentRestBranches[0] || nearest;
     let targetRest = enrichedRestaurants.find((r) => r._id === restaurantId) || enrichedRestaurants[0] || null;
 
+    const isViewOnly = targetBranch ? ((targetBranch.distanceKm ?? 0) > get().maxRadiusKm) : false;
+
     set({
       userLocation: coords,
       onlyNearby: true,
@@ -197,6 +220,7 @@ export const useTenantStore = create<TenantState>((set, get) => ({
       nearestBranch: nearest,
       currentBranch: targetBranch,
       currentRestaurant: targetRest,
+      isViewOnlyBranch: isViewOnly,
     });
   },
 
@@ -227,6 +251,8 @@ export const useTenantStore = create<TenantState>((set, get) => ({
       let targetBranch = currentRestBranches.find((b) => b._id === branchId) || currentRestBranches[0] || nearest;
       let targetRest = enrichedRestaurants.find((r) => r._id === restaurantId) || enrichedRestaurants[0] || null;
 
+      const isViewOnly = targetBranch ? ((targetBranch.distanceKm ?? 0) > get().maxRadiusKm) : false;
+
       set({
         userLocation: coords,
         isLocating: false,
@@ -237,6 +263,7 @@ export const useTenantStore = create<TenantState>((set, get) => ({
         nearestBranch: nearest,
         currentBranch: targetBranch,
         currentRestaurant: targetRest,
+        isViewOnlyBranch: isViewOnly,
       });
     } catch (err: any) {
       set({
@@ -328,7 +355,7 @@ export const useTenantStore = create<TenantState>((set, get) => ({
             restaurantId: targetRest?._id ?? DEFAULT_RESTAURANT_ID,
             name: 'Main Dining Hall (Bardoli)',
             slug: 'downtown-main',
-            address: 'Bardoli Center',
+            address: 'Station Road, Near Sardar Patel Ashram, Bardoli, Gujarat 394601, India',
             latitude: 21.1197,
             longitude: 73.1167,
             isActive: true,
@@ -343,6 +370,8 @@ export const useTenantStore = create<TenantState>((set, get) => ({
       localStorage.setItem('restaurantos-restaurant-id', restId);
       localStorage.setItem('restaurantos-branch-id', brId);
 
+      const isViewOnly = targetBranch ? !get().isBranchInDeliveryRange(targetBranch) : false;
+
       set({
         restaurantId: restId,
         branchId: brId,
@@ -352,6 +381,7 @@ export const useTenantStore = create<TenantState>((set, get) => ({
         availableBranches: activeRestBranches.length > 0 ? activeRestBranches : allBranches,
         allBranches: allBranches.length > 0 ? allBranches : (targetBranch ? [targetBranch] : []),
         nearestBranch: allBranches[0] || targetBranch || null,
+        isViewOnlyBranch: isViewOnly,
         isLoading: false,
       });
     } catch {
@@ -398,12 +428,15 @@ export const useTenantStore = create<TenantState>((set, get) => ({
       localStorage.setItem('restaurantos-restaurant-id', restaurantId);
       localStorage.setItem('restaurantos-branch-id', brId);
 
+      const isViewOnly = targetBranch ? !get().isBranchInDeliveryRange(targetBranch) : false;
+
       set({
         restaurantId,
         branchId: brId,
         currentRestaurant: targetRest,
         currentBranch: targetBranch,
         availableBranches: branches,
+        isViewOnlyBranch: isViewOnly,
         isLoading: false,
       });
 
@@ -434,6 +467,7 @@ export const useTenantStore = create<TenantState>((set, get) => ({
     if (!targetBranch) return;
 
     localStorage.setItem('restaurantos-branch-id', branchId);
+    const isViewOnly = !get().isBranchInDeliveryRange(targetBranch);
 
     // If branch belongs to a different restaurant, switch restaurant too
     if (targetBranch.restaurantId && String(targetBranch.restaurantId) !== String(get().restaurantId)) {
@@ -445,11 +479,13 @@ export const useTenantStore = create<TenantState>((set, get) => ({
         branchId,
         currentRestaurant: targetRest,
         currentBranch: targetBranch,
+        isViewOnlyBranch: isViewOnly,
       });
     } else {
       set({
         branchId,
         currentBranch: targetBranch,
+        isViewOnlyBranch: isViewOnly,
       });
     }
 
@@ -458,7 +494,6 @@ export const useTenantStore = create<TenantState>((set, get) => ({
         detail: { restaurantId: get().restaurantId, branchId },
       })
     );
-    window.location.reload();
   },
 
   setTenant: async (restaurantId: string, branchId: string) => {

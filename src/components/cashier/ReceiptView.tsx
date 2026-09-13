@@ -23,7 +23,6 @@ export default function ReceiptView({ invoice }: Props) {
         <p className="text-base font-bold">{restaurantInfo.name}</p>
         <p>{restaurantInfo.address}</p>
         <p>{restaurantInfo.phone}</p>
-        <p>GST: {restaurantInfo.gstNumber}</p>
       </div>
 
       <div className="my-3 border-t border-dashed border-neutral-400" />
@@ -40,6 +39,9 @@ export default function ReceiptView({ invoice }: Props) {
         )}
         <p>Date: {dateStr}</p>
         <p>Customer: {invoice.customer.name}</p>
+        {(invoice.customer.address || invoice.deliveryAddress) && (
+          <p>Address: {invoice.customer.address || invoice.deliveryAddress}</p>
+        )}
       </div>
 
       <div className="my-3 border-t border-dashed border-neutral-400" />
@@ -67,10 +69,12 @@ export default function ReceiptView({ invoice }: Props) {
           <span>Discount</span>
           <span>−{formatINR(invoice.discount)}</span>
         </p>
-        <p className="flex justify-between">
-          <span>Tax</span>
-          <span>{formatINR(invoice.tax)}</span>
-        </p>
+        {invoice.tax > 0 && (
+          <p className="flex justify-between">
+            <span>Tax</span>
+            <span>{formatINR(invoice.tax)}</span>
+          </p>
+        )}
         {invoice.additionalCharges > 0 && (
           <p className="flex justify-between">
             <span>Charges</span>

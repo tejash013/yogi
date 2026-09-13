@@ -167,3 +167,5 @@ export function getAvatarColor(name: string): string {
   return colors[Math.abs(hash) % colors.length];
 }
 
+export * from './address';
+
