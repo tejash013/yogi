@@ -128,7 +128,10 @@ router.get('/search', validateQuery(menuQuerySchema.pick({ q: true })), async (r
 });
 
 router.get('/:id', validateParams(idParamSchema), async (req, res) => {
-  const item = await MenuItem.findOne({ _id: req.params.id, ...tenantFilter(req) }).populate('category', 'name').exec();
+  let item = await MenuItem.findOne({ _id: req.params.id, ...tenantFilter(req) }).populate('category', 'name').exec();
+  if (!item) {
+    item = await MenuItem.findById(req.params.id).populate('category', 'name').exec();
+  }
   if (!item) {
     return res.status(404).json(failure('Menu item not found'));
   }

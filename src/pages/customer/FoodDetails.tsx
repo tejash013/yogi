@@ -36,6 +36,7 @@ export default function FoodDetails() {
   const { id } = useParams();
   const addItem = useCartStore((s) => s.addItem);
   const { isViewOnlyBranch, currentBranch, setModalOpen } = useTenantStore();
+  const [isLoading, setIsLoading] = useState(true);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -64,6 +65,7 @@ export default function FoodDetails() {
 
   useEffect(() => {
     const loadItem = async () => {
+      setIsLoading(true);
       try {
         const [itemRes, listRes] = await Promise.all([
           menuApi.getById(String(id ?? '')).catch(() => ({ data: { data: null } })),
@@ -77,17 +79,27 @@ export default function FoodDetails() {
         if (itemData) {
           const currentItem = normalizeMenuItem(itemData);
           setMenuItems([currentItem, ...normalizedItems.filter((entry) => entry.id !== currentItem.id)]);
-          return;
+        } else {
+          setMenuItems(normalizedItems);
         }
-
-        setMenuItems(normalizedItems);
       } catch {
         setMenuItems([]);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     void loadItem();
   }, [id]);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 space-y-4">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
+        <p className="text-xs font-bold tracking-wide uppercase text-neutral-400">Loading dish details...</p>
+      </div>
+    );
+  }
 
   const item = menuItems.find((m) => m.id === id);
   if (!item) {
