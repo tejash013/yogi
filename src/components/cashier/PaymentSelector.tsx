@@ -3,16 +3,37 @@ import { PAYMENT_METHOD_LABELS } from '@/types/cashier';
 import { useCashierStore } from '@/store';
 import { cn } from '@/utils';
 
-const methods: CashierPaymentMethod[] = ['cash', 'upi'];
+const methods: CashierPaymentMethod[] = [
+  'cash',
+  'card',
+  'wallet',
+  'upi',
+  'cash_and_card',
+  'cash_and_wallet',
+  'non_chargeable',
+  'split',
+];
 
 const icons: Record<CashierPaymentMethod, string> = {
   cash: '💵',
+  card: '💳',
+  wallet: '👛',
   upi: '📱',
+  cash_and_card: '💵💳',
+  cash_and_wallet: '💵👛',
+  non_chargeable: '🏷️',
+  split: '🔀',
 };
 
 const sublabels: Record<CashierPaymentMethod, string> = {
   cash: 'Physical Currency',
+  card: 'Credit / Debit Card',
+  wallet: 'Mobile Wallet / Paytm',
   upi: 'Google Pay / PhonePe / QR',
+  cash_and_card: 'Combined Cash & Card',
+  cash_and_wallet: 'Combined Cash & Wallet',
+  non_chargeable: 'Complimentary / Staff Bill',
+  split: 'Split across methods',
 };
 
 export default function PaymentSelector() {

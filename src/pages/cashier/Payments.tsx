@@ -9,7 +9,13 @@ import { PAYMENT_METHOD_LABELS } from '@/types/cashier';
 const methodOptions: { value: string; label: string }[] = [
   { value: 'all', label: 'All Methods' },
   { value: 'cash', label: 'Cash' },
+  { value: 'card', label: 'Card' },
+  { value: 'wallet', label: 'Wallet' },
   { value: 'upi', label: 'UPI' },
+  { value: 'cash_and_card', label: 'Cash & Card' },
+  { value: 'cash_and_wallet', label: 'Cash & Wallet' },
+  { value: 'non_chargeable', label: 'Non-Chargeable' },
+  { value: 'split', label: 'Split Payment' },
 ];
 
 const statusOptions: { value: string; label: string }[] = [

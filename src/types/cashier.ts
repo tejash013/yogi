@@ -21,7 +21,15 @@ export type CashierPaymentStatus =
   | 'refunded'
   | 'failed';
 
-export type CashierPaymentMethod = 'cash' | 'upi';
+export type CashierPaymentMethod =
+  | 'cash'
+  | 'card'
+  | 'wallet'
+  | 'upi'
+  | 'cash_and_card'
+  | 'cash_and_wallet'
+  | 'non_chargeable'
+  | 'split';
 
 export type ShiftStatus = 'active' | 'break' | 'closed';
 
@@ -144,7 +152,13 @@ export interface Invoice {
 // ---- Label / color helper maps ----
 export const PAYMENT_METHOD_LABELS: Record<CashierPaymentMethod, string> = {
   cash: 'Cash',
+  card: 'Card',
+  wallet: 'Wallet',
   upi: 'UPI',
+  cash_and_card: 'Cash & Card',
+  cash_and_wallet: 'Cash & Wallet',
+  non_chargeable: 'Non Chargeable',
+  split: 'Split Payment',
 };
 
 export const PAYMENT_STATUS_LABELS: Record<CashierPaymentStatus, string> = {
