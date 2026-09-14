@@ -69,6 +69,14 @@ export default function Billing() {
   const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const handleReset = () => {
+      createNewBill();
+    };
+    window.addEventListener('reset-pos-cart', handleReset);
+    return () => window.removeEventListener('reset-pos-cart', handleReset);
+  }, [createNewBill]);
+
+  useEffect(() => {
     Promise.all([
       menuApi.getAll({ page: 1, limit: 100 }).catch(() => ({ data: { data: [] } })),
       categoriesApi.getAll().catch(() => ({ data: { data: [] } })),

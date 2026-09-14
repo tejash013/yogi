@@ -1,16 +1,14 @@
-import { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
-import { CashierHeader, CashierSidebar } from '@/components/cashier';
+import { CashierHeader } from '@/components/cashier';
 import { ToastContainer } from '@/components/ui';
 import { useAuthStore, useToastStore } from '@/store';
 import { ROUTES } from '@/constants';
 
 /**
- * Dedicated cashier layout: cashier header + collapsible sidebar.
- * Renders global toast notifications.
+ * Dedicated cashier layout: top header with integrated navigation & quick bill creation.
+ * Full-width layout without left sidebar.
  */
 export default function CashierLayout() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const logout = useAuthStore((s) => s.logout);
   const toasts = useToastStore((s) => s.toasts);
@@ -23,22 +21,15 @@ export default function CashierLayout() {
 
   return (
     <div className="flex min-h-screen flex-col bg-neutral-50 dark:bg-neutral-900">
-      <CashierHeader onMenuClick={() => setIsSidebarOpen((o) => !o)} />
+      <CashierHeader onLogout={handleLogout} />
 
-      <div className="flex flex-1">
-        <CashierSidebar
-          isOpen={isSidebarOpen}
-          onClose={() => setIsSidebarOpen(false)}
-          onLogout={handleLogout}
-        />
-
-        <main className="flex-1 p-4 sm:p-6 lg:ml-64 lg:p-8">
-          <Outlet />
-        </main>
-      </div>
+      <main className="flex-1 p-2 sm:p-4 lg:p-6">
+        <Outlet />
+      </main>
 
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 }
+
 
