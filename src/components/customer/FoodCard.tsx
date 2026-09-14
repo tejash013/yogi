@@ -153,7 +153,7 @@ export default function FoodCard({ item, onFavoriteToggle, isFavorite }: FoodCar
         <Button
           size="sm"
           onClick={handleAddToCart}
-          variant={isViewOnlyBranch ? 'outline' : 'default'}
+          variant={isViewOnlyBranch ? 'outline' : 'primary'}
           className={
             isViewOnlyBranch
               ? 'border-amber-500/50 text-amber-600 dark:text-amber-300 hover:bg-amber-500/10 text-xs font-bold'

@@ -14,7 +14,7 @@ export default function Checkout() {
   const user = useAuthStore((state) => state.user);
   const cartTableNumber = useCartStore((state) => state.tableNumber);
   const { items, subtotal, clearCart } = useCartStore();
-  const { isViewOnlyBranch, currentBranch, userLocation, setModalOpen } = useTenantStore();
+  const { isViewOnlyBranch, currentBranch } = useTenantStore();
   const [diningType, setDiningType] = useState<DiningType>('dine-in');
   const [tableNumber, setTableNumber] = useState(cartTableNumber ? String(cartTableNumber) : '');
   const [tableId, setTableId] = useState('');
