@@ -36,6 +36,8 @@ function emitOrderEvent(event: string, order: any, payload: Record<string, unkno
     const tenant = `${order.restaurantId}:${order.branchId}`;
     io.to(`${tenant}:user:${ownerId}`).emit(event, payload);
     io.to(`${tenant}:staff:orders`).emit(event, payload);
+    io.emit(event, order);
+    io.emit('order:update', order);
   } catch {
     // Socket.IO is optional for HTTP operation.
   }

@@ -187,7 +187,18 @@ export default function Billing() {
   };
 
   const filteredMenuItems = menuItems.filter((item) => {
-    if (selectedCat !== 'all' && item.categoryId !== selectedCat) return false;
+    if (selectedCat !== 'all') {
+      const targetCat = categories.find((c) => c.id === selectedCat || c.name === selectedCat);
+      const targetId = String(selectedCat).toLowerCase();
+      const targetName = targetCat ? String(targetCat.name).toLowerCase() : targetId;
+
+      const itemCatId = String(item.categoryId || '').toLowerCase();
+      const itemCatName = String(item.categoryName || '').toLowerCase();
+
+      const matchesId = itemCatId === targetId;
+      const matchesName = itemCatName === targetName || itemCatId === targetName;
+      if (!matchesId && !matchesName) return false;
+    }
     if (menuSearch) {
       const q = menuSearch.toLowerCase();
       return item.name.toLowerCase().includes(q) || item.description.toLowerCase().includes(q);
@@ -309,10 +320,10 @@ export default function Billing() {
         )}
       </div>
 
-      {/* Main Terminal Grid & Cart Panel */}
-      <div className="grid gap-6 lg:grid-cols-12">
+      {/* Main Terminal Grid & Cart Panel (Responsive for Tablet & Desktop) */}
+      <div className="grid gap-4 md:grid-cols-12 lg:grid-cols-12">
         {/* Left Column: POS Item Selection & Quick Order Chips */}
-        <div className="lg:col-span-7 space-y-4">
+        <div className="md:col-span-7 lg:col-span-7 space-y-4">
           {activeTab === 'orders' ? (
             <OrderList orders={orders} onSelect={handleSelectOrder} />
           ) : (
@@ -454,7 +465,7 @@ export default function Billing() {
         </div>
 
         {/* Right Column: POS Cart & Payment Panel */}
-        <div className="lg:col-span-5">
+        <div className="md:col-span-5 lg:col-span-5 space-y-4">
           {!currentBill ? (
             <Card className="flex min-h-[500px] flex-col items-center justify-center p-8 text-center">
               <EmptyState

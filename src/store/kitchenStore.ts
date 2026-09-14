@@ -56,6 +56,13 @@ interface KitchenState {
   addNotification: (n: KitchenNotificationShim) => void;
 }
 
+// Auto-subscribe to global order sync events so kitchen updates instantly when cashier creates orders
+if (typeof window !== 'undefined') {
+  useOrderSyncStore.subscribe(() => {
+    void useKitchenStore.getState().fetchOrders();
+  });
+}
+
 // Local shim type to avoid importing the full kitchen notification type cycles.
 interface KitchenNotificationShim {
   id: string;
