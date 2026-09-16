@@ -46,6 +46,15 @@ const baseSidebarItems: SidebarItem[] = [
     href: ROUTES.ADMIN.ORDERS,
   },
   {
+    label: 'Invoices',
+    icon: (
+      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14h6m-6-4h6m2 10H7a2 2 0 01-2-2V6a2 2 0 012-2h7l5 5v9a2 2 0 01-2 2z" />
+      </svg>
+    ),
+    href: ROUTES.ADMIN.INVOICES,
+  },
+  {
     label: 'Customers',
     icon: (
       <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -8,9 +8,9 @@ import {
   ReceiptView,
   SplitPayment,
 } from '@/components/cashier';
-import { formatINR, useCashierStore } from '@/store';
+import { useCashierStore } from '@/store';
 import { menuApi, categoriesApi, tablesApi } from '@/api';
-import type { MenuItem, Category } from '@/types';
+import type { MenuItem } from '@/types';
 import {
   FiPlus,
   FiShoppingBag,
@@ -57,8 +57,9 @@ export default function Billing() {
   const [showReceipt, setShowReceipt] = useState(false);
   const [showInvoice, setShowInvoice] = useState(false);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
   const [menuSearch, setMenuSearch] = useState('');
+  const [categorySearch, setCategorySearch] = useState('');
   const [selectedCat, setSelectedCat] = useState<string>('all');
   const [tables, setTables] = useState<Array<{ id: string; label: string }>>([]);
   const [showCartMenu, setShowCartMenu] = useState(false);
@@ -74,11 +75,15 @@ export default function Billing() {
 
   useEffect(() => {
     Promise.all([
-      menuApi.getAll({ page: 1, limit: 100 }).catch(() => ({ data: { data: [] } })),
-      categoriesApi.getAll().catch(() => ({ data: { data: [] } })),
+      menuApi.getAll({ page: 1, limit: 500 }).catch(() => ({ data: { data: [] } })),
+      categoriesApi.getAll({ page: 1, limit: 500 }).catch(() => ({ data: { data: [] } })),
     ]).then(([mRes, cRes]) => {
       const items = Array.isArray(mRes?.data?.data) ? mRes.data.data : Array.isArray(mRes?.data) ? mRes.data : [];
-      const cats = Array.isArray(cRes?.data?.data) ? cRes.data.data : Array.isArray(cRes?.data) ? cRes.data : [];
+      const cats = (Array.isArray(cRes?.data?.data) ? cRes.data.data : Array.isArray(cRes?.data) ? cRes.data : [])
+        .map((category: any, index: number) => ({
+          id: String(category?._id ?? category?.id ?? `category-${index}`),
+          name: String(category?.name ?? category?.title ?? 'Category'),
+        }));
       setMenuItems(
         items.map((it: any) => ({
           id: String(it._id ?? it.id ?? ''),
@@ -206,11 +211,9 @@ export default function Billing() {
     return true;
   });
 
-  const popularItems = menuItems.filter((it) => it.isPopular).slice(0, 4);
-  const featuredItems = menuItems.filter((it) => it.isRecommended).slice(0, 4);
-
-  const bestSellingList = popularItems.length > 0 ? popularItems : menuItems.slice(0, 4);
-  const featuredList = featuredItems.length > 0 ? featuredItems : menuItems.slice(4, 6);
+  const visibleCategories = categories.filter((category) =>
+    category.name.toLowerCase().includes(categorySearch.trim().toLowerCase())
+  );
 
   const totals = calculateTotals();
 
@@ -269,12 +272,21 @@ export default function Billing() {
         {activeTab === 'menu' && (
           <Card padding="sm" className="bg-white/90 dark:bg-neutral-850/90 shadow-soft">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              {/* Category Horizontal Bar */}
-              <div className="flex flex-1 items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              <div className="min-w-0 flex-1">
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <p className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500">Browse categories</p>
+                  <input
+                    value={categorySearch}
+                    onChange={(event) => setCategorySearch(event.target.value)}
+                    placeholder="Find category..."
+                    className="w-36 rounded-lg border border-neutral-200 bg-neutral-50 px-2.5 py-1.5 text-[11px] font-semibold focus:border-primary-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+                  />
+                </div>
+                <div className="grid max-h-28 grid-cols-2 gap-2 overflow-y-auto pr-1 sm:grid-cols-3 lg:grid-cols-4">
                 <button
                   type="button"
                   onClick={() => setSelectedCat('all')}
-                  className={`flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all border ${
+                    className={`flex min-w-0 items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-xs font-bold transition-all ${
                     selectedCat === 'all'
                       ? 'bg-primary-500 text-white border-primary-400 shadow-md shadow-primary-500/25'
                       : 'bg-neutral-100 text-neutral-700 border-neutral-200/80 hover:bg-neutral-200 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-750'
@@ -283,7 +295,7 @@ export default function Billing() {
                   <span>🍽️</span>
                   <span>All Categories</span>
                 </button>
-                {categories.map((c) => {
+                {visibleCategories.map((c) => {
                   const icon = getCategoryIcon(c.name);
                   const isSelected = selectedCat === c.id;
                   return (
@@ -291,20 +303,20 @@ export default function Billing() {
                       key={c.id}
                       type="button"
                       onClick={() => setSelectedCat(c.id)}
-                      className={`flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all border ${
+                      className={`flex min-w-0 items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-xs font-bold transition-all ${
                         isSelected
                           ? 'bg-primary-500 text-white border-primary-400 shadow-md shadow-primary-500/25'
                           : 'bg-neutral-100 text-neutral-700 border-neutral-200/80 hover:bg-neutral-200 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-750'
                       }`}
                     >
                       <span className="text-base">{icon}</span>
-                      <span>{c.name}</span>
+                      <span className="truncate">{c.name}</span>
                     </button>
                   );
                 })}
+                </div>
               </div>
 
-              {/* Header Search Field */}
               <div className="relative shrink-0 sm:w-64">
                 <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
                 <input
@@ -328,83 +340,12 @@ export default function Billing() {
             <OrderList orders={orders} onSelect={handleSelectOrder} />
           ) : (
             <div className="space-y-4">
-              {/* Best Selling Items & Featured Items Row */}
-              {(bestSellingList.length > 0 || featuredList.length > 0) && !menuSearch && selectedCat === 'all' && (
-                <Card padding="md" className="space-y-3 bg-neutral-50/70 dark:bg-neutral-850/60 border-neutral-200/80 dark:border-neutral-800">
-                  {bestSellingList.length > 0 && (
-                    <div>
-                      <p className="text-[11px] font-extrabold uppercase tracking-wider text-rose-600 dark:text-rose-400 mb-1.5">
-                        🔥 Best Selling Items
-                      </p>
-                      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                        {bestSellingList.map((item) => {
-                          const qty = itemQtyMap.get(item.id) || 0;
-                          return (
-                            <button
-                              key={item.id}
-                              type="button"
-                              onClick={() => handleQuantityChange(item, 1)}
-                              className={`flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2 text-left transition-all ${
-                                qty > 0
-                                  ? 'border-rose-500 bg-rose-500/10 text-neutral-900 dark:text-white font-bold ring-1 ring-rose-500'
-                                  : 'border-neutral-200 bg-white hover:border-rose-400 dark:border-neutral-700 dark:bg-neutral-800'
-                              }`}
-                            >
-                              <div className="min-w-0">
-                                <p className="truncate text-xs font-bold">{item.name}</p>
-                                <p className="text-[11px] font-extrabold text-primary-500">{formatINR(item.discountPrice || item.price)}</p>
-                              </div>
-                              {qty > 0 && (
-                                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white">
-                                  {qty}
-                                </span>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {featuredList.length > 0 && (
-                    <div>
-                      <p className="text-[11px] font-extrabold uppercase tracking-wider text-amber-600 dark:text-amber-400 mb-1.5">
-                        ⭐ Featured Items
-                      </p>
-                      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                        {featuredList.map((item) => {
-                          const qty = itemQtyMap.get(item.id) || 0;
-                          return (
-                            <button
-                              key={item.id}
-                              type="button"
-                              onClick={() => handleQuantityChange(item, 1)}
-                              className={`flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2 text-left transition-all ${
-                                qty > 0
-                                  ? 'border-amber-500 bg-amber-500/10 text-neutral-900 dark:text-white font-bold ring-1 ring-amber-500'
-                                  : 'border-neutral-200 bg-white hover:border-amber-400 dark:border-neutral-700 dark:bg-neutral-800'
-                              }`}
-                            >
-                              <div className="min-w-0">
-                                <p className="truncate text-xs font-bold">{item.name}</p>
-                                <p className="text-[11px] font-extrabold text-primary-500">{formatINR(item.discountPrice || item.price)}</p>
-                              </div>
-                              {qty > 0 && (
-                                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white">
-                                  {qty}
-                                </span>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </Card>
-              )}
-
               {/* Main Dish Items Grid */}
-              <div className="max-h-[620px] overflow-y-auto pr-1">
+              <div className="max-h-[calc(100vh-300px)] min-h-[420px] overflow-y-auto pr-1">
+                <div className="mb-3 flex items-center justify-between text-xs text-neutral-500">
+                  <span>{filteredMenuItems.length} menu items</span>
+                  {selectedCat !== 'all' && <button type="button" onClick={() => setSelectedCat('all')} className="font-bold text-primary-600 hover:underline">Clear category</button>}
+                </div>
                 {filteredMenuItems.length === 0 ? (
                   <Card className="py-16 text-center text-sm text-neutral-500">
                     <p>No dishes found for this category or search.</p>
@@ -465,7 +406,7 @@ export default function Billing() {
         </div>
 
         {/* Right Column: POS Cart & Payment Panel */}
-        <div className="md:col-span-5 lg:col-span-5 space-y-4">
+        <div className="md:col-span-5 lg:col-span-5 space-y-4 md:sticky md:top-4 md:self-start">
           {!currentBill ? (
             <Card className="flex min-h-[500px] flex-col items-center justify-center p-8 text-center">
               <EmptyState

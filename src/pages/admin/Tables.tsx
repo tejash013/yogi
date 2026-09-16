@@ -4,8 +4,10 @@ import { PageHeader, TenantSelector } from '@/components/common';
 import RestaurantFloorView, { type TableItem } from '@/components/common/RestaurantFloorView';
 import { tablesApi } from '@/api';
 import { useTenantStore } from '@/store';
+import { QRCodeCanvas } from 'qrcode.react';
 
 type TableRow = TableItem;
+type QrAsset = { tableId: string; label: string; url: string };
 
 const defaultNewTable = {
   label: '',
@@ -31,6 +33,8 @@ export default function Tables() {
   const [isSaving, setIsSaving] = useState(false);
   const [createError, setCreateError] = useState('');
   const [newTable, setNewTable] = useState(defaultNewTable);
+  const [qrAsset, setQrAsset] = useState<QrAsset | null>(null);
+  const [qrLoading, setQrLoading] = useState<string | null>(null);
 
   const loadTables = async () => {
     setIsLoading(true);
@@ -110,6 +114,38 @@ export default function Tables() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleGenerateQr = async (table: TableRow) => {
+    setQrLoading(table.id);
+    try {
+      const response = await tablesApi.generateQrToken(table.id);
+      setQrAsset(response.data.data);
+    } catch (error) {
+      console.error('Failed to generate table QR', error);
+    } finally {
+      setQrLoading(null);
+    }
+  };
+
+  const handleDownloadQr = () => {
+    const canvas = document.getElementById('table-qr-canvas') as HTMLCanvasElement | null;
+    if (!canvas || !qrAsset) return;
+    const link = document.createElement('a');
+    link.download = `${qrAsset.label.replace(/\s+/g, '-').toLowerCase()}-qr.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  };
+
+  const handlePrintQr = () => {
+    const canvas = document.getElementById('table-qr-canvas') as HTMLCanvasElement | null;
+    if (!canvas || !qrAsset) return;
+    const printWindow = window.open('', '_blank', 'width=480,height=640');
+    if (!printWindow) return;
+    printWindow.document.write(`<html><head><title>${qrAsset.label} QR</title><style>body{font-family:Arial;text-align:center;padding:32px}img{width:280px;height:280px}h1{font-size:24px}p{color:#555}</style></head><body><h1>${qrAsset.label}</h1><img src="${canvas.toDataURL('image/png')}" alt="${qrAsset.label} QR code"/><p>Scan to order from this table</p></body></html>`);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
   };
 
   const summary = useMemo(() => ({
@@ -234,6 +270,22 @@ export default function Tables() {
         </Card>
       ) : null}
 
+      {qrAsset ? (
+        <Card className="flex flex-col items-center gap-4 rounded-[28px] border-emerald-200 bg-emerald-50/70 p-6 text-center dark:border-emerald-900 dark:bg-emerald-950/20">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-300">Table QR ready</p>
+            <h3 className="mt-1 text-xl font-bold text-neutral-900 dark:text-white">{qrAsset.label}</h3>
+          </div>
+          <QRCodeCanvas id="table-qr-canvas" value={qrAsset.url} size={240} includeMargin level="H" />
+          <p className="max-w-lg break-all text-xs text-neutral-500">{qrAsset.url}</p>
+          <div className="flex flex-wrap justify-center gap-2">
+            <Button onClick={handleDownloadQr}>Download PNG</Button>
+            <Button variant="outline" onClick={handlePrintQr}>Print QR</Button>
+            <Button variant="ghost" onClick={() => setQrAsset(null)}>Close</Button>
+          </div>
+        </Card>
+      ) : null}
+
       {viewMode === 'floor' ? (
         <RestaurantFloorView
           tables={tables}
@@ -313,6 +365,11 @@ export default function Tables() {
                         No special notes for this table.
                       </p>
                     )}
+                    <div className="mt-4 flex gap-2">
+                      <Button size="sm" variant="outline" disabled={qrLoading === table.id} onClick={() => void handleGenerateQr(table)}>
+                        {qrLoading === table.id ? 'Generating...' : 'Generate QR'}
+                      </Button>
+                    </div>
                   </Card>
                 );
               })}

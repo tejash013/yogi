@@ -16,6 +16,7 @@ import {
   tablesRouter,
   usersRouter,
   reviewsRouter,
+  subscriptionsRouter,
 } from './routes/index.js';
 import { checkDbConnection } from './db.js';
 import { errorHandler } from './middleware/errorHandler.js';
@@ -163,6 +164,7 @@ app.use('/api/settings', settingsRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/reviews', reviewsRouter);
 app.use('/api/tenants', tenantsRouter);
+app.use('/api/subscriptions', subscriptionsRouter);
 
 app.use((_req, res) => {
   res.status(404).json({ success: false, data: null, message: 'Endpoint not found' });

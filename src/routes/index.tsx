@@ -36,10 +36,12 @@ const Rewards = lazyPage(() => import('@/pages/customer'), 'Rewards');
 const Coupons = lazyPage(() => import('@/pages/customer'), 'Coupons');
 const Feedback = lazyPage(() => import('@/pages/customer'), 'Feedback');
 const CustomerTables = lazyPage(() => import('@/pages/customer'), 'CustomerTables');
+const ScanTable = lazyPage(() => import('@/pages/customer'), 'ScanTable');
 const AdminDashboard = lazyPage(() => import('@/pages/admin'), 'AdminDashboard');
 const MenuManagement = lazyPage(() => import('@/pages/admin'), 'MenuManagement');
 const AdminCategories = lazyPage(() => import('@/pages/admin'), 'AdminCategories');
 const AdminOrders = lazyPage(() => import('@/pages/admin'), 'AdminOrders');
+const AdminInvoices = lazyPage(() => import('@/pages/admin'), 'AdminInvoices');
 const AdminCustomers = lazyPage(() => import('@/pages/admin'), 'AdminCustomers');
 const AdminEmployees = lazyPage(() => import('@/pages/admin'), 'AdminEmployees');
 const AdminTables = lazyPage(() => import('@/pages/admin'), 'AdminTables');
@@ -61,8 +63,10 @@ const Analytics = lazyPage(() => import('@/pages/owner'), 'Analytics');
 const Revenue = lazyPage(() => import('@/pages/owner'), 'Revenue');
 const Expenses = lazyPage(() => import('@/pages/owner'), 'Expenses');
 const OwnerReports = lazyPage(() => import('@/pages/owner'), 'OwnerReports');
+const OwnerSubscription = lazyPage(() => import('@/pages/owner'), 'OwnerSubscription');
 const Error403 = lazy(() => import('@/pages/errors/Error403'));
 const Workspace = lazyPage(() => import('@/pages/saas'), 'Workspace');
+const Subscriptions = lazyPage(() => import('@/pages/saas'), 'Subscriptions');
 
 const router = createBrowserRouter([
   // Root redirect
@@ -100,6 +104,15 @@ const router = createBrowserRouter([
     ),
     children: [{ index: true, element: <AdminUsers /> }],
   },
+  {
+    path: ROUTES.PLATFORM_ADMIN.SUBSCRIPTIONS,
+    element: (
+      <ProtectedRoute roles={['platformAdmin']}>
+        <PlatformAdminLayout />
+      </ProtectedRoute>
+    ),
+    children: [{ index: true, element: <Subscriptions /> }],
+  },
 
   // Auth routes
   {
@@ -111,6 +124,12 @@ const router = createBrowserRouter([
       { path: 'register', element: <Register /> },
       { path: 'forgot-password', element: <ForgotPassword /> },
     ],
+  },
+
+  // Customer routes
+  {
+    path: '/scan/table/:token',
+    element: <ScanTable />,
   },
 
   // Customer routes
@@ -150,6 +169,7 @@ const router = createBrowserRouter([
       { path: 'menu', element: <MenuManagement /> },
       { path: 'categories', element: <AdminCategories /> },
       { path: 'orders', element: <AdminOrders /> },
+      { path: 'invoices', element: <AdminInvoices /> },
       { path: 'customers', element: <AdminCustomers /> },
       { path: 'employees', element: <AdminEmployees /> },
       {
@@ -224,6 +244,7 @@ const router = createBrowserRouter([
       { path: 'revenue', element: <Revenue /> },
       { path: 'expenses', element: <Expenses /> },
       { path: 'reports', element: <OwnerReports /> },
+      { path: 'subscription', element: <OwnerSubscription /> },
     ],
   },
 

@@ -12,4 +12,5 @@ import settingsRouter from './settings.js';
 import tablesRouter from './tables.js';
 import usersRouter from './users.js';
 import reviewsRouter from './reviews.js';
-export { authRouter, categoriesRouter, employeesRouter, inventoryRouter, invoicesRouter, menuRouter, offersRouter, ordersRouter, reportsRouter, schemaRouter, settingsRouter, tablesRouter, usersRouter, reviewsRouter, };
+import subscriptionsRouter from './subscriptions.js';
+export { authRouter, categoriesRouter, employeesRouter, inventoryRouter, invoicesRouter, menuRouter, offersRouter, ordersRouter, reportsRouter, schemaRouter, settingsRouter, tablesRouter, usersRouter, reviewsRouter, subscriptionsRouter, };

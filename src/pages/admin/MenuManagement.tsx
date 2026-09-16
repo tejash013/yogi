@@ -169,6 +169,26 @@ export default function MenuManagement() {
     reader.readAsDataURL(file);
   };
 
+  const handleDeleteItem = async (item: MenuItemRow) => {
+    if (!item.id) return;
+    const shouldDelete = window.confirm(`Delete "${item.title}" from the menu?`);
+    if (!shouldDelete) return;
+
+    try {
+      setError('');
+      await menuApi.delete(item.id);
+      useOrderSyncStore.getState().notifyResourceChange({
+        type: 'delete',
+        resource: 'menu',
+        at: new Date().toISOString(),
+      });
+      await loadData();
+    } catch (deleteError: any) {
+      const serverMessage = deleteError?.response?.data?.message || deleteError?.response?.data?.error;
+      setError(serverMessage || 'Unable to delete menu item.');
+    }
+  };
+
   const columns: Column<MenuItemRow>[] = [
     {
       key: 'title',
@@ -188,7 +208,16 @@ export default function MenuManagement() {
       render: (item) => <Badge variant={item.status === 'Available' ? 'success' : 'error'} size="sm">{item.status}</Badge>,
     },
     { key: 'rating', header: 'Rating' },
-    { key: 'id', header: 'Actions', render: (item) => <Button size="sm" variant="outline" onClick={() => editItem(item)}>Edit</Button> },
+    {
+      key: 'id',
+      header: 'Actions',
+      render: (item) => (
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => editItem(item)}>Edit</Button>
+          <Button size="sm" variant="danger" onClick={() => handleDeleteItem(item)}>Delete</Button>
+        </div>
+      ),
+    },
   ];
 
   return (

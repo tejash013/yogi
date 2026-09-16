@@ -80,6 +80,15 @@ const sidebarItems: SidebarItem[] = [
     ),
     href: ROUTES.OWNER.REPORTS,
   },
+  {
+    label: 'Subscription',
+    icon: (
+      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-2.5 0-4 1.1-4 2.5S9.5 13 12 13s4 1.1 4 2.5S14.5 18 12 18m0-10V6m0 12v-2m7-4a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+    ),
+    href: ROUTES.OWNER.SUBSCRIPTION,
+  },
 ];
 
 export default function OwnerLayout() {

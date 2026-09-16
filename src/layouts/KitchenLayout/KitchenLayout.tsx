@@ -3,12 +3,14 @@ import { Outlet } from 'react-router-dom';
 import { KitchenHeader, KitchenSidebar } from '@/components/kitchen';
 import { ToastContainer } from '@/components/ui';
 import { useToastStore, useKitchenStore } from '@/store';
+import { useOrderAlertSound } from '@/hooks/useOrderAlert';
 
 /**
  * Main kitchen layout: sticky header + collapsible sidebar + content area.
  * Also renders global toast notifications and manages live order polling.
  */
 export default function KitchenLayout() {
+  useOrderAlertSound({ repeatUntilAccepted: true });
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const toasts = useToastStore((s) => s.toasts);
   const dismissToast = useToastStore((s) => s.dismissToast);

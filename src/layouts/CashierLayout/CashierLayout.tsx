@@ -3,12 +3,14 @@ import { CashierHeader } from '@/components/cashier';
 import { ToastContainer } from '@/components/ui';
 import { useAuthStore, useToastStore } from '@/store';
 import { ROUTES } from '@/constants';
+import { useOrderAlertSound } from '@/hooks/useOrderAlert';
 
 /**
  * Dedicated cashier layout: top header with integrated navigation & quick bill creation.
  * Full-width layout without left sidebar.
  */
 export default function CashierLayout() {
+  useOrderAlertSound();
   const navigate = useNavigate();
   const logout = useAuthStore((s) => s.logout);
   const toasts = useToastStore((s) => s.toasts);

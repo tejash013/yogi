@@ -36,6 +36,7 @@ export const ROUTES = {
     MENU_MANAGEMENT: '/admin/menu',
     CATEGORIES: '/admin/categories',
     ORDERS: '/admin/orders',
+    INVOICES: '/admin/invoices',
     CUSTOMERS: '/admin/customers',
     EMPLOYEES: '/admin/employees',
     USERS: '/admin/users',
@@ -69,12 +70,14 @@ export const ROUTES = {
     REVENUE: '/owner/revenue',
     EXPENSES: '/owner/expenses',
     REPORTS: '/owner/reports',
+    SUBSCRIPTION: '/owner/subscription',
   },
 
   WORKSPACE: '/workspace',
   PLATFORM_ADMIN: {
     DASHBOARD: '/platform-admin/dashboard',
     USERS: '/workspace/users',
+    SUBSCRIPTIONS: '/workspace/subscriptions',
   },
 
   // Error routes

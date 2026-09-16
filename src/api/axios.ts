@@ -36,6 +36,24 @@ function redirectToLoginIfNeeded() {
   }
 }
 
+let refreshPromise: Promise<string> | null = null;
+
+function refreshAccessToken() {
+  if (!refreshPromise) {
+    refreshPromise = axios
+      .post(`${config.api.baseUrl}/api/auth/refresh`, {}, { withCredentials: true })
+      .then((response) => {
+        const token = response.data.data.token as string;
+        localStorage.setItem('restaurantos-token', token);
+        return token;
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+  return refreshPromise;
+}
+
 // Request interceptor
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
@@ -85,13 +103,7 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const response = await axios.post(
-          `${config.api.baseUrl}/api/auth/refresh`,
-          undefined,
-          { withCredentials: true }
-        );
-        const { token } = response.data.data;
-        localStorage.setItem('restaurantos-token', token);
+        const token = await refreshAccessToken();
         originalRequest.headers.Authorization = `Bearer ${token}`;
         return apiClient(originalRequest);
       } catch {

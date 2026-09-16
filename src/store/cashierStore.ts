@@ -19,6 +19,7 @@ import { formatProperAddress } from '@/utils';
 
 export interface RestaurantInfo {
   name: string;
+  branchName: string;
   address: string;
   phone: string;
   email: string;
@@ -28,6 +29,7 @@ export interface RestaurantInfo {
 
 export const defaultRestaurantInfo: RestaurantInfo = {
   name: 'Yogi Restaurant',
+  branchName: 'Main Branch',
   address: 'Station Road, Near Sardar Patel Ashram, Bardoli, Gujarat 394601, India',
   phone: '+91 98251 23456',
   email: 'contact@yogirestaurant.com',
@@ -313,6 +315,20 @@ const syncBillUpdateToBackend = async (bill: CashierOrder) => {
   } catch {}
 };
 
+const buildRestaurantInfo = (
+  restaurant: ReturnType<typeof useTenantStore.getState>['currentRestaurant'],
+  branch: ReturnType<typeof useTenantStore.getState>['currentBranch'],
+  settings: Partial<RestaurantInfo> = {},
+): RestaurantInfo => ({
+  name: restaurant?.name || settings.name || defaultRestaurantInfo.name,
+  branchName: branch?.name || settings.branchName || defaultRestaurantInfo.branchName,
+  address: formatProperAddress(branch || restaurant || settings, defaultRestaurantInfo.address),
+  phone: branch?.phone || restaurant?.phone || settings.phone || defaultRestaurantInfo.phone,
+  email: branch?.email || restaurant?.email || settings.email || defaultRestaurantInfo.email,
+  gstNumber: restaurant?.gstNumber || settings.gstNumber || defaultRestaurantInfo.gstNumber,
+  tagline: restaurant?.tagline || settings.tagline || defaultRestaurantInfo.tagline,
+});
+
 const hydrateCashierData = async () => {
   try {
     const [ordersResponse, invoicesResponse, couponResponse, settingsResponse] = await Promise.all([
@@ -330,19 +346,10 @@ const hydrateCashierData = async () => {
     const activeRestaurant = tenantState.currentRestaurant;
     const rawSettings = settingsResponse?.data?.data ?? {};
 
-    const resolvedAddress = formatProperAddress(
-      activeBranch?.address ? activeBranch : activeRestaurant?.address ? activeRestaurant : { address: rawSettings.address },
-      defaultRestaurantInfo.address
-    );
-
-    const restaurantInfo: RestaurantInfo = {
-      name: activeBranch?.name || activeRestaurant?.name || rawSettings.name || defaultRestaurantInfo.name,
-      address: resolvedAddress,
-      phone: activeBranch?.phone || activeRestaurant?.phone || rawSettings.phone || defaultRestaurantInfo.phone,
-      email: activeBranch?.email || activeRestaurant?.email || rawSettings.email || defaultRestaurantInfo.email,
-      gstNumber: '',
-      tagline: activeRestaurant?.tagline || rawSettings.tagline || defaultRestaurantInfo.tagline,
-    };
+    const restaurantInfo = buildRestaurantInfo(activeRestaurant, activeBranch, {
+      ...rawSettings,
+      address: rawSettings.address,
+    });
 
     const dynamicTaxes: TaxRule[] = [];
 
@@ -406,18 +413,7 @@ const hydrateCashierData = async () => {
     const tenantState = useTenantStore.getState();
     const activeBranch = tenantState.currentBranch;
     const activeRestaurant = tenantState.currentRestaurant;
-    const resolvedAddress = formatProperAddress(
-      activeBranch?.address ? activeBranch : activeRestaurant?.address ? activeRestaurant : undefined,
-      defaultRestaurantInfo.address
-    );
-    const fallbackInfo: RestaurantInfo = {
-      name: activeBranch?.name || activeRestaurant?.name || defaultRestaurantInfo.name,
-      address: resolvedAddress,
-      phone: activeBranch?.phone || activeRestaurant?.phone || defaultRestaurantInfo.phone,
-      email: activeBranch?.email || activeRestaurant?.email || defaultRestaurantInfo.email,
-      gstNumber: '',
-      tagline: activeRestaurant?.tagline || defaultRestaurantInfo.tagline,
-    };
+    const fallbackInfo = buildRestaurantInfo(activeRestaurant, activeBranch);
     useCashierStore.setState((prev) => ({
       restaurantInfo: fallbackInfo,
       orders: storedActiveBill ? [storedActiveBill] : [],
@@ -919,6 +915,10 @@ splitPayments: [],
               if (invId) {
                 return invoicesApi.updateStatus(invId, { status: 'paid', transactionId: txnId });
               }
+              return undefined;
+            })
+            .then(() => {
+              useOrderSyncStore.getState().notifyResourceChange({ type: 'create', resource: 'invoice', at: new Date().toISOString() });
             })
             .catch(() => {});
           ordersApi.updateStatus(realId, 'completed').catch(() => {});
@@ -931,6 +931,10 @@ splitPayments: [],
           if (invId) {
             return invoicesApi.updateStatus(invId, { status: 'paid', transactionId: txnId });
           }
+          return undefined;
+        })
+        .then(() => {
+          useOrderSyncStore.getState().notifyResourceChange({ type: 'create', resource: 'invoice', at: new Date().toISOString() });
         })
         .catch(() => {});
 
@@ -1143,19 +1147,8 @@ if (typeof window !== 'undefined') {
     const activeBranch = tenantState.currentBranch;
     const activeRestaurant = tenantState.currentRestaurant;
     if (activeBranch || activeRestaurant) {
-      const resolvedAddress = formatProperAddress(
-        activeBranch?.address ? activeBranch : activeRestaurant?.address ? activeRestaurant : undefined,
-        defaultRestaurantInfo.address
-      );
       useCashierStore.setState((prev) => ({
-        restaurantInfo: {
-          ...prev.restaurantInfo,
-          name: activeBranch?.name || activeRestaurant?.name || prev.restaurantInfo.name,
-          address: resolvedAddress,
-          phone: activeBranch?.phone || activeRestaurant?.phone || prev.restaurantInfo.phone,
-          email: activeBranch?.email || activeRestaurant?.email || prev.restaurantInfo.email,
-          tagline: activeRestaurant?.tagline || prev.restaurantInfo.tagline,
-        },
+        restaurantInfo: buildRestaurantInfo(activeRestaurant, activeBranch, prev.restaurantInfo),
       }));
     }
   });

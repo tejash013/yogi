@@ -21,6 +21,7 @@ export default function ReceiptView({ invoice }: Props) {
     <div className="mx-auto w-[300px] bg-white p-4 font-mono text-xs text-neutral-900">
       <div className="text-center">
         <p className="text-base font-bold">{restaurantInfo.name}</p>
+        <p>{restaurantInfo.branchName}</p>
         <p>{restaurantInfo.address}</p>
         <p>{restaurantInfo.phone}</p>
       </div>

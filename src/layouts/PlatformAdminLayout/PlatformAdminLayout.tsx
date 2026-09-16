@@ -37,7 +37,7 @@ export default function PlatformAdminLayout() {
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#df714c]">Control plane</p>
             <p className="mt-1 text-sm text-[#68736d]">{user?.email}</p>
           </div>
-          {[{ label: 'Platform Dashboard', href: ROUTES.PLATFORM_ADMIN.DASHBOARD }, { label: 'User Access', href: ROUTES.PLATFORM_ADMIN.USERS }].map((item) => (
+          {[{ label: 'Platform Dashboard', href: ROUTES.PLATFORM_ADMIN.DASHBOARD }, { label: 'User Access', href: ROUTES.PLATFORM_ADMIN.USERS }, { label: 'Subscriptions', href: ROUTES.PLATFORM_ADMIN.SUBSCRIPTIONS }].map((item) => (
             <Link key={item.href} to={item.href} onClick={() => setIsMenuOpen(false)} className={`mb-1 flex h-11 items-center rounded-xl px-3 text-sm font-semibold ${location.pathname === item.href ? 'bg-[#173c35] text-white' : 'text-[#52605a] hover:bg-[#f4f1ea]'}`}>
               {item.label}
             </Link>

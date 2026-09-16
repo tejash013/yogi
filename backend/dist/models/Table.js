@@ -8,6 +8,8 @@ const tableSchema = new Schema({
     capacity: { type: Number, required: true },
     location: { type: String, trim: true },
     notes: { type: String, trim: true },
+    qrTokenHash: { type: String, trim: true, unique: true, sparse: true, index: true },
+    qrTokenIssuedAt: { type: Date },
 }, { timestamps: true });
 tableSchema.index({ restaurantId: 1, branchId: 1, label: 1 }, { unique: true });
 export default model('Table', tableSchema);

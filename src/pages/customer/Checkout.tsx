@@ -13,11 +13,12 @@ export default function Checkout() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const cartTableNumber = useCartStore((state) => state.tableNumber);
+  const cartTableId = useCartStore((state) => state.tableId);
   const { items, subtotal, clearCart } = useCartStore();
   const { isViewOnlyBranch, currentBranch } = useTenantStore();
   const [diningType, setDiningType] = useState<DiningType>('dine-in');
   const [tableNumber, setTableNumber] = useState(cartTableNumber ? String(cartTableNumber) : '');
-  const [tableId, setTableId] = useState('');
+  const [tableId, setTableId] = useState(cartTableId || '');
   const [tables, setTables] = useState<Array<{ id: string; label: string }>>([]);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [showEditCustomer, setShowEditCustomer] = useState(false);
@@ -49,6 +50,10 @@ export default function Checkout() {
       setTableNumber(String(cartTableNumber));
     }
   }, [cartTableNumber]);
+
+  useEffect(() => {
+    if (cartTableId) setTableId(cartTableId);
+  }, [cartTableId]);
 
   useEffect(() => {
     settingsApi.get()

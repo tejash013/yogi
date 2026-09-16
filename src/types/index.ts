@@ -196,6 +196,7 @@ export interface Cart {
   discount: number;
   total: number;
   deliveryType: 'dine-in' | 'takeaway' | 'delivery';
+  tableId?: string;
   tableNumber?: number;
   deliveryAddress?: string;
   specialInstructions?: string;
@@ -209,6 +210,7 @@ export interface Table {
   status: 'available' | 'occupied' | 'reserved' | 'cleaning' | 'maintenance';
   location: string;
   qrCode?: string;
+  qrTokenIssuedAt?: string;
 }
 
 // Employee Types

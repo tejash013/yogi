@@ -12,4 +12,5 @@ export { default as Rewards } from './Rewards';
 export { default as Coupons } from './Coupons';
 export { default as Feedback } from './Feedback';
 export { default as CustomerTables } from './Tables';
+export { default as ScanTable } from './ScanTable';
 

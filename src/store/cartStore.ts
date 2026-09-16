@@ -9,6 +9,7 @@ interface CartState extends Cart {
   updateSpecialInstructions: (menuItemId: string, instructions: string) => void;
   setDeliveryType: (type: Cart['deliveryType']) => void;
   setTableNumber: (tableNumber: number | undefined) => void;
+  setTableContext: (context: { tableId: string; tableNumber?: number }) => void;
   setDeliveryAddress: (address: string | undefined) => void;
   clearCart: () => void;
   recalculateTotals: () => void;
@@ -36,6 +37,7 @@ export const useCartStore = create<CartState>((set) => ({
   total: 0,
   deliveryType: 'dine-in',
   tableNumber: storedTable ? Number(storedTable) || undefined : undefined,
+  tableId: typeof window !== 'undefined' ? localStorage.getItem('restaurantos-table-id') || undefined : undefined,
   deliveryAddress: undefined,
   specialInstructions: undefined,
 
@@ -108,7 +110,15 @@ export const useCartStore = create<CartState>((set) => ({
       if (tableNumber) localStorage.setItem('restaurantos-table-number', String(tableNumber));
       else localStorage.removeItem('restaurantos-table-number');
     }
-    set({ tableNumber });
+    set({ tableNumber, tableId: undefined });
+  },
+
+  setTableContext: ({ tableId, tableNumber }) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('restaurantos-table-id', tableId);
+      if (tableNumber) localStorage.setItem('restaurantos-table-number', String(tableNumber));
+    }
+    set({ tableId, tableNumber });
   },
 
   setDeliveryAddress: (deliveryAddress: string | undefined) =>
@@ -122,6 +132,7 @@ export const useCartStore = create<CartState>((set) => ({
       discount: 0,
       total: 0,
       deliveryType: 'dine-in',
+      tableId: undefined,
       tableNumber: undefined,
       deliveryAddress: undefined,
       specialInstructions: undefined,

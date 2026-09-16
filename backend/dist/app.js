@@ -1,7 +1,7 @@
 import 'express-async-errors';
 import express from 'express';
 import cors from 'cors';
-import { authRouter, categoriesRouter, employeesRouter, inventoryRouter, invoicesRouter, menuRouter, offersRouter, ordersRouter, reportsRouter, schemaRouter, settingsRouter, tablesRouter, usersRouter, reviewsRouter, } from './routes/index.js';
+import { authRouter, categoriesRouter, employeesRouter, inventoryRouter, invoicesRouter, menuRouter, offersRouter, ordersRouter, reportsRouter, schemaRouter, settingsRouter, tablesRouter, usersRouter, reviewsRouter, subscriptionsRouter, } from './routes/index.js';
 import { checkDbConnection } from './db.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import helmet from 'helmet';
@@ -140,6 +140,7 @@ app.use('/api/settings', settingsRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/reviews', reviewsRouter);
 app.use('/api/tenants', tenantsRouter);
+app.use('/api/subscriptions', subscriptionsRouter);
 app.use((_req, res) => {
     res.status(404).json({ success: false, data: null, message: 'Endpoint not found' });
 });

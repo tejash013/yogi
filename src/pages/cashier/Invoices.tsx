@@ -27,6 +27,7 @@ export default function Invoices() {
   const handleDownload = (inv: Invoice) => {
     const lines = [
       restaurantInfo.name,
+      restaurantInfo.branchName,
       restaurantInfo.address,
       restaurantInfo.phone,
       restaurantInfo.email,

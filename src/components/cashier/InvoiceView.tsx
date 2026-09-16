@@ -27,6 +27,7 @@ export default function InvoiceView({ invoice, onClose, onPrint }: Props) {
             <h3 className="text-xl font-bold text-neutral-900 dark:text-white">
               {restaurantInfo.name}
             </h3>
+            <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{restaurantInfo.branchName}</p>
             <p className="mt-1 text-sm text-neutral-500">{restaurantInfo.tagline}</p>
             <p className="mt-1 text-sm text-neutral-500">{restaurantInfo.address}</p>
             <p className="text-sm text-neutral-500">

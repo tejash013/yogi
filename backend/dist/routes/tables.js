@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { createHash, randomBytes } from 'crypto';
 import Table from '../models/Table.js';
 import { paginated, success, failure } from '../utils/response.js';
 import { validateBody, validateParams, validateQuery } from '../middleware/validate.js';
@@ -22,6 +23,25 @@ function emitTableEvent(event, table) {
 function paginate(items, total, page, limit) {
     return paginated(items, total, page, limit);
 }
+function hashQrToken(token) {
+    return createHash('sha256').update(token).digest('hex');
+}
+// Resolve QR identity independently of request tenant headers.
+router.get('/qr/:token', optionalAuth, async (req, res) => {
+    const token = String(req.params.token || '');
+    if (!/^[a-f0-9]{32}$/i.test(token))
+        return res.status(404).json(failure('QR code not found'));
+    const table = await Table.findOne({ qrTokenHash: hashQrToken(token) }).lean().exec();
+    if (!table)
+        return res.status(404).json(failure('QR code not found or expired'));
+    return res.json(success({
+        restaurantId: String(table.restaurantId),
+        branchId: String(table.branchId),
+        tableId: String(table._id),
+        label: table.label,
+        status: table.status,
+    }, 'Table QR resolved'));
+});
 // GET /api/tables - Publicly readable for customers and staff directly from database
 router.get('/', optionalAuth, validateQuery(tableQuerySchema), async (req, res) => {
     const page = Number(req.query.page ?? 1);
@@ -45,6 +65,26 @@ router.get('/:id', optionalAuth, validateParams(idParamSchema), async (req, res)
         return res.status(404).json(failure('Table not found'));
     }
     return res.json(success(table, 'Table loaded'));
+});
+// POST /api/tables/:id/qr-token - Issue or rotate a table QR token
+router.post('/:id/qr-token', authenticate, requirePermission(permissions.tablesManage), validateParams(idParamSchema), async (req, res) => {
+    const token = randomBytes(16).toString('hex');
+    const table = await Table.findOneAndUpdate({ _id: req.params.id, ...tenantFilter(req) }, { qrTokenHash: hashQrToken(token), qrTokenIssuedAt: new Date() }, { new: true }).lean().exec();
+    if (!table)
+        return res.status(404).json(failure('Table not found'));
+    return res.json(success({
+        tableId: String(table._id),
+        label: table.label,
+        token,
+        url: `${process.env.FRONTEND_URL?.split(',')[0] || 'http://localhost:5173'}/scan/table/${token}`,
+    }, 'Table QR generated'));
+});
+// DELETE /api/tables/:id/qr-token - Revoke a table QR token
+router.delete('/:id/qr-token', authenticate, requirePermission(permissions.tablesManage), validateParams(idParamSchema), async (req, res) => {
+    const table = await Table.findOneAndUpdate({ _id: req.params.id, ...tenantFilter(req) }, { $unset: { qrTokenHash: 1, qrTokenIssuedAt: 1 } }, { new: true }).lean().exec();
+    if (!table)
+        return res.status(404).json(failure('Table not found'));
+    return res.json(success(null, 'Table QR revoked'));
 });
 // POST /api/tables - Create new table (Staff only)
 router.post('/', authenticate, requirePermission(permissions.tablesManage), validateBody(tableCreateSchema), async (req, res) => {

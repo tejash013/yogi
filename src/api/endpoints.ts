@@ -75,6 +75,44 @@ export const tenantsApi = {
     apiClient.delete<ApiResponse<null>>(`/api/tenants/branches/${id}`, { params: { permanent } }),
 };
 
+export interface SubscriptionPlan {
+  id: string;
+  name: string;
+  key: string;
+  description?: string;
+  amount: number;
+  currency: string;
+  billingCycle: 'monthly' | 'yearly';
+  isActive: boolean;
+}
+
+export interface RestaurantSubscription {
+  id: string;
+  restaurantId: string;
+  restaurantName?: string;
+  ownerId: string;
+  ownerName?: string;
+  plan?: SubscriptionPlan;
+  status: 'trial' | 'active' | 'past_due' | 'cancelled' | 'expired' | 'suspended';
+  billingCycle: 'monthly' | 'yearly';
+  amount: number;
+  currency: string;
+  trialEndsAt?: string;
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  cancelledAt?: string;
+}
+
+export const subscriptionsApi = {
+  getPlans: () => apiClient.get<ApiResponse<SubscriptionPlan[]>>('/api/subscriptions/plans'),
+  getCurrent: () => apiClient.get<ApiResponse<RestaurantSubscription>>('/api/subscriptions/current'),
+  getRestaurants: () => apiClient.get<ApiResponse<RestaurantSubscription[]>>('/api/subscriptions/restaurants'),
+  updateRestaurant: (restaurantId: string, payload: { status?: RestaurantSubscription['status']; planId?: string; currentPeriodEnd?: string }) =>
+    apiClient.patch<ApiResponse<RestaurantSubscription>>(`/api/subscriptions/restaurants/${restaurantId}`, payload),
+  createPlan: (payload: Omit<SubscriptionPlan, 'id' | 'isActive'> & { isActive?: boolean }) =>
+    apiClient.post<ApiResponse<SubscriptionPlan>>('/api/subscriptions/plans', payload),
+};
+
 // Menu API
 export const menuApi = {
   getAll: (params?: PaginationParams) =>
@@ -88,6 +126,9 @@ export const menuApi = {
 
   update: (id: string, item: Partial<MenuItem> & { title?: string; category?: string }) =>
     apiClient.patch<ApiResponse<MenuItem>>(`/api/menu/${id}`, item),
+
+  delete: (id: string) =>
+    apiClient.delete<ApiResponse<MenuItem>>(`/api/menu/${id}`),
 
   getPopular: () =>
     apiClient.get<ApiResponse<MenuItem[]>>('/api/menu/popular'),
@@ -103,8 +144,8 @@ export const menuApi = {
 
 // Categories API
 export const categoriesApi = {
-  getAll: () =>
-    apiClient.get<ApiResponse<Category[]>>('/api/categories'),
+  getAll: (params?: PaginationParams) =>
+    apiClient.get<PaginatedResponse<Category>>('/api/categories', { params }),
 
   getById: (id: string) =>
     apiClient.get<ApiResponse<Category>>(`/api/categories/${id}`),
@@ -166,6 +207,12 @@ export const tablesApi = {
 
   reserve: (id: string) =>
     apiClient.post<ApiResponse<Table>>(`/api/tables/${id}/reserve`),
+  generateQrToken: (id: string) =>
+    apiClient.post<ApiResponse<{ tableId: string; label: string; token: string; url: string }>>(`/api/tables/${id}/qr-token`),
+  revokeQrToken: (id: string) =>
+    apiClient.delete<ApiResponse<null>>(`/api/tables/${id}/qr-token`),
+  resolveQrToken: (token: string) =>
+    apiClient.get<ApiResponse<{ restaurantId: string; branchId: string; tableId: string; label: string; status: string }>>(`/api/tables/qr/${token}`),
 };
 
 // Employees API

@@ -12,6 +12,7 @@ import settingsRouter from './settings.js';
 import tablesRouter from './tables.js';
 import usersRouter from './users.js';
 import reviewsRouter from './reviews.js';
+import subscriptionsRouter from './subscriptions.js';
 
 export {
   authRouter,
@@ -28,4 +29,5 @@ export {
   tablesRouter,
   usersRouter,
   reviewsRouter,
+  subscriptionsRouter,
 };
