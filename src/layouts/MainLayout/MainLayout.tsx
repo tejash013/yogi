@@ -18,7 +18,7 @@ export default function MainLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen flex-col bg-neutral-50 dark:bg-neutral-900">
+    <div className="flex min-h-[100dvh] flex-col bg-neutral-50 dark:bg-neutral-900">
       <Navbar
         items={navItems}
         showMobileMenu={true}
@@ -34,7 +34,7 @@ export default function MainLayout({
         }
       />
 
-      <div className="flex flex-1">
+      <div className="flex min-w-0 flex-1">
         {sidebar && (
           <div className="hidden lg:block">
             {sidebar}
@@ -51,7 +51,7 @@ export default function MainLayout({
           />
         )}
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8">
+        <main className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
           <Outlet />
         </main>
       </div>

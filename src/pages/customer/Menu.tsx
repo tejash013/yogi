@@ -69,11 +69,11 @@ export default function Menu() {
     const loadData = async () => {
       try {
         const [menuRes, categoriesRes] = await Promise.all([
-          menuApi.getAll({ page: 1, limit: 100 }).catch(() => ({ data: { data: [] } })),
+          menuApi.getAllItems().catch(() => []),
           categoriesApi.getAll().catch(() => ({ data: { data: [] } })),
         ]);
 
-        const items = Array.isArray(menuRes?.data?.data) ? menuRes.data.data : Array.isArray(menuRes?.data) ? menuRes.data : [];
+        const items = Array.isArray(menuRes) ? menuRes : [];
         const categoryList = Array.isArray(categoriesRes?.data?.data) ? categoriesRes.data.data : Array.isArray(categoriesRes?.data) ? categoriesRes.data : [];
 
         setMenuItems(items.map(normalizeMenuItem));

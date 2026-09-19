@@ -1,3 +1,5 @@
+@reference "../index.css";
+
 /* Additional global styles beyond Tailwind */
 
 @layer base {
@@ -10,13 +12,40 @@
     transition: background-color 0.3s ease, color 0.3s ease;
   }
 
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    -webkit-tap-highlight-color: transparent;
+  }
+
   * {
     @apply border-neutral-200 dark:border-neutral-700;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    @apply text-neutral-900 dark:text-neutral-100;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    @apply text-neutral-400 dark:text-neutral-500;
+  }
+
+  select option {
+    @apply bg-white text-neutral-900 dark:bg-neutral-850 dark:text-neutral-100;
   }
 }
 
 @layer components {
   .auth-shell {
+    min-height: 100dvh;
+    padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+    padding-top: max(1.25rem, env(safe-area-inset-top));
     background:
       radial-gradient(circle at 8% 12%, rgba(251, 146, 60, 0.8), transparent 28%),
       radial-gradient(circle at 92% 86%, rgba(45, 212, 191, 0.72), transparent 30%),
@@ -56,7 +85,7 @@
   }
 
   .page-container {
-    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+    @apply mx-auto w-full max-w-7xl min-w-0 px-4 sm:px-6 lg:px-8;
   }
 
   .section-title {

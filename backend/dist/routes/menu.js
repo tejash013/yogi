@@ -9,6 +9,9 @@ import { permissions } from '../auth/permissions.js';
 import { tenantFilter } from '../utils/tenant.js';
 import { uploadImage } from '../utils/cloudinaryUpload.js';
 const router = Router();
+function exactTitleRegex(title) {
+    return new RegExp(`^${title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
+}
 async function resolveMenuImage(image, tenant) {
     if (typeof image !== 'string')
         return { value: image };
@@ -117,6 +120,14 @@ router.post('/', authenticate, requirePermission(permissions.menuCreate), valida
     try {
         const { title, description, category, price, image, isPopular, isRecommended, tags } = req.body;
         const tenant = tenantFilter(req);
+        const duplicate = await MenuItem.findOne({
+            ...tenant,
+            title: exactTitleRegex(title),
+            isActive: true,
+        }).select('_id').lean().exec();
+        if (duplicate) {
+            return res.status(409).json(failure('A menu item with this title already exists in the selected branch'));
+        }
         const resolvedImage = await resolveMenuImage(image, tenant);
         const categoryExists = await Category.findOne({ _id: category, ...tenant }).exec();
         if (!categoryExists) {
@@ -145,6 +156,17 @@ router.post('/', authenticate, requirePermission(permissions.menuCreate), valida
 router.patch('/:id', authenticate, requirePermission(permissions.menuUpdate), validateParams(idParamSchema), validateBody(menuUpdateSchema), async (req, res) => {
     try {
         const tenant = tenantFilter(req);
+        if (typeof req.body.title === 'string') {
+            const duplicate = await MenuItem.findOne({
+                ...tenant,
+                title: exactTitleRegex(req.body.title),
+                isActive: true,
+                _id: { $ne: req.params.id },
+            }).select('_id').lean().exec();
+            if (duplicate) {
+                return res.status(409).json(failure('A menu item with this title already exists in the selected branch'));
+            }
+        }
         if (req.body.category && !(await Category.exists({ _id: req.body.category, ...tenant }))) {
             return res.status(400).json(failure('Category belongs to another branch'));
         }

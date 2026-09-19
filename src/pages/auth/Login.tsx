@@ -97,7 +97,7 @@ export default function Login() {
         <button
           type="button"
           onClick={() => { setLoginMethod('email'); setValidationErrors({}); }}
-          className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-all ${loginMethod === 'email' ? 'bg-white text-primary-600 shadow-sm dark:bg-neutral-700 dark:text-primary-400' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'}`}
+          className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-all ${loginMethod === 'email' ? 'bg-white text-primary-600 shadow-sm dark:bg-neutral-700 dark:text-primary-400' : 'text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-200'}`}
         >
           <svg className="mx-auto mb-1 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -107,7 +107,7 @@ export default function Login() {
         <button
           type="button"
           onClick={() => { setLoginMethod('mobile'); setValidationErrors({}); }}
-          className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-all ${loginMethod === 'mobile' ? 'bg-white text-primary-600 shadow-sm dark:bg-neutral-700 dark:text-primary-400' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'}`}
+          className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-all ${loginMethod === 'mobile' ? 'bg-white text-primary-600 shadow-sm dark:bg-neutral-700 dark:text-primary-400' : 'text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-200'}`}
         >
           <svg className="mx-auto mb-1 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />

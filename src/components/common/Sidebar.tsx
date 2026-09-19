@@ -64,7 +64,7 @@ export default function Sidebar({ items, isOpen, onClose, variant = 'default' }:
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed left-0 top-16 z-40 flex h-[calc(100vh-4rem)] w-64 flex-col transition-transform duration-300 lg:translate-x-0',
+          'fixed left-0 top-16 z-40 flex h-[calc(100dvh-4rem)] w-64 flex-col transition-transform duration-300 lg:translate-x-0',
           variant === 'owner'
             ? 'border-r border-neutral-800 bg-neutral-950 text-neutral-100'
             : 'border-r border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900',

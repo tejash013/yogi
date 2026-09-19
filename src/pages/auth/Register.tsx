@@ -107,7 +107,7 @@ export default function Register() {
     <div>
       <div className="mb-8 text-center">
         <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Create Account</h1>
-        <p className="mt-2 text-sm text-neutral-500">Join RestaurantOS and streamline your dining experience</p>
+        <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">Join RestaurantOS and streamline your dining experience</p>
       </div>
 
       {error && (
@@ -117,7 +117,7 @@ export default function Register() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Input
             label="First Name"
             placeholder="John"

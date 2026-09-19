@@ -93,12 +93,12 @@ export default function CustomerHome() {
     const loadData = async () => {
       try {
         const [menuRes, categoriesRes, offersRes] = await Promise.all([
-          menuApi.getAll({ page: 1, limit: 100 }).catch(() => ({ data: { data: [] } })),
+          menuApi.getAllItems().catch(() => []),
           categoriesApi.getAll().catch(() => ({ data: { data: [] } })),
           offersApi.getAll().catch(() => ({ data: { data: [] } })),
         ]);
 
-        const rawMenu = Array.isArray(menuRes?.data?.data) ? menuRes.data.data : Array.isArray(menuRes?.data) ? menuRes.data : [];
+        const rawMenu = Array.isArray(menuRes) ? menuRes : [];
         const categoryList = Array.isArray(categoriesRes?.data?.data) ? categoriesRes.data.data : Array.isArray(categoriesRes?.data) ? categoriesRes.data : [];
         const offerList = Array.isArray(offersRes?.data?.data) ? offersRes.data.data : Array.isArray(offersRes?.data) ? offersRes.data : [];
 

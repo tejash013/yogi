@@ -75,11 +75,11 @@ export default function Billing() {
 
   useEffect(() => {
     Promise.all([
-      menuApi.getAll({ page: 1, limit: 500 }).catch(() => ({ data: { data: [] } })),
-      categoriesApi.getAll({ page: 1, limit: 500 }).catch(() => ({ data: { data: [] } })),
+      menuApi.getAllItems().catch(() => []),
+      categoriesApi.getAllItems().catch(() => []),
     ]).then(([mRes, cRes]) => {
-      const items = Array.isArray(mRes?.data?.data) ? mRes.data.data : Array.isArray(mRes?.data) ? mRes.data : [];
-      const cats = (Array.isArray(cRes?.data?.data) ? cRes.data.data : Array.isArray(cRes?.data) ? cRes.data : [])
+      const items = Array.isArray(mRes) ? mRes : [];
+      const cats = (Array.isArray(cRes) ? cRes : [])
         .map((category: any, index: number) => ({
           id: String(category?._id ?? category?.id ?? `category-${index}`),
           name: String(category?.name ?? category?.title ?? 'Category'),
@@ -224,7 +224,7 @@ export default function Billing() {
         title="POS Terminal Billing"
         description="Touchscreen Billing & Instant Order Checkout"
         actions={
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
             <TenantSelector variant="pill" />
             <Button variant="primary" onClick={handleNewBill} className="shadow-md font-bold">
               <FiPlus className="mr-1.5 h-4 w-4" /> + New POS Bill
@@ -333,15 +333,15 @@ export default function Billing() {
       </div>
 
       {/* Main Terminal Grid & Cart Panel (Responsive for Tablet & Desktop) */}
-      <div className="grid gap-4 md:grid-cols-12 lg:grid-cols-12">
+      <div className="grid gap-4 lg:grid-cols-12">
         {/* Left Column: POS Item Selection & Quick Order Chips */}
-        <div className="md:col-span-7 lg:col-span-7 space-y-4">
+        <div className="min-w-0 space-y-4 lg:col-span-7">
           {activeTab === 'orders' ? (
             <OrderList orders={orders} onSelect={handleSelectOrder} />
           ) : (
             <div className="space-y-4">
               {/* Main Dish Items Grid */}
-              <div className="max-h-[calc(100vh-300px)] min-h-[420px] overflow-y-auto pr-1">
+              <div className="min-h-[360px] overflow-y-auto pr-1 sm:min-h-[420px] lg:max-h-[calc(100vh-300px)]">
                 <div className="mb-3 flex items-center justify-between text-xs text-neutral-500">
                   <span>{filteredMenuItems.length} menu items</span>
                   {selectedCat !== 'all' && <button type="button" onClick={() => setSelectedCat('all')} className="font-bold text-primary-600 hover:underline">Clear category</button>}
@@ -406,7 +406,7 @@ export default function Billing() {
         </div>
 
         {/* Right Column: POS Cart & Payment Panel */}
-        <div className="md:col-span-5 lg:col-span-5 space-y-4 md:sticky md:top-4 md:self-start">
+        <div className="min-w-0 space-y-4 lg:sticky lg:top-4 lg:col-span-5 lg:self-start">
           {!currentBill ? (
             <Card className="flex min-h-[500px] flex-col items-center justify-center p-8 text-center">
               <EmptyState

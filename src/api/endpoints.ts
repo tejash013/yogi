@@ -118,6 +118,32 @@ export const menuApi = {
   getAll: (params?: PaginationParams) =>
     apiClient.get<PaginatedResponse<MenuItem>>('/api/menu', { params }),
 
+  getAllItems: async (params?: Omit<PaginationParams, 'page' | 'limit'>) => {
+    const limit = 100;
+    const firstResponse = await apiClient.get<PaginatedResponse<MenuItem>>('/api/menu', {
+      params: { ...params, page: 1, limit },
+    });
+    const firstPage = firstResponse.data;
+    const totalPages = firstPage.pagination?.totalPages ?? 1;
+
+    if (totalPages <= 1) {
+      return firstPage.data;
+    }
+
+    const remainingResponses = await Promise.all(
+      Array.from({ length: totalPages - 1 }, (_, index) =>
+        apiClient.get<PaginatedResponse<MenuItem>>('/api/menu', {
+          params: { ...params, page: index + 2, limit },
+        })
+      )
+    );
+
+    return [
+      ...firstPage.data,
+      ...remainingResponses.flatMap((response) => response.data.data),
+    ];
+  },
+
   getById: (id: string) =>
     apiClient.get<ApiResponse<MenuItem>>(`/api/menu/${id}`),
 
@@ -146,6 +172,32 @@ export const menuApi = {
 export const categoriesApi = {
   getAll: (params?: PaginationParams) =>
     apiClient.get<PaginatedResponse<Category>>('/api/categories', { params }),
+
+  getAllItems: async (params?: Omit<PaginationParams, 'page' | 'limit'>) => {
+    const limit = 100;
+    const firstResponse = await apiClient.get<PaginatedResponse<Category>>('/api/categories', {
+      params: { ...params, page: 1, limit },
+    });
+    const firstPage = firstResponse.data;
+    const totalPages = firstPage.pagination?.totalPages ?? 1;
+
+    if (totalPages <= 1) {
+      return firstPage.data;
+    }
+
+    const remainingResponses = await Promise.all(
+      Array.from({ length: totalPages - 1 }, (_, index) =>
+        apiClient.get<PaginatedResponse<Category>>('/api/categories', {
+          params: { ...params, page: index + 2, limit },
+        })
+      )
+    );
+
+    return [
+      ...firstPage.data,
+      ...remainingResponses.flatMap((response) => response.data.data),
+    ];
+  },
 
   getById: (id: string) =>
     apiClient.get<ApiResponse<Category>>(`/api/categories/${id}`),
