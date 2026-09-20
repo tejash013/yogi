@@ -40,7 +40,6 @@ export default function FoodDetails() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [selectedVariant, setSelectedVariant] = useState('regular');
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
   const [addedToCart, setAddedToCart] = useState(false);
@@ -118,12 +117,6 @@ export default function FoodDetails() {
   const recommendedItems = menuItems.filter((m) => m.id !== item.id && m.categoryId === item.categoryId).slice(0, 4);
   const basePrice = item.discountPrice || item.price;
 
-  const variants = [
-    { id: 'regular', label: 'Regular Portion', price: 0 },
-    { id: 'medium', label: 'Medium Combo', price: Math.max(30, Math.round(basePrice * 0.35)) },
-    { id: 'large', label: 'Large Feast', price: Math.max(60, Math.round(basePrice * 0.7)) },
-  ];
-
   const addons = [
     { id: 'extra-cheese', label: 'Extra Gourmet Cheese', price: 50 },
     { id: 'signature-sauce', label: 'Signature Dip & Sauce', price: 35 },
@@ -131,12 +124,11 @@ export default function FoodDetails() {
     { id: 'beverage-add', label: 'Add Soft Drink', price: 45 },
   ];
 
-  const variantPrice = variants.find((v) => v.id === selectedVariant)?.price || 0;
   const addonPrice = selectedAddons.reduce((sum, aId) => {
     const addon = addons.find((a) => a.id === aId);
     return sum + (addon?.price || 0);
   }, 0);
-  const totalPrice = (basePrice + variantPrice + addonPrice) * quantity;
+  const totalPrice = (basePrice + addonPrice) * quantity;
 
   const handleAddToCart = () => {
     if (isViewOnlyBranch) {
@@ -152,7 +144,7 @@ export default function FoodDetails() {
 
     const cartItem: CartItem = {
       menuItemId: item.id,
-      name: `${item.name} (${selectedVariant})`,
+      name: item.name,
       price: totalPrice / quantity,
       quantity,
       image: item.image,
@@ -286,28 +278,6 @@ export default function FoodDetails() {
             )}
           </div>
 
-          {/* Variants */}
-          <div className="mb-6">
-            <h3 className="mb-3 font-bold text-neutral-900 dark:text-white">Choose Size</h3>
-            <div className="flex gap-2">
-              {variants.map((v) => (
-                <button
-                  key={v.id}
-                  onClick={() => setSelectedVariant(v.id)}
-                  className={`flex-1 rounded-xl border-2 py-3 text-center transition-all ${
-                    selectedVariant === v.id
-                      ? 'border-primary-500 bg-primary-50 text-primary-600 dark:bg-primary-950/30 dark:text-primary-400'
-                      : 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300 dark:border-neutral-800 dark:bg-neutral-850 dark:text-neutral-300 dark:hover:border-neutral-700'
-                  }`}
-                >
-                  <p className="text-sm font-semibold">{v.label}</p>
-                  <p className="text-xs text-neutral-400 dark:text-neutral-500">
-                    {v.price === 0 ? 'Standard' : `+₹${v.price.toFixed(2)}`}
-                  </p>
-                </button>
-              ))}
-            </div>
-          </div>
 
 
           {/* Addons */}
@@ -388,53 +358,7 @@ export default function FoodDetails() {
         </div>
       </div>
 
-      {/* Nutritional Info & Ingredients */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <h3 className="mb-4 font-semibold text-neutral-900 dark:text-white">Ingredients</h3>
-          <div className="flex flex-wrap gap-2">
-            {item.ingredients.map((ing) => (
-              <Badge key={ing} variant="neutral" size="sm">{ing}</Badge>
-            ))}
-          </div>
-          <h3 className="mb-2 mt-4 font-semibold text-neutral-900 dark:text-white">Allergens</h3>
-          <div className="flex flex-wrap gap-2">
-            {item.allergens.length > 0 ? (
-              item.allergens.map((a) => (
-                <Badge key={a} variant="warning" size="sm">{a}</Badge>
-              ))
-            ) : (
-              <span className="text-sm text-neutral-500">None</span>
-            )}
-          </div>
-        </Card>
 
-        <Card>
-          <h3 className="mb-4 font-semibold text-neutral-900 dark:text-white">Nutritional Information</h3>
-          <div className="grid grid-cols-5 gap-2 text-center">
-            <div>
-              <p className="text-lg font-bold text-neutral-900 dark:text-white">{item.nutritionalInfo.calories}</p>
-              <p className="text-xs text-neutral-500">Calories</p>
-            </div>
-            <div>
-              <p className="text-lg font-bold text-neutral-900 dark:text-white">{item.nutritionalInfo.protein}g</p>
-              <p className="text-xs text-neutral-500">Protein</p>
-            </div>
-            <div>
-              <p className="text-lg font-bold text-neutral-900 dark:text-white">{item.nutritionalInfo.carbs}g</p>
-              <p className="text-xs text-neutral-500">Carbs</p>
-            </div>
-            <div>
-              <p className="text-lg font-bold text-neutral-900 dark:text-white">{item.nutritionalInfo.fat}g</p>
-              <p className="text-xs text-neutral-500">Fat</p>
-            </div>
-            <div>
-              <p className="text-lg font-bold text-neutral-900 dark:text-white">{item.nutritionalInfo.fiber}g</p>
-              <p className="text-xs text-neutral-500">Fiber</p>
-            </div>
-          </div>
-        </Card>
-      </div>
 
       {/* Reviews */}
       <section>
