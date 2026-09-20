@@ -2,13 +2,11 @@ import { Router } from 'express';
 import { userRepo, orderRepo } from '../repos/index.js';
 import Table from '../models/Table.js';
 import MenuItem from '../models/MenuItem.js';
-import Branch from '../models/Branch.js';
-import { geocodeAddress } from '../utils/geocoding.js';
 import { paginated, success, failure } from '../utils/response.js';
 import { getIO } from '../socket/socketServer.js';
 import { validateBody, validateParams, validateQuery } from '../middleware/validate.js';
 import { idParamSchema, orderCreateSchema, orderQuerySchema, orderStatusSchema } from '../validation/schemas.js';
-import { authenticate, requirePermission } from '../middleware/auth.js';
+import { authenticate, optionalAuth, requirePermission } from '../middleware/auth.js';
 import { permissions } from '../auth/permissions.js';
 import { recordAudit } from '../utils/audit.js';
 import { tenantFilter } from '../utils/tenant.js';
@@ -130,39 +128,43 @@ router.get('/:id/track', authenticate, requirePermission(permissions.orderRead),
         updatedAt: order.updatedAt,
     }, 'Order tracking data loaded'));
 });
-router.post('/', authenticate, requirePermission(permissions.orderCreate), validateBody(orderCreateSchema), async (req, res) => {
+router.post('/', optionalAuth, validateBody(orderCreateSchema), async (req, res) => {
     const { userId, tableId, items: orderItems = [], orderType, paymentStatus, notes } = req.body;
     const authenticatedUser = req.user;
     const tenant = tenantFilter(req);
-    if (authenticatedUser.role === 'customer' && userId && String(userId) !== String(authenticatedUser.id)) {
+    if (authenticatedUser?.role === 'customer' && userId && String(userId) !== String(authenticatedUser.id)) {
         return res.status(403).json(failure('Cannot create order for another user'));
     }
-    const orderUserId = (authenticatedUser.role === 'customer' || !userId || userId === 'walk-in' || !String(userId).match(/^[a-fA-F0-9]{24}$/))
-        ? authenticatedUser.id
-        : userId;
-    let user = await userRepo.findById(orderUserId);
-    if (!user && authenticatedUser) {
+    let user = null;
+    if (authenticatedUser) {
         user = await userRepo.findById(authenticatedUser.id);
     }
-    if (!user) {
-        return res.status(404).json(failure('User not found'));
+    else if (userId && String(userId).match(/^[a-fA-F0-9]{24}$/)) {
+        user = await userRepo.findById(userId);
     }
-    // Location & Distance Delivery Enforcement
-    if (orderType === 'delivery' || orderType === 'takeaway') {
-        const activeBranchId = req.branchId || req.headers['x-branch-id'];
-        const deliveryAddress = req.body.deliveryAddress || notes || '';
-        if (activeBranchId && String(activeBranchId).match(/^[a-fA-F0-9]{24}$/)) {
-            const targetBranch = await Branch.findById(activeBranchId).exec();
-            if (targetBranch && targetBranch.latitude && targetBranch.longitude && deliveryAddress) {
-                const addressCoords = geocodeAddress(deliveryAddress, '');
-                if (addressCoords) {
-                    const dist = calculateDistanceKm(addressCoords.latitude, addressCoords.longitude, targetBranch.latitude, targetBranch.longitude);
-                    if (dist > 25) {
-                        return res.status(400).json(failure(`Selected branch (${targetBranch.name}) is outside your delivery area (${dist.toFixed(1)} km away). Please switch to a nearby branch.`));
-                    }
-                }
-            }
+    if (!user) {
+        user = await userRepo.findByEmail('guest@yogirestaurant.com');
+    }
+    if (!user) {
+        try {
+            user = await userRepo.create({
+                firstName: 'Guest',
+                lastName: 'Customer',
+                email: 'guest@yogirestaurant.com',
+                phone: '+91 99999 99999',
+                role: 'customer',
+                restaurantId: tenant.restaurantId,
+                branchId: tenant.branchId,
+                status: 'active',
+                tokenVersion: 1,
+            });
         }
+        catch {
+            user = await userRepo.findByEmail('guest@yogirestaurant.com');
+        }
+    }
+    if (!user) {
+        return res.status(500).json(failure('Failed to process guest user account'));
     }
     let resolvedTableId = undefined;
     if (tableId) {

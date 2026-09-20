@@ -5,8 +5,6 @@ import { useAuthStore, useTenantStore } from '@/store';
 import { ROUTES } from '@/constants';
 import type { Branch, Restaurant, AddressDetails } from '@/types';
 import {
-  calculateDistanceKm,
-  formatDistance,
   getCurrentBrowserLocation,
   getIpBasedLocation,
   KNOWN_LOCATION_PRESETS,
@@ -94,7 +92,6 @@ export default function Workspace() {
   const {
     restaurantId: activeRestaurantId,
     branchId: activeBranchId,
-    userLocation,
     switchRestaurant: storeSwitchRestaurant,
     switchBranch: storeSwitchBranch,
     loadTenants,
@@ -265,7 +262,7 @@ export default function Workspace() {
     setIsLocating(true);
     try {
       const coords = await getCurrentBrowserLocation();
-      const geo = await reverseGeocode(coords.latitude, coords.longitude);
+      const geo = await reverseGeocode();
       setRestaurantForm((prev) => ({
         ...prev,
         latitude: Math.round(coords.latitude * 10000) / 10000,
@@ -325,7 +322,7 @@ export default function Workspace() {
     setIsLocating(true);
     try {
       const coords = await getCurrentBrowserLocation();
-      const geo = await reverseGeocode(coords.latitude, coords.longitude);
+      const geo = await reverseGeocode();
       setBranchForm((prev) => ({
         ...prev,
         latitude: Math.round(coords.latitude * 10000) / 10000,
@@ -851,11 +848,7 @@ export default function Workspace() {
                 ) : (
                   branches.map((branch) => {
                     const isActiveOperating = branch._id === activeBranchId;
-                    const distanceKm =
-                      userLocation && branch.latitude && branch.longitude
-                        ? calculateDistanceKm(userLocation.latitude, userLocation.longitude, branch.latitude, branch.longitude)
-                        : branch.distanceKm;
-                    const distanceLabel = formatDistance(distanceKm);
+                    const distanceLabel = '';
                     const city = branch.addressDetails?.city;
 
                     return (

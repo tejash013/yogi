@@ -4,7 +4,7 @@ import { Button, Card, Input } from '@/components/ui';
 import { ROUTES } from '@/constants';
 import { ordersApi, settingsApi, tablesApi } from '@/api';
 import { getApiErrorMessage } from '@/api/errors';
-import { useAuthStore, useCartStore, useOrderSyncStore, useTenantStore } from '@/store';
+import { useAuthStore, useCartStore, useOrderSyncStore } from '@/store';
 
 type DiningType = 'dine-in' | 'takeaway' | 'delivery';
 type PaymentMethod = 'cash' | 'upi';
@@ -15,7 +15,6 @@ export default function Checkout() {
   const cartTableNumber = useCartStore((state) => state.tableNumber);
   const cartTableId = useCartStore((state) => state.tableId);
   const { items, subtotal, clearCart } = useCartStore();
-  const { isViewOnlyBranch, currentBranch } = useTenantStore();
   const [diningType, setDiningType] = useState<DiningType>('dine-in');
   const [tableNumber, setTableNumber] = useState(cartTableNumber ? String(cartTableNumber) : '');
   const [tableId, setTableId] = useState(cartTableId || '');
@@ -97,35 +96,19 @@ export default function Checkout() {
     e.preventDefault();
 
     const customerId = user?.id ?? (user as any)?._id;
-    if (!customerId) {
-      navigate(ROUTES.AUTH.LOGIN);
-      return;
-    }
 
     if (items.length === 0) {
       setSubmitError('Your cart is empty.');
       return;
     }
 
-    if (diningType === 'dine-in' && !tableNumber.trim()) {
-      setSubmitError('Please enter your Table Number for Dine-In order.');
-      return;
-    }
-
-    if (diningType === 'dine-in' && !tableId) {
-      setSubmitError('Please select an available restaurant table.');
+    if (diningType === 'dine-in' && !tableNumber.trim() && !tableId) {
+      setSubmitError('Please select or enter your Table Number for Dine-In order.');
       return;
     }
 
     if (diningType === 'delivery' && !formData.address.trim()) {
       setSubmitError('Please enter your delivery address for delivery orders.');
-      return;
-    }
-
-    if (isViewOnlyBranch && diningType !== 'dine-in') {
-      setSubmitError(
-        `The outlet "${currentBranch?.name || 'this branch'}" is outside your delivery area and does not accept online delivery/takeaway for your location. Please switch to a nearby deliverable outlet.`
-      );
       return;
     }
 
@@ -135,14 +118,16 @@ export default function Checkout() {
     try {
       const notes = [
         formData.notes,
+        formData.name ? `Customer: ${formData.name.trim()}` : '',
+        formData.phone ? `Phone: ${formData.phone.trim()}` : '',
         diningType === 'dine-in' && tableNumber ? `Table ${tableNumber}` : '',
         diningType === 'delivery' && formData.address ? `Delivery: ${formData.address.trim()}` : '',
         paymentMethod ? `Payment: ${paymentMethod}` : '',
       ].filter(Boolean).join(' | ');
 
       const response = await ordersApi.create({
-        userId: String(customerId),
-        tableId: diningType === 'dine-in' ? tableId : undefined,
+        userId: customerId ? String(customerId) : undefined,
+        tableId: diningType === 'dine-in' ? (tableId || tableNumber) : undefined,
         deliveryAddress: diningType === 'delivery' ? formData.address.trim() : undefined,
         items: items.map((item) => ({
           menuItem: item.menuItemId,

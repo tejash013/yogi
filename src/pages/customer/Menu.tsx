@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { FoodCard, LoadingSkeleton } from '@/components/customer';
 import { TenantSelector } from '@/components/common';
 import { categoriesApi, menuApi } from '@/api';
-import { useOrderSyncStore, useTenantStore } from '@/store';
+import { useCartStore, useOrderSyncStore, useTenantStore } from '@/store';
 import type { MenuItem, Category } from '@/types';
 
 const FAVORITES_STORAGE_KEY = 'yogi_favorites';
@@ -44,7 +44,8 @@ const normalizeCategory = (item: any): Category => ({
 });
 
 export default function Menu() {
-  const { branchId, currentBranch, isViewOnlyBranch, userLocation, setModalOpen } = useTenantStore();
+  const { branchId, currentBranch } = useTenantStore();
+  const { tableNumber, tableId } = useCartStore();
   const [searchParams] = useSearchParams();
   const [search, setSearch] = useState(searchParams.get('q') || searchParams.get('search') || '');
   const [selectedCategory, setSelectedCategory] = useState<string>(searchParams.get('category') || 'all');
@@ -164,40 +165,20 @@ export default function Menu() {
       {/* Menu Header with Branch Context */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">Our Menu</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">Our Menu</h1>
+            {(tableNumber || tableId) && (
+              <span className="rounded-full bg-amber-500/15 border border-amber-500/30 px-3 py-1 text-xs font-bold text-amber-700 dark:text-amber-300">
+                🪑 Table #{tableNumber || tableId}
+              </span>
+            )}
+          </div>
           <p className="text-xs text-neutral-500 dark:text-neutral-400">
             Freshly prepared dishes available at {currentBranch?.name || 'Main Dining Hall'}
           </p>
         </div>
         <TenantSelector variant="pill" />
       </div>
-
-      {/* Out of Delivery Range Banner */}
-      {isViewOnlyBranch && (
-        <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 text-amber-900 dark:text-amber-200 shadow-soft">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl shrink-0">📍</span>
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-wider text-amber-500 dark:text-amber-400">
-                  Out of Delivery Area — View Only
-                </p>
-                <p className="text-xs font-semibold mt-0.5 leading-relaxed">
-                  You are currently browsing <strong className="text-amber-600 dark:text-amber-300">{currentBranch?.name}</strong>.
-                  {userLocation ? ` Your area (${userLocation.displayName || userLocation.city}) is outside this outlet's delivery radius.` : ' Switch to a nearby branch to place an order.'}
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setModalOpen(true)}
-              className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 text-xs font-bold shadow-md shrink-0 transition-all"
-            >
-              Switch to Deliverable Outlet
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Header with Search */}
       <div className="relative">

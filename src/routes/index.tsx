@@ -126,9 +126,17 @@ const router = createBrowserRouter([
     ],
   },
 
-  // Customer routes
+  // Table QR Scan routes
   {
     path: '/scan/table/:token',
+    element: <ScanTable />,
+  },
+  {
+    path: '/table/:token',
+    element: <ScanTable />,
+  },
+  {
+    path: '/t/:token',
     element: <ScanTable />,
   },
 

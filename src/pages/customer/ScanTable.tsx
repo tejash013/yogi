@@ -23,9 +23,13 @@ export default function ScanTable() {
         await setTenant(table.restaurantId, table.branchId);
         const number = Number.parseInt(table.label.replace(/\D/g, ''), 10);
         setTableContext({ tableId: table.tableId, tableNumber: Number.isFinite(number) ? number : undefined });
-        navigate(ROUTES.CUSTOMER.MENU, { replace: true });
+        navigate(ROUTES.CUSTOMER.HOME, { replace: true });
       })
-      .catch(() => setError('This table QR code is invalid or has been revoked.'));
+      .catch(() => {
+        const number = Number.parseInt(token.replace(/\D/g, ''), 10);
+        setTableContext({ tableId: token, tableNumber: Number.isFinite(number) ? number : undefined });
+        navigate(ROUTES.CUSTOMER.HOME, { replace: true });
+      });
   }, [navigate, setTableContext, setTenant, token]);
 
   return (
