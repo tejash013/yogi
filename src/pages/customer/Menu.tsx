@@ -99,7 +99,17 @@ export default function Menu() {
   }
 
   if (selectedCategory !== 'all') {
-    filtered = filtered.filter((item) => item.categoryId === selectedCategory);
+    const targetCat = categories.find(
+      (c) => c.id === selectedCategory || c.name.toLowerCase() === selectedCategory.toLowerCase()
+    );
+    const targetId = targetCat ? targetCat.id : selectedCategory;
+    const targetName = targetCat ? targetCat.name.toLowerCase() : selectedCategory.toLowerCase();
+
+    filtered = filtered.filter((item) => {
+      const itemCatId = String(item.categoryId || '');
+      const itemCatName = String(item.categoryName || '').toLowerCase();
+      return itemCatId === targetId || itemCatName === targetName || itemCatId.toLowerCase() === targetName;
+    });
   }
 
   if (showVegOnly) {
@@ -118,9 +128,11 @@ export default function Menu() {
 
   switch (sortBy) {
     case 'price-asc':
+    case 'price-low':
       filtered.sort((a, b) => (a.discountPrice || a.price) - (b.discountPrice || b.price));
       break;
     case 'price-desc':
+    case 'price-high':
       filtered.sort((a, b) => (b.discountPrice || b.price) - (a.discountPrice || a.price));
       break;
     case 'rating':

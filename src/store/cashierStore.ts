@@ -96,6 +96,7 @@ interface CashierState {
   addBillItem: (item: CashierOrderItem) => void;
   removeBillItem: (itemId: string) => void;
   updateQuantity: (itemId: string, delta: number) => void;
+  updateItemCustomization: (itemId: string, addons: string[], specialInstructions?: string) => void;
   applyDiscount: (discount: Discount) => void;
   applyCoupon: (code: string) => { ok: boolean; error?: string };
   applyPercentageDiscount: (value: string) => void;
@@ -682,6 +683,25 @@ splitPayments: [],
     void syncBillUpdateToBackend(updatedBill);
   },
 
+  updateItemCustomization: (itemId, addons, specialInstructions) => {
+    const bill = get().currentBill;
+    if (!bill) return;
+    const items = bill.items.map((i) => {
+      if (i.id !== itemId) return i;
+      return { ...i, addons, specialInstructions };
+    });
+    const updatedBill: CashierOrder = {
+      ...bill,
+      items,
+    };
+    saveActiveBillToStorage(updatedBill);
+    set((s) => ({
+      currentBill: updatedBill,
+      orders: s.orders.map((o) => (o.id === bill.id ? updatedBill : o)),
+    }));
+    void syncBillUpdateToBackend(updatedBill);
+  },
+
   applyDiscount: (discount) => {
     const totals = get().calculateTotals();
     if (discount.amount > totals.subtotal) {
@@ -854,14 +874,14 @@ splitPayments: [],
       // Single method
       const amount = round2(totals.grandTotal);
       if (state.paymentMethod === 'cash') {
-        const received = parseFloat(state.cashReceived);
-        if (Number.isNaN(received) || received < 0) {
-          useToastStore.getState().showToast('Enter a valid cash amount', 'error');
-          return { ok: false, error: 'Enter a valid cash amount' };
+        let received = parseFloat(state.cashReceived);
+        if (Number.isNaN(received) || received <= 0) {
+          received = amount;
+          set({ cashReceived: amount.toString() });
         }
         if (received < amount) {
-          useToastStore.getState().showToast('Cash received cannot be less than the bill amount', 'error');
-          return { ok: false, error: 'Cash received cannot be less than the bill amount' };
+          received = amount;
+          set({ cashReceived: amount.toString() });
         }
       }
     }

@@ -188,8 +188,27 @@ export const useKitchenStore = create<KitchenState>((set, get) => ({
     try {
       const response = await ordersApi.getAll({ page: 1, limit: 100 }).catch(() => ({ data: { data: [] } }));
       const list = Array.isArray(response?.data?.data) ? response.data.data : [];
+      const nextOrders = list.map(normalizeKitchenOrder);
+      const prevOrders = get().orders;
+      const prevOrderIds = new Set(prevOrders.map((o) => o.id));
+
+      if (prevOrders.length > 0) {
+        const newlyArrived = nextOrders.find(
+          (o) => !prevOrderIds.has(o.id) && (o.status === 'new' || o.status === 'confirmed')
+        );
+        if (newlyArrived) {
+          useOrderSyncStore.getState().notifyOrderChange({
+            type: 'create',
+            orderId: newlyArrived.id,
+            status: newlyArrived.status,
+            resource: 'order',
+            at: new Date().toISOString(),
+          });
+        }
+      }
+
       set({
-        orders: list.map(normalizeKitchenOrder),
+        orders: nextOrders,
         isLoading: false,
         lastUpdated: new Date().toISOString(),
       });

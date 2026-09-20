@@ -13,29 +13,33 @@ const getAudioContext = () => {
   return audioContext;
 };
 
-const unlockAudio = () => {
+export const unlockAudio = () => {
   const context = getAudioContext();
   if (context?.state === 'suspended') void context.resume().catch(() => {});
 };
 
-const playOrderAlert = () => {
+export const playOrderAlert = () => {
   const context = getAudioContext();
   if (!context) return;
+  if (context.state === 'suspended') {
+    void context.resume().catch(() => {});
+  }
 
   const start = context.currentTime;
   const gain = context.createGain();
   gain.gain.setValueAtTime(0.0001, start);
-  gain.gain.exponentialRampToValueAtTime(0.18, start + 0.02);
-  gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.55);
+  gain.gain.exponentialRampToValueAtTime(0.35, start + 0.03);
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.9);
   gain.connect(context.destination);
 
-  [660, 880].forEach((frequency, index) => {
+  // Play two-tone bell chime (D5 and A5)
+  [587.33, 880.00].forEach((frequency, index) => {
     const oscillator = context.createOscillator();
-    oscillator.type = 'sine';
+    oscillator.type = 'triangle';
     oscillator.frequency.value = frequency;
     oscillator.connect(gain);
-    oscillator.start(start + index * 0.12);
-    oscillator.stop(start + 0.55);
+    oscillator.start(start + index * 0.15);
+    oscillator.stop(start + 0.9);
   });
 };
 

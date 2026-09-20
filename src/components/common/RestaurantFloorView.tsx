@@ -620,13 +620,19 @@ export default function RestaurantFloorView({
                   🍽️ Sit Here & Start Order
                 </Button>
               ) : activeModalTable.status === 'occupied' ? (
-                <Button
-                  variant="outline"
-                  className="rounded-xl border-rose-500/40 text-xs font-semibold text-rose-300 hover:bg-rose-950/40"
-                  onClick={() => handleSitAndOrder(activeModalTable)}
-                >
-                  Join / Add Order to Table {activeModalTable.number}
-                </Button>
+                isAdmin ? (
+                  <Button
+                    variant="outline"
+                    className="rounded-xl border-rose-500/40 text-xs font-semibold text-rose-300 hover:bg-rose-950/40"
+                    onClick={() => handleSitAndOrder(activeModalTable)}
+                  >
+                    Join / Add Order to Table {activeModalTable.number}
+                  </Button>
+                ) : (
+                  <div className="rounded-xl border border-rose-500/40 bg-rose-950/40 px-3 py-1.5 text-xs font-bold text-rose-300">
+                    🔒 Table Currently Occupied
+                  </div>
+                )
               ) : null}
             </div>
           </div>

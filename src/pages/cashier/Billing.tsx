@@ -45,6 +45,8 @@ export default function Billing() {
   const updateQuantity = useCashierStore((s) => s.updateQuantity);
   const paymentMethod = useCashierStore((s) => s.paymentMethod);
   const setPaymentMethod = useCashierStore((s) => s.setPaymentMethod);
+  const cashReceived = useCashierStore((s) => s.cashReceived);
+  const setCashReceived = useCashierStore((s) => s.setCashReceived);
   const completePayment = useCashierStore((s) => s.completePayment);
   const sendOrderToKitchen = useCashierStore((s) => s.sendOrderToKitchen);
   const clearCurrentBill = useCashierStore((s) => s.clearCurrentBill);
@@ -594,6 +596,46 @@ export default function Billing() {
                         {pm.label}
                       </button>
                     ))}
+                  </div>
+                )}
+
+                {paymentMethod === 'cash' && !showSplit && (
+                  <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50/60 p-3 text-xs dark:border-amber-900/60 dark:bg-amber-950/20">
+                    <div className="flex items-center justify-between">
+                      <label className="font-bold text-amber-900 dark:text-amber-200 uppercase text-[10px]">
+                        💵 Cash Received (₹)
+                      </label>
+                      <span className="font-semibold text-emerald-600 dark:text-emerald-400 text-[11px]">
+                        Change Due: ₹{Math.max(0, (parseFloat(cashReceived) || totals.grandTotal) - totals.grandTotal).toFixed(2)}
+                      </span>
+                    </div>
+                    <input
+                      type="number"
+                      step="1"
+                      placeholder={`Exact: ${totals.grandTotal.toFixed(0)}`}
+                      value={cashReceived}
+                      onChange={(e) => setCashReceived(e.target.value)}
+                      className="mt-1.5 w-full rounded-xl border border-amber-300 bg-white px-3 py-2 text-sm font-black text-neutral-900 focus:border-amber-500 focus:outline-none dark:border-amber-700 dark:bg-neutral-800 dark:text-white"
+                    />
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setCashReceived(totals.grandTotal.toString())}
+                        className="rounded-lg bg-amber-200/80 px-2 py-1 text-[11px] font-bold text-amber-950 hover:bg-amber-300 dark:bg-amber-900/60 dark:text-amber-100"
+                      >
+                        Exact (₹{totals.grandTotal.toFixed(0)})
+                      </button>
+                      {[100, 200, 500, 2000].map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => setCashReceived(preset.toString())}
+                          className="rounded-lg bg-neutral-200/80 px-2 py-1 text-[11px] font-semibold text-neutral-800 hover:bg-neutral-300 dark:bg-neutral-700 dark:text-neutral-200"
+                        >
+                          ₹{preset}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
 
