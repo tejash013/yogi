@@ -33,6 +33,19 @@ export default function Tables() {
   const [isSaving, setIsSaving] = useState(false);
   const [createError, setCreateError] = useState('');
   const [newTable, setNewTable] = useState(defaultNewTable);
+
+  // Edit table state
+  const [editingTable, setEditingTable] = useState<TableRow | null>(null);
+  const [editForm, setEditForm] = useState({
+    label: '',
+    capacity: '2',
+    status: 'available' as TableRow['status'],
+    location: '',
+    notes: '',
+  });
+  const [editError, setEditError] = useState('');
+
+  // QR Asset state
   const [qrAsset, setQrAsset] = useState<QrAsset | null>(null);
   const [qrLoading, setQrLoading] = useState<string | null>(null);
 
@@ -76,10 +89,6 @@ export default function Tables() {
     }
   };
 
-  useEffect(() => {
-    void loadTables();
-  }, []);
-
   const handleCreateTable = async () => {
     const label = newTable.label.trim();
     const capacity = Number(newTable.capacity);
@@ -98,7 +107,7 @@ export default function Tables() {
     setCreateError('');
 
     try {
-      await tablesApi.create({
+      const createdRes = await tablesApi.create({
         label,
         capacity,
         status: newTable.status,
@@ -106,13 +115,89 @@ export default function Tables() {
         notes: newTable.notes.trim(),
       });
 
+      const createdTable = createdRes.data.data;
+      const createdId = String((createdTable as any)?._id ?? (createdTable as any)?.id);
+
       setNewTable(defaultNewTable);
       setShowCreateForm(false);
       await loadTables();
+
+      // Auto generate QR for newly created table
+      if (createdId) {
+        try {
+          const qrRes = await tablesApi.generateQrToken(createdId);
+          setQrAsset(qrRes.data.data);
+        } catch {
+          // ignore QR error if token generation fails
+        }
+      }
     } catch (error) {
       setCreateError(error instanceof Error ? error.message : 'Unable to create table.');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleStartEdit = (table: TableRow) => {
+    setEditingTable(table);
+    setEditForm({
+      label: table.label,
+      capacity: String(table.capacity),
+      status: table.status,
+      location: table.location,
+      notes: table.notes || '',
+    });
+    setEditError('');
+    // Also auto-fetch QR for editing modal view
+    void handleGenerateQr(table);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingTable) return;
+
+    const label = editForm.label.trim();
+    const capacity = Number(editForm.capacity);
+
+    if (!label) {
+      setEditError('Table label is required.');
+      return;
+    }
+
+    if (!Number.isFinite(capacity) || capacity <= 0) {
+      setEditError('Capacity must be a valid number greater than zero.');
+      return;
+    }
+
+    setIsSaving(true);
+    setEditError('');
+
+    try {
+      await tablesApi.update(editingTable.id, {
+        label,
+        capacity,
+        status: editForm.status,
+        location: editForm.location.trim() || 'Main hall',
+        notes: editForm.notes.trim(),
+      });
+
+      setEditingTable(null);
+      await loadTables();
+    } catch (error) {
+      setEditError(error instanceof Error ? error.message : 'Unable to update table.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteTable = async (tableId: string) => {
+    if (!window.confirm('Are you sure you want to delete this table?')) return;
+    try {
+      await tablesApi.delete(tableId);
+      if (editingTable?.id === tableId) setEditingTable(null);
+      if (qrAsset?.tableId === tableId) setQrAsset(null);
+      await loadTables();
+    } catch (error) {
+      console.error('Failed to delete table', error);
     }
   };
 
@@ -142,7 +227,7 @@ export default function Tables() {
     if (!canvas || !qrAsset) return;
     const printWindow = window.open('', '_blank', 'width=480,height=640');
     if (!printWindow) return;
-    printWindow.document.write(`<html><head><title>${qrAsset.label} QR</title><style>body{font-family:Arial;text-align:center;padding:32px}img{width:280px;height:280px}h1{font-size:24px}p{color:#555}</style></head><body><h1>${qrAsset.label}</h1><img src="${canvas.toDataURL('image/png')}" alt="${qrAsset.label} QR code"/><p>Scan to order from this table</p></body></html>`);
+    printWindow.document.write(`<html><head><title>${qrAsset.label} QR Code</title><style>body{font-family:Arial,sans-serif;text-align:center;padding:32px}img{width:280px;height:280px;margin:16px 0}h1{font-size:24px;margin:0}p{color:#555;font-size:14px}</style></head><body><h1>${qrAsset.label}</h1><img src="${canvas.toDataURL('image/png')}" alt="${qrAsset.label} QR code"/><p>Scan with your camera to open table menu & place orders</p></body></html>`);
     printWindow.document.close();
     printWindow.focus();
     printWindow.print();
@@ -162,7 +247,7 @@ export default function Tables() {
     <div className="space-y-6">
       <PageHeader
         title="Dining Tables & Floor Plan"
-        description={`Manage floor layout, reservations, and live occupancy for ${currentBranch?.name || 'Downtown Hall'}`}
+        description={`Manage floor layout, reservations, and QR code facility for ${currentBranch?.name || 'Downtown Hall'}`}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <TenantSelector variant="pill" />
@@ -201,26 +286,28 @@ export default function Tables() {
         }
       />
 
+      {/* CREATE NEW TABLE FORM */}
       {showCreateForm ? (
         <Card className="rounded-[28px] border-[#efe4d7] bg-[#fffdfb] p-6 shadow-[0_20px_60px_rgba(85,68,44,0.04)] dark:border-neutral-700 dark:bg-neutral-900">
+          <h3 className="mb-4 text-lg font-bold text-neutral-900 dark:text-white">➕ Add New Dining Table</h3>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
             <div className="xl:col-span-2">
-              <label className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-200">Table label</label>
+              <label className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-200">Table Label</label>
               <input
                 value={newTable.label}
                 onChange={(event) => setNewTable((current) => ({ ...current, label: event.target.value }))}
-                className="w-full rounded-xl border border-[#eadcc7] bg-white px-3 py-2.5 dark:border-neutral-700 dark:bg-neutral-800"
+                className="w-full rounded-xl border border-[#eadcc7] bg-white px-3 py-2.5 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
                 placeholder="Table 12"
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-200">Capacity</label>
+              <label className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-200">Capacity (Seats)</label>
               <input
                 type="number"
                 min="1"
                 value={newTable.capacity}
                 onChange={(event) => setNewTable((current) => ({ ...current, capacity: event.target.value }))}
-                className="w-full rounded-xl border border-[#eadcc7] bg-white px-3 py-2.5 dark:border-neutral-700 dark:bg-neutral-800"
+                className="w-full rounded-xl border border-[#eadcc7] bg-white px-3 py-2.5 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
               />
             </div>
             <div>
@@ -228,7 +315,7 @@ export default function Tables() {
               <select
                 value={newTable.status}
                 onChange={(event) => setNewTable((current) => ({ ...current, status: event.target.value as TableRow['status'] }))}
-                className="w-full rounded-xl border border-[#eadcc7] bg-white px-3 py-2.5 dark:border-neutral-700 dark:bg-neutral-800"
+                className="w-full rounded-xl border border-[#eadcc7] bg-white px-3 py-2.5 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
               >
                 <option value="available">Available</option>
                 <option value="occupied">Occupied</option>
@@ -237,22 +324,22 @@ export default function Tables() {
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-200">Location</label>
+              <label className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-200">Location / Zone</label>
               <input
                 value={newTable.location}
                 onChange={(event) => setNewTable((current) => ({ ...current, location: event.target.value }))}
-                className="w-full rounded-xl border border-[#eadcc7] bg-white px-3 py-2.5 dark:border-neutral-700 dark:bg-neutral-800"
+                className="w-full rounded-xl border border-[#eadcc7] bg-white px-3 py-2.5 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
                 placeholder="Main hall"
               />
             </div>
           </div>
 
           <div className="mt-4">
-            <label className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-200">Notes</label>
+            <label className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-200">Notes / Details</label>
             <textarea
               value={newTable.notes}
               onChange={(event) => setNewTable((current) => ({ ...current, notes: event.target.value }))}
-              className="min-h-24 w-full rounded-xl border border-[#eadcc7] bg-white px-3 py-2.5 dark:border-neutral-700 dark:bg-neutral-800"
+              className="min-h-20 w-full rounded-xl border border-[#eadcc7] bg-white px-3 py-2.5 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
               placeholder="Window seat, party of four, etc."
             />
           </div>
@@ -264,16 +351,151 @@ export default function Tables() {
               Cancel
             </Button>
             <Button onClick={() => void handleCreateTable()} disabled={isSaving}>
-              {isSaving ? 'Saving...' : 'Save Table'}
+              {isSaving ? 'Saving...' : 'Save & Generate QR'}
             </Button>
           </div>
         </Card>
       ) : null}
 
-      {qrAsset ? (
+      {/* EDIT TABLE MODAL WITH QR FACILITY */}
+      {editingTable ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-md">
+          <div className="relative w-full max-w-2xl overflow-hidden rounded-[28px] border border-neutral-200 bg-white p-6 shadow-2xl dark:border-neutral-700 dark:bg-neutral-900 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-neutral-100 pb-4 dark:border-neutral-800">
+              <h3 className="text-xl font-bold text-neutral-900 dark:text-white">
+                ✏️ Edit {editingTable.label} & QR Facility
+              </h3>
+              <button
+                type="button"
+                onClick={() => setEditingTable(null)}
+                className="rounded-full p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-neutral-800 dark:hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-xs font-bold text-neutral-600 uppercase dark:text-neutral-400">Table Label</label>
+                <input
+                  value={editForm.label}
+                  onChange={(e) => setEditForm((f) => ({ ...f, label: e.target.value }))}
+                  className="w-full rounded-xl border border-neutral-300 bg-neutral-50 px-3 py-2 text-sm font-semibold dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-bold text-neutral-600 uppercase dark:text-neutral-400">Capacity (Seats)</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={editForm.capacity}
+                  onChange={(e) => setEditForm((f) => ({ ...f, capacity: e.target.value }))}
+                  className="w-full rounded-xl border border-neutral-300 bg-neutral-50 px-3 py-2 text-sm font-semibold dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-bold text-neutral-600 uppercase dark:text-neutral-400">Status</label>
+                <select
+                  value={editForm.status}
+                  onChange={(e) => setEditForm((f) => ({ ...f, status: e.target.value as TableRow['status'] }))}
+                  className="w-full rounded-xl border border-neutral-300 bg-neutral-50 px-3 py-2 text-sm font-semibold dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                >
+                  <option value="available">Available</option>
+                  <option value="occupied">Occupied</option>
+                  <option value="reserved">Reserved</option>
+                  <option value="cleaning">Cleaning</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-bold text-neutral-600 uppercase dark:text-neutral-400">Location / Zone</label>
+                <input
+                  value={editForm.location}
+                  onChange={(e) => setEditForm((f) => ({ ...f, location: e.target.value }))}
+                  className="w-full rounded-xl border border-neutral-300 bg-neutral-50 px-3 py-2 text-sm font-semibold dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="mb-1 block text-xs font-bold text-neutral-600 uppercase dark:text-neutral-400">Notes / Ambiance</label>
+                <textarea
+                  value={editForm.notes}
+                  onChange={(e) => setEditForm((f) => ({ ...f, notes: e.target.value }))}
+                  className="min-h-16 w-full rounded-xl border border-neutral-300 bg-neutral-50 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                />
+              </div>
+            </div>
+
+            {/* QR CODE FACILITY BLOCK INSIDE EDIT MODAL */}
+            <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4 dark:border-emerald-900/60 dark:bg-emerald-950/20">
+              <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+                    📷 QR Code Facility
+                  </p>
+                  <p className="text-xs text-neutral-600 dark:text-neutral-400">
+                    Customers scan this QR code at {editingTable.label} to view menu & order.
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={qrLoading === editingTable.id}
+                  onClick={() => void handleGenerateQr(editingTable)}
+                  className="border-emerald-600 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-500 dark:text-emerald-300"
+                >
+                  {qrLoading === editingTable.id ? 'Generating...' : '🔄 Rotate / Refresh QR Token'}
+                </Button>
+              </div>
+
+              {qrAsset && qrAsset.tableId === editingTable.id ? (
+                <div className="mt-4 flex flex-col items-center gap-3 rounded-xl bg-white p-4 shadow-sm dark:bg-neutral-800">
+                  <QRCodeCanvas id="table-qr-canvas" value={qrAsset.url} size={180} includeMargin level="H" />
+                  <p className="max-w-md truncate text-[11px] text-neutral-500">{qrAsset.url}</p>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={handleDownloadQr}>Download PNG</Button>
+                    <Button size="sm" variant="outline" onClick={handlePrintQr}>Print QR</Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-3 text-center">
+                  <Button size="sm" onClick={() => void handleGenerateQr(editingTable)}>
+                    Show QR Code Preview
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {editError ? <p className="mt-3 text-sm text-red-600">{editError}</p> : null}
+
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-neutral-100 pt-4 dark:border-neutral-800">
+              <Button
+                variant="outline"
+                className="border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900 dark:hover:bg-red-950/40"
+                onClick={() => void handleDeleteTable(editingTable.id)}
+              >
+                🗑️ Delete Table
+              </Button>
+              <div className="flex gap-2">
+                <Button variant="ghost" onClick={() => setEditingTable(null)}>
+                  Cancel
+                </Button>
+                <Button onClick={() => void handleSaveEdit()} disabled={isSaving}>
+                  {isSaving ? 'Saving...' : 'Save Changes'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* STANDALONE QR CODE MODAL */}
+      {qrAsset && !editingTable ? (
         <Card className="flex flex-col items-center gap-4 rounded-[28px] border-emerald-200 bg-emerald-50/70 p-6 text-center dark:border-emerald-900 dark:bg-emerald-950/20">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-300">Table QR ready</p>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-300">Table QR facility</p>
             <h3 className="mt-1 text-xl font-bold text-neutral-900 dark:text-white">{qrAsset.label}</h3>
           </div>
           <QRCodeCanvas id="table-qr-canvas" value={qrAsset.url} size={240} includeMargin level="H" />
@@ -286,6 +508,7 @@ export default function Tables() {
         </Card>
       ) : null}
 
+      {/* MAIN VIEW: FLOOR MAP OR CARDS */}
       {viewMode === 'floor' ? (
         <RestaurantFloorView
           tables={tables}
@@ -365,9 +588,15 @@ export default function Tables() {
                         No special notes for this table.
                       </p>
                     )}
-                    <div className="mt-4 flex gap-2">
-                      <Button size="sm" variant="outline" disabled={qrLoading === table.id} onClick={() => void handleGenerateQr(table)}>
-                        {qrLoading === table.id ? 'Generating...' : 'Generate QR'}
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <Button size="sm" variant="outline" onClick={() => handleStartEdit(table)}>
+                        ✏️ Edit & QR
+                      </Button>
+                      <Button size="sm" variant="ghost" disabled={qrLoading === table.id} onClick={() => void handleGenerateQr(table)}>
+                        {qrLoading === table.id ? 'Generating...' : '📷 QR Code'}
+                      </Button>
+                      <Button size="sm" variant="ghost" className="text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30" onClick={() => void handleDeleteTable(table.id)}>
+                        🗑️
                       </Button>
                     </div>
                   </Card>
@@ -380,4 +609,3 @@ export default function Tables() {
     </div>
   );
 }
-

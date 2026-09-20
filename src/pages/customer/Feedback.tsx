@@ -27,9 +27,8 @@ export default function Feedback() {
   }, [user]);
 
   useEffect(() => {
-    menuApi.getAll({ page: 1, limit: 100 })
-      .then((response) => {
-        const list = Array.isArray(response.data?.data) ? response.data.data : [];
+    menuApi.getAllItems()
+      .then((list) => {
         setMenuItems(list.map((item: any) => ({
           id: String(item._id ?? item.id),
           name: String(item.title ?? item.name ?? 'Menu item'),

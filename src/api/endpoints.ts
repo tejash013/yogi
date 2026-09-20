@@ -116,10 +116,12 @@ export const subscriptionsApi = {
 // Menu API
 export const menuApi = {
   getAll: (params?: PaginationParams) =>
-    apiClient.get<PaginatedResponse<MenuItem>>('/api/menu', { params }),
+    apiClient.get<PaginatedResponse<MenuItem>>('/api/menu', {
+      params: { limit: 5000, ...params },
+    }),
 
   getAllItems: async (params?: Omit<PaginationParams, 'page' | 'limit'>) => {
-    const limit = 100;
+    const limit = 1000;
     const firstResponse = await apiClient.get<PaginatedResponse<MenuItem>>('/api/menu', {
       params: { ...params, page: 1, limit },
     });
@@ -174,7 +176,7 @@ export const categoriesApi = {
     apiClient.get<PaginatedResponse<Category>>('/api/categories', { params }),
 
   getAllItems: async (params?: Omit<PaginationParams, 'page' | 'limit'>) => {
-    const limit = 100;
+    const limit = 1000;
     const firstResponse = await apiClient.get<PaginatedResponse<Category>>('/api/categories', {
       params: { ...params, page: 1, limit },
     });
@@ -254,8 +256,20 @@ export const tablesApi = {
   }) =>
     apiClient.post<ApiResponse<Table>>('/api/tables', table),
 
+  update: (id: string, table: Partial<{
+    label: string;
+    capacity: number;
+    status: 'available' | 'occupied' | 'reserved' | 'cleaning';
+    location: string;
+    notes: string;
+  }>) =>
+    apiClient.patch<ApiResponse<Table>>(`/api/tables/${id}`, table),
+
   updateStatus: (id: string, status: Table['status']) =>
     apiClient.patch<ApiResponse<Table>>(`/api/tables/${id}/status`, { status }),
+
+  delete: (id: string) =>
+    apiClient.delete<ApiResponse<null>>(`/api/tables/${id}`),
 
   reserve: (id: string) =>
     apiClient.post<ApiResponse<Table>>(`/api/tables/${id}/reserve`),

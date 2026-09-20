@@ -47,8 +47,7 @@ export default function Favorites() {
     const loadFavorites = async () => {
       setIsLoading(true);
       try {
-        const response = await menuApi.getAll({ page: 1, limit: 100 }).catch(() => ({ data: { data: [] } }));
-        const items = Array.isArray(response?.data?.data) ? response.data.data : [];
+        const items = await menuApi.getAllItems().catch(() => []);
         setMenuItems(items.map(normalizeMenuItem));
       } catch {
         setMenuItems([]);

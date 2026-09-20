@@ -66,13 +66,12 @@ export default function FoodDetails() {
     const loadItem = async () => {
       setIsLoading(true);
       try {
-        const [itemRes, listRes] = await Promise.all([
+        const [itemRes, list] = await Promise.all([
           menuApi.getById(String(id ?? '')).catch(() => ({ data: { data: null } })),
-          menuApi.getAll({ page: 1, limit: 100 }).catch(() => ({ data: { data: [] } })),
+          menuApi.getAllItems().catch(() => []),
         ]);
 
         const itemData = itemRes?.data?.data ?? null;
-        const list = Array.isArray(listRes?.data?.data) ? listRes.data.data : [];
         const normalizedItems = list.map(normalizeMenuItem);
 
         if (itemData) {

@@ -8,7 +8,7 @@ export const idParamSchema = z.object({ id: objectId });
 
 export const paginationQuerySchema = z.object({
   page: positiveInt.default(1),
-  limit: positiveInt.max(100).default(20),
+  limit: positiveInt.max(10000).default(50),
   q: z.string().trim().optional(),
 });
 

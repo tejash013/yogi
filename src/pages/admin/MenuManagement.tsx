@@ -43,12 +43,12 @@ export default function MenuManagement() {
 
   const loadData = async () => {
     try {
-      const [menuResponse, categoryResponse] = await Promise.all([
-        menuApi.getAll({ page: 1, limit: 100 }),
-        categoriesApi.getAll(),
+      const [menuItemsList, categoryResponse] = await Promise.all([
+        menuApi.getAllItems(),
+        categoriesApi.getAllItems(),
       ]);
 
-      const nextItems = (menuResponse.data.data ?? []).map((item: any) => ({
+      const nextItems = (menuItemsList ?? []).map((item: any) => ({
         id: item._id ?? item.id,
         title: item.title ?? item.name,
         description: item.description ?? '',
@@ -64,7 +64,7 @@ export default function MenuManagement() {
       }));
 
       setItems(nextItems);
-      setCategories((categoryResponse.data.data ?? []).map((category: any) => ({
+      setCategories((categoryResponse ?? []).map((category: any) => ({
         id: category._id ?? category.id,
         name: category.name,
       })));

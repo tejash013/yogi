@@ -29,21 +29,10 @@ export default function Categories() {
     const loadCategories = async () => {
       setIsLoading(true);
       try {
-        const [categoryResponse, menuResponse] = await Promise.all([
-          categoriesApi.getAll().catch(() => ({ data: { data: [] } })),
-          menuApi.getAll({ page: 1, limit: 100 }).catch(() => ({ data: { data: [] } })),
+        const [categoryList, menuList] = await Promise.all([
+          categoriesApi.getAllItems().catch(() => []),
+          menuApi.getAllItems().catch(() => []),
         ]);
-
-        const categoryList = Array.isArray(categoryResponse?.data?.data)
-          ? categoryResponse.data.data
-          : Array.isArray(categoryResponse?.data)
-            ? categoryResponse.data
-            : [];
-        const menuList = Array.isArray(menuResponse?.data?.data)
-          ? menuResponse.data.data
-          : Array.isArray(menuResponse?.data)
-            ? menuResponse.data
-            : [];
 
         const itemCounts = new Map<string, number>();
         menuList.forEach((item: any) => {
@@ -106,10 +95,8 @@ export default function Categories() {
 
       setNewCategory({ name: '', description: '', icon: '🍽️' });
       setShowCreateForm(false);
-      const categoryResponse = await categoriesApi.getAll().catch(() => ({ data: { data: [] } }));
-      const categoryList = Array.isArray(categoryResponse?.data?.data) ? categoryResponse.data.data : [];
-      const menuResponse = await menuApi.getAll({ page: 1, limit: 100 }).catch(() => ({ data: { data: [] } }));
-      const menuList = Array.isArray(menuResponse?.data?.data) ? menuResponse.data.data : [];
+      const categoryList = await categoriesApi.getAllItems().catch(() => []);
+      const menuList = await menuApi.getAllItems().catch(() => []);
       const itemCounts = new Map<string, number>();
       menuList.forEach((item: any) => {
         const categoryId = String(item?.category?._id ?? item?.category ?? item?.categoryId ?? '');

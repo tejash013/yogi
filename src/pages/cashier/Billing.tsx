@@ -77,8 +77,7 @@ export default function Billing() {
     Promise.all([
       menuApi.getAllItems().catch(() => []),
       categoriesApi.getAllItems().catch(() => []),
-    ]).then(([mRes, cRes]) => {
-      const items = Array.isArray(mRes) ? mRes : [];
+    ]).then(([items, cRes]) => {
       const cats = (Array.isArray(cRes) ? cRes : [])
         .map((category: any, index: number) => ({
           id: String(category?._id ?? category?.id ?? `category-${index}`),
