@@ -29,9 +29,36 @@ function isPublicAuthRequest(url?: string) {
   return Boolean(url && /^\/api\/auth\/(login|register|refresh|forgot-password|reset-password|verify-otp)$/.test(url));
 }
 
+function isPublicCatalogRequest(url?: string): boolean {
+  if (!url) return false;
+  return Boolean(/^\/api\/(menu|categories|tables|tenants|offers|reviews)/.test(url));
+}
+
+function isTokenExpired(token: string): boolean {
+  try {
+    const payload = token.split('.')[1];
+    if (!payload) return true;
+    const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+    if (decoded.exp && typeof decoded.exp === 'number') {
+      return decoded.exp * 1000 < Date.now() + 10000;
+    }
+    return false;
+  } catch {
+    return true;
+  }
+}
+
 function redirectToLoginIfNeeded() {
-  const isAuthPage = /^\/auth(?:\/|$)/.test(window.location.pathname);
-  if (!isAuthPage) {
+  const pathname = window.location.pathname;
+  const isAuthPage = /^\/auth(?:\/|$)/.test(pathname);
+  const isPublicCustomerRoute =
+    pathname === '/' ||
+    pathname.startsWith('/menu') ||
+    pathname.startsWith('/table') ||
+    pathname.startsWith('/checkout') ||
+    pathname.startsWith('/order-success');
+
+  if (!isAuthPage && !isPublicCustomerRoute) {
     window.location.href = '/auth/login';
   }
 }
@@ -58,9 +85,17 @@ function refreshAccessToken() {
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('restaurantos-token');
-    const payload = token ? readTokenPayload(token) : null;
-    if (token && !isPublicAuthRequest(config.url)) {
-      config.headers.Authorization = `Bearer ${token}`;
+    let payload = null;
+
+    if (token) {
+      if (isTokenExpired(token)) {
+        localStorage.removeItem('restaurantos-token');
+      } else {
+        payload = readTokenPayload(token);
+        if (!isPublicAuthRequest(config.url)) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+      }
     }
 
     // Always attach active SaaS Tenant Context (Restaurant ID & Branch ID)
@@ -102,17 +137,26 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isPublicAuthRequest(originalRequest.url)) {
       originalRequest._retry = true;
 
+      // For public catalog requests (menu, categories, tables, tenants, etc.), clear invalid token and retry as guest
+      if (isPublicCatalogRequest(originalRequest.url)) {
+        localStorage.removeItem('restaurantos-token');
+        if (originalRequest.headers) {
+          delete originalRequest.headers.Authorization;
+        }
+        return apiClient(originalRequest);
+      }
+
       try {
         const token = await refreshAccessToken();
-        originalRequest.headers.Authorization = `Bearer ${token}`;
+        if (originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+        }
         return apiClient(originalRequest);
       } catch {
         // Refresh token failed, clear auth
         localStorage.removeItem('restaurantos-token');
         redirectToLoginIfNeeded();
       }
-      localStorage.removeItem('restaurantos-token');
-      redirectToLoginIfNeeded();
     }
 
     return Promise.reject(error);

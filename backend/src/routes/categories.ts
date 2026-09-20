@@ -3,7 +3,7 @@ import Category from '../models/Category.js';
 import { paginated, success, failure } from '../utils/response.js';
 import { validateBody, validateParams, validateQuery } from '../middleware/validate.js';
 import { categoryCreateSchema, categoryQuerySchema, categoryUpdateSchema, idParamSchema } from '../validation/schemas.js';
-import { authenticate, requirePermission } from '../middleware/auth.js';
+import { authenticate, optionalAuth, requirePermission } from '../middleware/auth.js';
 import { permissions } from '../auth/permissions.js';
 import { tenantFilter } from '../utils/tenant.js';
 
@@ -14,7 +14,7 @@ function paginate(items: any[], page: number, limit: number) {
   return paginated(items.slice(start, start + limit), items.length, page, limit);
 }
 
-router.get('/', validateQuery(categoryQuerySchema), async (req, res) => {
+router.get('/', optionalAuth, validateQuery(categoryQuerySchema), async (req, res) => {
   const page = Number(req.query.page ?? 1);
   const limit = Number(req.query.limit ?? 20);
   const q = String(req.query.q ?? '').trim();
@@ -28,7 +28,7 @@ router.get('/', validateQuery(categoryQuerySchema), async (req, res) => {
   return res.json(paginate(categories, page, limit));
 });
 
-router.get('/:id', validateParams(idParamSchema), async (req, res) => {
+router.get('/:id', optionalAuth, validateParams(idParamSchema), async (req, res) => {
   const category = await Category.findOne({ _id: req.params.id, ...tenantFilter(req) }).exec();
   if (!category) {
     return res.status(404).json(failure('Category not found'));

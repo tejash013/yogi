@@ -181,6 +181,17 @@ router.post('/', authenticate, requirePermission(permissions.orderCreate), valid
             }).exec();
         }
         if (table) {
+            if (authenticatedUser.role === 'customer' && table.status === 'occupied') {
+                const activeOccupantOrder = await orderRepo.findPaginated({
+                    table: table._id,
+                    user: { $ne: user._id },
+                    status: { $in: ['pending', 'confirmed', 'preparing', 'ready', 'served'] },
+                    ...tenant,
+                }, 1, 1);
+                if (activeOccupantOrder && activeOccupantOrder.total > 0) {
+                    return res.status(400).json(failure(`Table ${table.label} is currently occupied by another guest. Please choose an available table.`));
+                }
+            }
             resolvedTableId = table._id;
             await Table.updateOne({ _id: table._id }, { status: 'occupied' }).exec();
             try {

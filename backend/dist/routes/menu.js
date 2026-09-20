@@ -4,7 +4,7 @@ import MenuItem from '../models/MenuItem.js';
 import { paginated, success, failure } from '../utils/response.js';
 import { validateBody, validateParams, validateQuery } from '../middleware/validate.js';
 import { idParamSchema, menuCreateSchema, menuQuerySchema, menuUpdateSchema } from '../validation/schemas.js';
-import { authenticate, requirePermission } from '../middleware/auth.js';
+import { authenticate, optionalAuth, requirePermission } from '../middleware/auth.js';
 import { permissions } from '../auth/permissions.js';
 import { tenantFilter } from '../utils/tenant.js';
 import { uploadImage } from '../utils/cloudinaryUpload.js';
@@ -61,7 +61,7 @@ async function resolveMenuImage(image, tenant) {
         metadata: { provider: isDataUrl ? 'local' : 'external' },
     };
 }
-router.get('/', validateQuery(menuQuerySchema), async (req, res) => {
+router.get('/', optionalAuth, validateQuery(menuQuerySchema), async (req, res) => {
     const page = Number(req.query.page ?? 1);
     const limit = Number(req.query.limit ?? 10);
     const q = String(req.query.q ?? '').trim();
@@ -84,15 +84,15 @@ router.get('/', validateQuery(menuQuerySchema), async (req, res) => {
         .exec();
     return res.json(paginated(items, total, page, limit));
 });
-router.get('/popular', async (req, res) => {
+router.get('/popular', optionalAuth, async (req, res) => {
     const items = await MenuItem.find({ ...tenantFilter(req), isPopular: true, isActive: true }).populate('category', 'name').exec();
     return res.json(success(items, 'Popular menu items loaded'));
 });
-router.get('/recommended', async (req, res) => {
+router.get('/recommended', optionalAuth, async (req, res) => {
     const items = await MenuItem.find({ ...tenantFilter(req), isRecommended: true, isActive: true }).populate('category', 'name').exec();
     return res.json(success(items, 'Recommended items loaded'));
 });
-router.get('/search', validateQuery(menuQuerySchema.pick({ q: true })), async (req, res) => {
+router.get('/search', optionalAuth, validateQuery(menuQuerySchema.pick({ q: true })), async (req, res) => {
     const q = String(req.query.q ?? '').trim();
     const items = await MenuItem.find({
         ...tenantFilter(req),
@@ -106,7 +106,7 @@ router.get('/search', validateQuery(menuQuerySchema.pick({ q: true })), async (r
         .exec();
     return res.json(paginated(items, items.length, 1, items.length));
 });
-router.get('/:id', validateParams(idParamSchema), async (req, res) => {
+router.get('/:id', optionalAuth, validateParams(idParamSchema), async (req, res) => {
     let item = await MenuItem.findOne({ _id: req.params.id, ...tenantFilter(req) }).populate('category', 'name').exec();
     if (!item) {
         item = await MenuItem.findById(req.params.id).populate('category', 'name').exec();
