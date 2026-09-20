@@ -29,12 +29,12 @@ export default function WelcomeScreen() {
     if (currentSlide < welcomeSlides.length - 1) {
       setCurrentSlide((prev) => prev + 1);
     } else {
-      navigate(ROUTES.AUTH.LOGIN);
+      navigate(ROUTES.CUSTOMER.HOME);
     }
   };
 
   const handleSkip = () => {
-    navigate(ROUTES.AUTH.LOGIN);
+    navigate(ROUTES.CUSTOMER.HOME);
   };
 
   const slide = welcomeSlides[currentSlide];

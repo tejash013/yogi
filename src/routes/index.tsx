@@ -298,14 +298,14 @@ function NotFoundPage() {
 function RootRedirect() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const role = useAuthStore((state) => state.user?.role);
-  if (!isAuthenticated) return <Navigate to={ROUTES.AUTH.LOGIN} replace />;
+  if (!isAuthenticated) return <Navigate to={ROUTES.CUSTOMER.HOME} replace />;
   if (role === 'platformAdmin') return <Navigate to={ROUTES.PLATFORM_ADMIN.DASHBOARD} replace />;
   if (role === 'owner') return <Navigate to={ROUTES.OWNER.DASHBOARD} replace />;
   if (role === 'manager') return <Navigate to={ROUTES.ADMIN.DASHBOARD} replace />;
   if (role === 'chef') return <Navigate to={ROUTES.KITCHEN.DASHBOARD} replace />;
   if (role === 'cashier') return <Navigate to={ROUTES.CASHIER.DASHBOARD} replace />;
-  if (role === 'customer') return <Navigate to={ROUTES.DEFAULT} replace />;
-  return <Navigate to={ROUTES.AUTH.LOGIN} replace />;
+  if (role === 'customer') return <Navigate to={ROUTES.CUSTOMER.HOME} replace />;
+  return <Navigate to={ROUTES.CUSTOMER.HOME} replace />;
 }
 
 export default router;
