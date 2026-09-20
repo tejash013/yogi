@@ -4,7 +4,7 @@ import { Badge, Button, Card } from '@/components/ui';
 import { QuantitySelector, Rating, FoodCard } from '@/components/customer';
 import { ROUTES } from '@/constants';
 import { menuApi, reviewsApi } from '@/api';
-import { useCartStore, useTenantStore } from '@/store';
+import { useCartStore } from '@/store';
 import type { MenuItem, CartItem, MenuReview } from '@/types';
 
 const FAVORITES_STORAGE_KEY = 'yogi_favorites';
@@ -35,7 +35,6 @@ const normalizeMenuItem = (item: any): MenuItem => ({
 export default function FoodDetails() {
   const { id } = useParams();
   const addItem = useCartStore((s) => s.addItem);
-  const { isViewOnlyBranch, currentBranch, setModalOpen } = useTenantStore();
   const [isLoading, setIsLoading] = useState(true);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [quantity, setQuantity] = useState(1);
@@ -130,16 +129,6 @@ export default function FoodDetails() {
   const totalPrice = (basePrice + addonPrice) * quantity;
 
   const handleAddToCart = () => {
-    if (isViewOnlyBranch) {
-      if (
-        window.confirm(
-          `This dish belongs to "${currentBranch?.name || 'this branch'}", which is outside your location radius.\n\nWould you like to open the location selector to switch to a deliverable outlet?`
-        )
-      ) {
-        setModalOpen(true);
-      }
-      return;
-    }
 
     const cartItem: CartItem = {
       menuItemId: item.id,
@@ -215,6 +204,8 @@ export default function FoodDetails() {
                   <img
                     src={img}
                     alt={`${item.name} ${idx + 1}`}
+                    loading="lazy"
+                    decoding="async"
                     className="h-full w-full object-cover"
                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                   />
@@ -325,19 +316,11 @@ export default function FoodDetails() {
             <Button
               size="lg"
               className={`flex-1 transition-all ${
-                isViewOnlyBranch
-                  ? '!bg-amber-500 !text-neutral-950 font-bold hover:!bg-amber-400'
-                  : addedToCart
-                  ? '!bg-green-500'
-                  : ''
+                addedToCart ? '!bg-green-500' : ''
               }`}
               onClick={handleAddToCart}
             >
-              {isViewOnlyBranch ? (
-                <>
-                  <span>📍 Out of Delivery Range — View Menu Only</span>
-                </>
-              ) : addedToCart ? (
+              {addedToCart ? (
                 <>
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -347,9 +330,9 @@ export default function FoodDetails() {
               ) : (
                 <>
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
                   </svg>
-                  Add to Cart · ₹{totalPrice.toFixed(2)}
+                  Add to Cart — ₹{totalPrice.toFixed(2)}
                 </>
               )}
             </Button>

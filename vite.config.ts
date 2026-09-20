@@ -20,8 +20,11 @@ export default defineConfig({
           if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/') || id.includes('node_modules/react-router-dom/')) {
             return 'vendor-react';
           }
-          if (id.includes('node_modules/lucide-react/')) {
+          if (id.includes('node_modules/react-icons/')) {
             return 'vendor-icons';
+          }
+          if (id.includes('node_modules/axios/') || id.includes('node_modules/socket.io-client/') || id.includes('node_modules/zustand/') || id.includes('node_modules/qrcode.react/') || id.includes('node_modules/zod/')) {
+            return 'vendor-utils';
           }
         },
       },

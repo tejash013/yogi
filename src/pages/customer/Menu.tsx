@@ -8,6 +8,19 @@ import type { MenuItem, Category } from '@/types';
 
 const FAVORITES_STORAGE_KEY = 'yogi_favorites';
 
+function getCategoryIcon(name: string): string {
+  const lower = name.toLowerCase();
+  if (lower.includes('pizza')) return '🍕';
+  if (lower.includes('burger')) return '🍔';
+  if (lower.includes('beverage') || lower.includes('drink') || lower.includes('shake') || lower.includes('juice')) return '🥤';
+  if (lower.includes('coffee') || lower.includes('tea')) return '☕';
+  if (lower.includes('extra') || lower.includes('side') || lower.includes('snack')) return '🍿';
+  if (lower.includes('dessert') || lower.includes('ice cream') || lower.includes('sweet')) return '🍦';
+  if (lower.includes('noodle') || lower.includes('pasta') || lower.includes('chinese')) return '🍜';
+  if (lower.includes('main') || lower.includes('thali') || lower.includes('dish')) return '🍛';
+  return '🍽️';
+}
+
 const normalizeMenuItem = (item: any): MenuItem => ({
   id: String(item._id ?? item.id ?? ''),
   name: item.title ?? item.name,
@@ -205,10 +218,10 @@ export default function Menu() {
       </div>
 
       {/* Categories Filter */}
-      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none snap-x touch-pan-x -mx-1 px-1">
         <button
           onClick={() => handleCategoryFilter('all')}
-          className={`flex-shrink-0 rounded-full px-4 py-2 text-xs font-bold transition-all border ${
+          className={`flex-shrink-0 snap-start rounded-full px-4 py-2 text-xs font-bold transition-all border ${
             selectedCategory === 'all'
               ? 'bg-primary-500 text-white border-primary-400 shadow-md shadow-primary-500/25'
               : 'bg-white text-neutral-700 border-neutral-200/80 hover:bg-neutral-50 dark:bg-neutral-850 dark:border-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-800'
@@ -220,13 +233,13 @@ export default function Menu() {
           <button
             key={cat.id}
             onClick={() => handleCategoryFilter(cat.id)}
-            className={`flex-shrink-0 rounded-full px-4 py-2 text-xs font-bold transition-all border ${
+            className={`flex-shrink-0 snap-start rounded-full px-4 py-2 text-xs font-bold transition-all border ${
               selectedCategory === cat.id
                 ? 'bg-primary-500 text-white border-primary-400 shadow-md shadow-primary-500/25'
                 : 'bg-white text-neutral-700 border-neutral-200/80 hover:bg-neutral-50 dark:bg-neutral-850 dark:border-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-800'
             }`}
           >
-            {cat.icon} {cat.name}
+            {getCategoryIcon(cat.name)} {cat.name}
           </button>
         ))}
       </div>
