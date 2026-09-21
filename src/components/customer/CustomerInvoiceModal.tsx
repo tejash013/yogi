@@ -23,7 +23,7 @@ export default function CustomerInvoiceModal({
 
   const restaurantName = currentBranch?.name || currentRestaurant?.name || 'Yogi Restaurant';
   const restaurantTagline = currentRestaurant?.tagline || 'Authentic Dining & Smart Kitchen';
-  const restaurantAddress = formatProperAddress(currentBranch?.address ? currentBranch : currentRestaurant);
+  const restaurantAddress = formatProperAddress([currentBranch, currentRestaurant]);
   const restaurantPhone = currentBranch?.phone || currentRestaurant?.phone || '+91 98251 23456';
   const restaurantEmail = currentBranch?.email || currentRestaurant?.email || 'contact@yogirestaurant.com';
 

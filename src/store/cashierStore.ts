@@ -316,18 +316,27 @@ const syncBillUpdateToBackend = async (bill: CashierOrder) => {
   } catch {}
 };
 
+const getFirstNonEmptyString = (...vals: (string | undefined | null)[]): string => {
+  for (const v of vals) {
+    if (v && typeof v === 'string' && v.trim().length > 0) {
+      return v.trim();
+    }
+  }
+  return '';
+};
+
 const buildRestaurantInfo = (
   restaurant: ReturnType<typeof useTenantStore.getState>['currentRestaurant'],
   branch: ReturnType<typeof useTenantStore.getState>['currentBranch'],
   settings: Partial<RestaurantInfo> = {},
 ): RestaurantInfo => ({
-  name: restaurant?.name || settings.name || defaultRestaurantInfo.name,
-  branchName: branch?.name || settings.branchName || defaultRestaurantInfo.branchName,
-  address: formatProperAddress(branch || restaurant || settings, defaultRestaurantInfo.address),
-  phone: branch?.phone || restaurant?.phone || settings.phone || defaultRestaurantInfo.phone,
-  email: branch?.email || restaurant?.email || settings.email || defaultRestaurantInfo.email,
-  gstNumber: restaurant?.gstNumber || settings.gstNumber || defaultRestaurantInfo.gstNumber,
-  tagline: restaurant?.tagline || settings.tagline || defaultRestaurantInfo.tagline,
+  name: getFirstNonEmptyString(settings.name, restaurant?.name, defaultRestaurantInfo.name),
+  branchName: getFirstNonEmptyString(branch?.name, settings.branchName, defaultRestaurantInfo.branchName),
+  address: formatProperAddress([branch, restaurant, settings], defaultRestaurantInfo.address),
+  phone: getFirstNonEmptyString(branch?.phone, settings.phone, restaurant?.phone, defaultRestaurantInfo.phone),
+  email: getFirstNonEmptyString(branch?.email, settings.email, restaurant?.email, defaultRestaurantInfo.email),
+  gstNumber: getFirstNonEmptyString(settings.gstNumber, restaurant?.gstNumber, defaultRestaurantInfo.gstNumber),
+  tagline: getFirstNonEmptyString(settings.tagline, restaurant?.tagline, defaultRestaurantInfo.tagline),
 });
 
 const hydrateCashierData = async () => {
@@ -380,7 +389,8 @@ const hydrateCashierData = async () => {
         id: String(invoice?._id ?? invoice?.id ?? `pay-${Date.now()}`),
         paymentNumber: `PAY-${String(invoice?._id ?? invoice?.id ?? '000').slice(-6).toUpperCase()}`,
         orderNumber: invoice?.order?.orderNumber ?? `ORD-${String(invoice?._id ?? invoice?.id ?? '000').slice(-6).toUpperCase()}`,
-        invoiceNumber: `INV-${String(invoice?._id ?? invoice?.id ?? '000').slice(-6).toUpperCase()}`,
+        invoiceId: String(invoice?._id ?? invoice?.id ?? ''),
+        orderId: String(invoice?.order?._id ?? invoice?.order ?? ''),
         customerName: 'Guest Customer',
         amount: Number(invoice?.amount ?? 0),
         originalAmount: Number(invoice?.amount ?? 0),

@@ -24,6 +24,7 @@ export default function ReceiptView({ invoice }: Props) {
         <p>{restaurantInfo.branchName}</p>
         <p>{restaurantInfo.address}</p>
         <p>{restaurantInfo.phone}</p>
+        {restaurantInfo.email && <p>{restaurantInfo.email}</p>}
       </div>
 
       <div className="my-3 border-t border-dashed border-neutral-400" />
