@@ -27,7 +27,16 @@ const calculateTotals = (items: CartItem[]) => {
   return { subtotal, tax, total: subtotal + tax };
 };
 
-const storedTable = typeof window !== 'undefined' ? localStorage.getItem('restaurantos-table-number') : null;
+const rawStoredTable = typeof window !== 'undefined' ? localStorage.getItem('restaurantos-table-number') : null;
+const parsedStoredTable = rawStoredTable ? Number(rawStoredTable) : NaN;
+const initialTableNumber =
+  Number.isFinite(parsedStoredTable) && parsedStoredTable > 0 && parsedStoredTable < 1000
+    ? parsedStoredTable
+    : undefined;
+
+if (rawStoredTable && !initialTableNumber && typeof window !== 'undefined') {
+  localStorage.removeItem('restaurantos-table-number');
+}
 
 export const useCartStore = create<CartState>((set) => ({
   items: [],
@@ -36,7 +45,7 @@ export const useCartStore = create<CartState>((set) => ({
   discount: 0,
   total: 0,
   deliveryType: 'dine-in',
-  tableNumber: storedTable ? Number(storedTable) || undefined : undefined,
+  tableNumber: initialTableNumber,
   tableId: typeof window !== 'undefined' ? localStorage.getItem('restaurantos-table-id') || undefined : undefined,
   deliveryAddress: undefined,
   specialInstructions: undefined,

@@ -21,13 +21,13 @@ export default function ScanTable() {
       .then(async (response) => {
         const table = response.data.data;
         await setTenant(table.restaurantId, table.branchId);
-        const number = Number.parseInt(table.label.replace(/\D/g, ''), 10);
-        setTableContext({ tableId: table.tableId, tableNumber: Number.isFinite(number) ? number : undefined });
+        const parsed = Number.parseInt(String(table.label || '').replace(/\D/g, ''), 10);
+        const validNum = Number.isFinite(parsed) && parsed > 0 && parsed < 1000 ? parsed : undefined;
+        setTableContext({ tableId: table.tableId, tableNumber: validNum });
         navigate(ROUTES.CUSTOMER.HOME, { replace: true });
       })
       .catch(() => {
-        const number = Number.parseInt(token.replace(/\D/g, ''), 10);
-        setTableContext({ tableId: token, tableNumber: Number.isFinite(number) ? number : undefined });
+        setTableContext({ tableId: token, tableNumber: undefined });
         navigate(ROUTES.CUSTOMER.HOME, { replace: true });
       });
   }, [navigate, setTableContext, setTenant, token]);

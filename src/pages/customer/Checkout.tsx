@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Card, Input } from '@/components/ui';
+import { Button, Card } from '@/components/ui';
 import { ROUTES } from '@/constants';
-import { ordersApi, settingsApi, tablesApi } from '@/api';
+import { ordersApi, settingsApi } from '@/api';
 import { getApiErrorMessage } from '@/api/errors';
 import { useAuthStore, useCartStore, useOrderSyncStore } from '@/store';
 
@@ -18,9 +18,7 @@ export default function Checkout() {
   const [diningType, setDiningType] = useState<DiningType>('dine-in');
   const [tableNumber, setTableNumber] = useState(cartTableNumber ? String(cartTableNumber) : '');
   const [tableId, setTableId] = useState(cartTableId || '');
-  const [tables, setTables] = useState<Array<{ id: string; label: string }>>([]);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
-  const [showEditCustomer, setShowEditCustomer] = useState(false);
   const [formData, setFormData] = useState({
     name: user ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Customer' : '',
     email: user?.email ?? '',
@@ -65,29 +63,6 @@ export default function Checkout() {
       .catch(() => {});
   }, []);
 
-  useEffect(() => {
-    tablesApi.getAll()
-      .then((res) => {
-        const list = Array.isArray(res.data?.data) ? res.data.data : [];
-        const mapped = list.map((table: any) => ({
-          id: String(table._id ?? table.id),
-          label: String(table.label ?? `Table ${table.number ?? ''}`),
-          status: String(table.status ?? 'available'),
-          number: Number.parseInt(String(table.label ?? table.number).replace(/\D/g, ''), 10),
-        }));
-        setTables(mapped);
-
-        if (cartTableNumber) {
-          const match = mapped.find((t: any) => t.number === cartTableNumber || t.label.includes(String(cartTableNumber)));
-          if (match) {
-            setTableId(match.id);
-            setTableNumber(String(cartTableNumber));
-          }
-        }
-      })
-      .catch(() => setTables([]));
-  }, [cartTableNumber]);
-
   const deliveryFee = diningType === 'delivery' ? standardDeliveryFee : 0;
   const rewardDiscount = useRewardPoints ? Math.min(50, subtotal * 0.2) : 0;
   const finalTotal = Math.max(0, subtotal + deliveryFee - rewardDiscount);
@@ -102,11 +77,6 @@ export default function Checkout() {
       return;
     }
 
-    if (diningType === 'dine-in' && !tableNumber.trim() && !tableId) {
-      setSubmitError('Please select or enter your Table Number for Dine-In order.');
-      return;
-    }
-
     if (diningType === 'delivery' && !formData.address.trim()) {
       setSubmitError('Please enter your delivery address for delivery orders.');
       return;
@@ -116,18 +86,19 @@ export default function Checkout() {
     setSubmitError(null);
 
     try {
+      const activeTableNum = cartTableNumber && Number.isFinite(cartTableNumber) && cartTableNumber > 0 && cartTableNumber < 1000 ? cartTableNumber : undefined;
       const notes = [
         formData.notes,
         formData.name ? `Customer: ${formData.name.trim()}` : '',
         formData.phone ? `Phone: ${formData.phone.trim()}` : '',
-        diningType === 'dine-in' && tableNumber ? `Table ${tableNumber}` : '',
+        diningType === 'dine-in' && (activeTableNum || tableNumber) ? `Table ${activeTableNum || tableNumber}` : '',
         diningType === 'delivery' && formData.address ? `Delivery: ${formData.address.trim()}` : '',
         paymentMethod ? `Payment: ${paymentMethod}` : '',
       ].filter(Boolean).join(' | ');
 
       const response = await ordersApi.create({
         userId: customerId ? String(customerId) : undefined,
-        tableId: diningType === 'dine-in' ? (tableId || tableNumber) : undefined,
+        tableId: diningType === 'dine-in' ? (tableId || (activeTableNum ? String(activeTableNum) : undefined)) : undefined,
         deliveryAddress: diningType === 'delivery' ? formData.address.trim() : undefined,
         items: items.map((item) => ({
           menuItem: item.menuItemId,
@@ -207,27 +178,6 @@ export default function Checkout() {
                 ))}
               </div>
 
-              {diningType === 'dine-in' && (
-                <div className="mt-4 rounded-2xl bg-amber-50/60 p-4 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40">
-                  <label className="mb-1.5 flex items-center justify-between text-xs font-bold text-amber-900 dark:text-amber-300">
-                    <span>Restaurant Table 🍽️ (Required for Dine-in)</span>
-                  </label>
-                  <select
-                    value={tableId}
-                    onChange={(e) => {
-                      const selected = tables.find((table) => table.id === e.target.value);
-                      setTableId(e.target.value);
-                      setTableNumber(selected?.label.replace(/\D/g, '') || selected?.label || '');
-                    }}
-                    required
-                    className="w-full rounded-xl border border-amber-300 bg-white px-3 py-2 text-sm font-bold text-neutral-900 shadow-sm focus:border-primary-500 focus:outline-none dark:border-amber-700 dark:bg-neutral-800 dark:text-white"
-                  >
-                    <option value="">Select an available table</option>
-                    {tables.map((table) => <option key={table.id} value={table.id}>{table.label}</option>)}
-                  </select>
-                </div>
-              )}
-
               {diningType === 'delivery' && (
                 <div className="mt-4 rounded-2xl bg-blue-50/60 p-4 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/40">
                   <label className="mb-1.5 flex items-center justify-between text-xs font-bold text-blue-900 dark:text-blue-300">
@@ -243,79 +193,15 @@ export default function Checkout() {
                   />
                 </div>
               )}
-            </Card>
 
-            {/* Customer Details - Friction Free */}
-            <Card>
-              <h3 className="mb-3 font-bold text-neutral-900 dark:text-white">2. Customer Information</h3>
-              {user ? (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between rounded-xl bg-green-50 p-3.5 border border-green-200 dark:bg-green-950/30 dark:border-green-800/40">
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-green-600 text-white text-xs font-bold">
-                        ✓
-                      </span>
-                      <div>
-                        <p className="text-sm font-bold text-green-900 dark:text-green-100">
-                          {formData.name || 'Registered Customer'}
-                        </p>
-                        <p className="text-xs text-green-700 dark:text-green-300">
-                          {formData.email} {formData.phone ? `· ${formData.phone}` : ''}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowEditCustomer(!showEditCustomer)}
-                      className="text-xs font-bold text-green-800 hover:underline dark:text-green-300"
-                    >
-                      {showEditCustomer ? 'Done' : 'Change Info'}
-                    </button>
-                  </div>
-
-                  {showEditCustomer && (
-                    <div className="grid grid-cols-2 gap-3 pt-2">
-                      <Input
-                        label="Full Name"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        required
-                      />
-                      <Input
-                        label="Phone Number"
-                        type="tel"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      />
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-3">
-                  <Input
-                    label="Full Name"
-                    placeholder="e.g. John Doe"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                  />
-                  <Input
-                    label="Phone Number"
-                    placeholder="e.g. +91 9876543210"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  />
-                </div>
-              )}
-
-              {/* Special instructions */}
-              <div className="mt-4">
+              {/* Special Cooking Instructions */}
+              <div className="mt-4 pt-3 border-t border-neutral-100 dark:border-neutral-800">
                 <label className="mb-1.5 block text-xs font-bold text-neutral-700 dark:text-neutral-300">
-                  Special Cooking Instructions / Description
+                  Special Cooking Instructions / Food Notes
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Less spicy, no onions, extra sauce, well cooked..."
+                  placeholder="e.g. Less spicy, no onions, extra sauce..."
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   className="w-full rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-xs text-neutral-900 placeholder-neutral-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
@@ -325,7 +211,7 @@ export default function Checkout() {
 
             {/* Payment Method */}
             <Card>
-              <h3 className="mb-1 font-bold text-neutral-900 dark:text-white">3. Payment Option</h3>
+              <h3 className="mb-1 font-bold text-neutral-900 dark:text-white">2. Payment Option</h3>
               <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-3.5">
                 Select your payment method (Cash or UPI)
               </p>

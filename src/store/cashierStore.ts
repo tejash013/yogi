@@ -147,15 +147,19 @@ const normalizeCashierOrder = (order: any): CashierOrder => {
     tableId: order?.table?._id ?? (typeof order?.tableId === 'string' ? order.tableId : undefined),
     tableNumber: (() => {
       const rawTable = order?.table ?? order?.tableNumber;
-      if (typeof rawTable === 'number' && Number.isFinite(rawTable)) return rawTable;
+      if (typeof rawTable === 'number' && Number.isFinite(rawTable)) {
+        return rawTable > 0 && rawTable < 1000 ? rawTable : undefined;
+      }
       if (typeof rawTable === 'string') {
-        const num = Number.parseInt(rawTable.replace(/\D/g, ''), 10);
-        return Number.isFinite(num) ? num : undefined;
+        const trimmed = rawTable.trim();
+        if (/^[a-f0-9]{16,}$/i.test(trimmed)) return undefined;
+        const num = Number.parseInt(trimmed.replace(/\D/g, ''), 10);
+        return Number.isFinite(num) && num > 0 && num < 1000 ? num : undefined;
       }
       if (typeof rawTable === 'object' && rawTable !== null) {
-        const label = rawTable.label || rawTable.name || rawTable.number || '';
+        const label = (rawTable as any).label || (rawTable as any).name || (rawTable as any).number || '';
         const num = Number.parseInt(String(label).replace(/\D/g, ''), 10);
-        return Number.isFinite(num) ? num : undefined;
+        return Number.isFinite(num) && num > 0 && num < 1000 ? num : undefined;
       }
       return undefined;
     })(),
@@ -196,15 +200,19 @@ const normalizeInvoice = (invoice: any): Invoice => {
     orderNumber: order?.orderNumber ?? `ORD-${invoiceId.slice(-6).toUpperCase()}`,
     tableNumber: (() => {
       const rawTable = order?.table ?? order?.tableNumber ?? invoice?.tableNumber;
-      if (typeof rawTable === 'number' && Number.isFinite(rawTable)) return rawTable;
+      if (typeof rawTable === 'number' && Number.isFinite(rawTable)) {
+        return rawTable > 0 && rawTable < 1000 ? rawTable : undefined;
+      }
       if (typeof rawTable === 'string') {
-        const num = Number.parseInt(rawTable.replace(/\D/g, ''), 10);
-        return Number.isFinite(num) ? num : undefined;
+        const trimmed = rawTable.trim();
+        if (/^[a-f0-9]{16,}$/i.test(trimmed)) return undefined;
+        const num = Number.parseInt(trimmed.replace(/\D/g, ''), 10);
+        return Number.isFinite(num) && num > 0 && num < 1000 ? num : undefined;
       }
       if (typeof rawTable === 'object' && rawTable !== null) {
-        const label = rawTable.label || rawTable.name || rawTable.number || '';
+        const label = (rawTable as any).label || (rawTable as any).name || (rawTable as any).number || '';
         const num = Number.parseInt(String(label).replace(/\D/g, ''), 10);
-        return Number.isFinite(num) ? num : undefined;
+        return Number.isFinite(num) && num > 0 && num < 1000 ? num : undefined;
       }
       return undefined;
     })(),
