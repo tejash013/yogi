@@ -31,7 +31,7 @@ function isPublicAuthRequest(url?: string) {
 
 function isPublicCatalogRequest(url?: string): boolean {
   if (!url) return false;
-  return Boolean(/^\/api\/(menu|categories|tables|tenants|offers|reviews)/.test(url));
+  return Boolean(/^\/api\/(menu|categories|tables|tenants|offers|reviews|settings|coupons)/.test(url));
 }
 
 function isTokenExpired(token: string): boolean {
@@ -51,14 +51,9 @@ function isTokenExpired(token: string): boolean {
 function redirectToLoginIfNeeded() {
   const pathname = window.location.pathname;
   const isAuthPage = /^\/auth(?:\/|$)/.test(pathname);
-  const isPublicCustomerRoute =
-    pathname === '/' ||
-    pathname.startsWith('/menu') ||
-    pathname.startsWith('/table') ||
-    pathname.startsWith('/checkout') ||
-    pathname.startsWith('/order-success');
+  const isProtectedStaffRoute = /^\/(admin|cashier|kitchen|owner|workspace|platform-admin)(?:\/|$)/.test(pathname);
 
-  if (!isAuthPage && !isPublicCustomerRoute) {
+  if (!isAuthPage && isProtectedStaffRoute) {
     window.location.href = '/auth/login';
   }
 }
