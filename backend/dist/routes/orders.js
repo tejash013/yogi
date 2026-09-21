@@ -183,7 +183,7 @@ router.post('/', optionalAuth, validateBody(orderCreateSchema), async (req, res)
             }).exec();
         }
         if (table) {
-            if (authenticatedUser.role === 'customer' && table.status === 'occupied') {
+            if (authenticatedUser?.role === 'customer' && table.status === 'occupied') {
                 const activeOccupantOrder = await orderRepo.findPaginated({
                     table: table._id,
                     user: { $ne: user._id },
@@ -236,7 +236,7 @@ router.post('/', optionalAuth, validateBody(orderCreateSchema), async (req, res)
         items: resolvedItems,
         orderType: orderType || 'dine-in',
         deliveryAddress: req.body.deliveryAddress ? String(req.body.deliveryAddress).trim() : undefined,
-        paymentStatus: authenticatedUser.role === 'customer' ? 'pending' : paymentStatus || 'pending',
+        paymentStatus: authenticatedUser?.role === 'customer' ? 'pending' : paymentStatus || 'pending',
         subtotal,
         taxes,
         total,
@@ -244,7 +244,7 @@ router.post('/', optionalAuth, validateBody(orderCreateSchema), async (req, res)
     });
     emitOrderEvent('order:created', order, { id: order.id, user: order.user, total: order.total });
     await recordAudit({
-        actor: authenticatedUser.id,
+        actor: authenticatedUser?.id || String(user._id),
         action: 'order.created',
         resourceType: 'Order',
         resourceId: String(order._id),
