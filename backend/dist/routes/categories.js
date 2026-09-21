@@ -15,11 +15,19 @@ router.get('/', optionalAuth, validateQuery(categoryQuerySchema), async (req, re
     const page = Number(req.query.page ?? 1);
     const limit = Number(req.query.limit ?? 20);
     const q = String(req.query.q ?? '').trim();
-    const filter = { ...tenantFilter(req), isActive: true };
+    const tenant = tenantFilter(req);
+    let filter = { restaurantId: tenant.restaurantId, branchId: tenant.branchId, isActive: { $ne: false } };
     if (q) {
         filter.name = { $regex: q, $options: 'i' };
     }
-    const categories = await Category.find(filter).sort({ name: 1 }).exec();
+    let categories = await Category.find(filter).sort({ name: 1 }).exec();
+    if (categories.length === 0) {
+        const fallbackFilter = { isActive: { $ne: false } };
+        if (q) {
+            fallbackFilter.name = { $regex: q, $options: 'i' };
+        }
+        categories = await Category.find(fallbackFilter).sort({ name: 1 }).exec();
+    }
     return res.json(paginate(categories, page, limit));
 });
 router.get('/:id', optionalAuth, validateParams(idParamSchema), async (req, res) => {

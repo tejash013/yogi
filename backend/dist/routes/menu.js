@@ -66,7 +66,8 @@ router.get('/', optionalAuth, validateQuery(menuQuerySchema), async (req, res) =
     const limit = Number(req.query.limit ?? 10);
     const q = String(req.query.q ?? '').trim();
     const categoryId = String(req.query.category ?? '').trim();
-    const filter = { ...tenantFilter(req), isActive: true };
+    const tenant = tenantFilter(req);
+    let filter = { restaurantId: tenant.restaurantId, branchId: tenant.branchId, isActive: { $ne: false } };
     if (q) {
         filter.$or = [
             { title: { $regex: q, $options: 'i' } },
@@ -76,12 +77,30 @@ router.get('/', optionalAuth, validateQuery(menuQuerySchema), async (req, res) =
     if (categoryId) {
         filter.category = categoryId;
     }
-    const total = await MenuItem.countDocuments(filter).exec();
-    const items = await MenuItem.find(filter)
+    let total = await MenuItem.countDocuments(filter).exec();
+    let items = await MenuItem.find(filter)
         .populate('category', 'name')
         .skip((page - 1) * limit)
         .limit(limit)
         .exec();
+    if (total === 0) {
+        const fallbackFilter = { isActive: { $ne: false } };
+        if (q) {
+            fallbackFilter.$or = [
+                { title: { $regex: q, $options: 'i' } },
+                { description: { $regex: q, $options: 'i' } },
+            ];
+        }
+        if (categoryId) {
+            fallbackFilter.category = categoryId;
+        }
+        total = await MenuItem.countDocuments(fallbackFilter).exec();
+        items = await MenuItem.find(fallbackFilter)
+            .populate('category', 'name')
+            .skip((page - 1) * limit)
+            .limit(limit)
+            .exec();
+    }
     return res.json(paginated(items, total, page, limit));
 });
 router.get('/popular', optionalAuth, async (req, res) => {
