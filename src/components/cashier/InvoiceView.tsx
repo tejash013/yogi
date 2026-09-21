@@ -20,7 +20,7 @@ export default function InvoiceView({ invoice, onClose, onPrint }: Props) {
 
   return (
     <Modal isOpen={!!invoice} onClose={onClose} title={`Invoice ${invoice.invoiceNumber}`} size="lg">
-      <div id="invoice-print-area" className="space-y-5">
+      <div id="printable-receipt" className="print-area space-y-5">
         {/* Restaurant header */}
         <div className="flex items-start justify-between border-b border-neutral-200 pb-4 dark:border-neutral-700">
           <div>

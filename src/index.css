@@ -178,3 +178,34 @@ a:hover {
 }
 
 
+/* Print media styling for receipts & invoices */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  #printable-receipt,
+  #printable-receipt *,
+  .print-area,
+  .print-area * {
+    visibility: visible !important;
+  }
+  #printable-receipt,
+  .print-area {
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 16px !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    border: none !important;
+    overflow: visible !important;
+    z-index: 99999 !important;
+  }
+  nav, header, footer, button, .no-print {
+    display: none !important;
+  }
+}

@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, EmptyState, Button, Input } from '@/components/ui';
 import { PageHeader, TenantSelector } from '@/components/common';
 import {
   BillItem,
+  InvoiceView,
   OrderList,
   PaymentSuccess,
   ReceiptView,
@@ -28,35 +29,34 @@ function getCategoryIcon(name: string): string {
   if (lower.includes('burger')) return '🍔';
   if (lower.includes('beverage') || lower.includes('drink') || lower.includes('shake') || lower.includes('juice')) return '🥤';
   if (lower.includes('coffee') || lower.includes('tea')) return '☕';
-  if (lower.includes('extra') || lower.includes('side') || lower.includes('snack')) return '🍿';
-  if (lower.includes('dessert') || lower.includes('ice cream') || lower.includes('sweet')) return '🍦';
-  if (lower.includes('noodle') || lower.includes('pasta') || lower.includes('chinese')) return '🍜';
-  if (lower.includes('main') || lower.includes('thali') || lower.includes('dish')) return '🍛';
+  if (lower.includes('dessert') || lower.includes('cake') || lower.includes('ice cream')) return '🍰';
+  if (lower.includes('noodle') || lower.includes('pasta') || lower.includes('ramen')) return '🍜';
+  if (lower.includes('salad')) return '🥗';
+  if (lower.includes('taco') || lower.includes('mexican')) return '🌮';
   return '🍽️';
 }
 
 export default function Billing() {
-  const orders = useCashierStore((s) => s.orders);
   const currentBill = useCashierStore((s) => s.currentBill);
-  const setSelectedOrder = useCashierStore((s) => s.setSelectedOrder);
   const createNewBill = useCashierStore((s) => s.createNewBill);
-  const updateBillInfo = useCashierStore((s) => s.updateBillInfo);
-  const addBillItem = useCashierStore((s) => s.addBillItem);
-  const updateQuantity = useCashierStore((s) => s.updateQuantity);
-  const paymentMethod = useCashierStore((s) => s.paymentMethod);
+  const setSelectedOrder = useCashierStore((s) => s.setSelectedOrder);
   const setPaymentMethod = useCashierStore((s) => s.setPaymentMethod);
-  const cashReceived = useCashierStore((s) => s.cashReceived);
   const setCashReceived = useCashierStore((s) => s.setCashReceived);
+  const paymentMethod = useCashierStore((s) => s.paymentMethod);
+  const cashReceived = useCashierStore((s) => s.cashReceived);
+  const orders = useCashierStore((s) => s.orders);
   const completePayment = useCashierStore((s) => s.completePayment);
   const sendOrderToKitchen = useCashierStore((s) => s.sendOrderToKitchen);
   const clearCurrentBill = useCashierStore((s) => s.clearCurrentBill);
   const paymentSuccess = useCashierStore((s) => s.paymentSuccess);
   const invoices = useCashierStore((s) => s.invoices);
+  const updateBillInfo = useCashierStore((s) => s.updateBillInfo);
+  const addBillItem = useCashierStore((s) => s.addBillItem);
+  const updateQuantity = useCashierStore((s) => s.updateQuantity);
   const calculateTotals = useCashierStore((s) => s.calculateTotals);
 
   const [activeTab, setActiveTab] = useState<'menu' | 'orders'>('menu');
   const [showSplit, setShowSplit] = useState(false);
-  const [showReceipt, setShowReceipt] = useState(false);
   const [showInvoice, setShowInvoice] = useState(false);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
@@ -65,7 +65,6 @@ export default function Billing() {
   const [selectedCat, setSelectedCat] = useState<string>('all');
   const [tables, setTables] = useState<Array<{ id: string; label: string }>>([]);
   const [showCartMenu, setShowCartMenu] = useState(false);
-  const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleReset = () => {
@@ -80,13 +79,12 @@ export default function Billing() {
       menuApi.getAllItems().catch(() => []),
       categoriesApi.getAllItems().catch(() => []),
     ]).then(([items, cRes]) => {
-      const cats = (Array.isArray(cRes) ? cRes : [])
-        .map((category: any, index: number) => ({
-          id: String(category?._id ?? category?.id ?? `category-${index}`),
-          name: String(category?.name ?? category?.title ?? 'Category'),
-        }));
+      const cats = (Array.isArray(cRes) ? cRes : []).map((category: any, index: number) => ({
+        id: String(category?._id ?? category?.id ?? `category-${index}`),
+        name: String(category?.name ?? category?.title ?? 'Category'),
+      }));
       setMenuItems(
-        items.map((it: any) => ({
+        (Array.isArray(items) ? items : []).map((it: any) => ({
           id: String(it._id ?? it.id ?? ''),
           name: it.title ?? it.name ?? 'Item',
           description: it.description ?? '',
@@ -128,7 +126,6 @@ export default function Billing() {
   const handleSelectOrder = (id: string) => {
     setSelectedOrder(id);
     setShowSplit(false);
-    setShowReceipt(false);
     setShowInvoice(false);
   };
 
@@ -140,7 +137,6 @@ export default function Billing() {
     createNewBill();
     setActiveTab('menu');
     setShowSplit(false);
-    setShowReceipt(false);
     setShowInvoice(false);
   };
 
@@ -150,10 +146,9 @@ export default function Billing() {
 
   const handlePrintReceipt = () => {
     if (successInvoice) {
-      setShowReceipt(true);
       setTimeout(() => {
         window.print();
-      }, 200);
+      }, 100);
     }
   };
 
@@ -269,52 +264,79 @@ export default function Billing() {
           </div>
         </div>
 
-        {/* TOP HEADER CATEGORY LIST BAR (Replaces left-side bar with Header Category Bar) */}
+        {/* TOP HEADER CATEGORY LIST BAR (Clean Horizontal Pill Bar) */}
         {activeTab === 'menu' && (
           <Card padding="sm" className="bg-white/90 dark:bg-neutral-850/90 shadow-soft">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3.5 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0 flex-1">
                 <div className="mb-2 flex items-center justify-between gap-3">
-                  <p className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500">Browse categories</p>
-                  <input
-                    value={categorySearch}
-                    onChange={(event) => setCategorySearch(event.target.value)}
-                    placeholder="Find category..."
-                    className="w-36 rounded-lg border border-neutral-200 bg-neutral-50 px-2.5 py-1.5 text-[11px] font-semibold focus:border-primary-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
-                  />
+                  <span className="text-[11px] font-black uppercase tracking-wider text-neutral-500">
+                    Browse Categories
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <input
+                      value={categorySearch}
+                      onChange={(event) => setCategorySearch(event.target.value)}
+                      placeholder="Find category..."
+                      className="w-36 rounded-xl border border-neutral-200 bg-neutral-50 px-2.5 py-1 text-[11px] font-semibold focus:border-primary-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+                    />
+                    {selectedCat !== 'all' && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedCat('all')}
+                        className="text-[11px] font-extrabold text-red-600 hover:underline dark:text-red-400"
+                      >
+                        Reset Filter
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <div className="grid max-h-28 grid-cols-2 gap-2 overflow-y-auto pr-1 sm:grid-cols-3 lg:grid-cols-4">
-                <button
-                  type="button"
-                  onClick={() => setSelectedCat('all')}
-                    className={`flex min-w-0 items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-xs font-bold transition-all ${
-                    selectedCat === 'all'
-                      ? 'bg-primary-500 text-white border-primary-400 shadow-md shadow-primary-500/25'
-                      : 'bg-neutral-100 text-neutral-700 border-neutral-200/80 hover:bg-neutral-200 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-750'
-                  }`}
-                >
-                  <span>🍽️</span>
-                  <span>All Categories</span>
-                </button>
-                {visibleCategories.map((c) => {
-                  const icon = getCategoryIcon(c.name);
-                  const isSelected = selectedCat === c.id;
-                  return (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => setSelectedCat(c.id)}
-                      className={`flex min-w-0 items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-xs font-bold transition-all ${
-                        isSelected
-                          ? 'bg-primary-500 text-white border-primary-400 shadow-md shadow-primary-500/25'
-                          : 'bg-neutral-100 text-neutral-700 border-neutral-200/80 hover:bg-neutral-200 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-750'
-                      }`}
-                    >
-                      <span className="text-base">{icon}</span>
-                      <span className="truncate">{c.name}</span>
-                    </button>
-                  );
-                })}
+
+                {/* Horizontal Scrollable Category Pills */}
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 no-scrollbar">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCat('all')}
+                    className={`flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-black transition-all ${
+                      selectedCat === 'all'
+                        ? 'bg-primary-500 text-white shadow-md shadow-primary-500/25 ring-2 ring-primary-500/30'
+                        : 'bg-neutral-100 text-neutral-700 border border-neutral-200/80 hover:bg-neutral-200 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-750'
+                    }`}
+                  >
+                    <span className="text-sm">🍽️</span>
+                    <span>All Items ({menuItems.length})</span>
+                  </button>
+                  {visibleCategories.map((c) => {
+                    const icon = getCategoryIcon(c.name);
+                    const isSelected = selectedCat === c.id;
+                    const count = menuItems.filter((i: any) => String(i.category?._id ?? i.category ?? i.categoryId ?? '') === c.id).length;
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => setSelectedCat(c.id)}
+                        className={`flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-black transition-all ${
+                          isSelected
+                            ? 'bg-primary-500 text-white shadow-md shadow-primary-500/25 ring-2 ring-primary-500/30'
+                            : 'bg-neutral-100 text-neutral-700 border border-neutral-200/80 hover:bg-neutral-200 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-750'
+                        }`}
+                      >
+                        <span className="text-sm">{icon}</span>
+                        <span>{c.name}</span>
+                        {count > 0 && (
+                          <span
+                            className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                              isSelected
+                                ? 'bg-white/20 text-white'
+                                : 'bg-neutral-200 text-neutral-700 dark:bg-neutral-700 dark:text-neutral-300'
+                            }`}
+                          >
+                            {count}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -575,19 +597,16 @@ export default function Billing() {
                 {showSplit ? (
                   <SplitPayment />
                 ) : (
-                  <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
+                  <div className="grid grid-cols-2 gap-2 text-xs">
                     {[
-                      { id: 'cash', label: '💵 Cash' },
-                      { id: 'card', label: '💳 Card' },
-                      { id: 'upi', label: '📱 Wallet / UPI' },
-                      { id: 'netbanking', label: '💵💳 Cash & Card' },
-                      { id: 'other', label: '🎁 Non chargeable' },
+                      { id: 'cash', label: '💵 Cash Payment' },
+                      { id: 'upi', label: '📱 UPI / QR Code' },
                     ].map((pm) => (
                       <button
                         key={pm.id}
                         type="button"
                         onClick={() => setPaymentMethod(pm.id as any)}
-                        className={`rounded-xl p-2 text-center text-xs font-bold transition-all border ${
+                        className={`rounded-xl p-2.5 text-center text-xs font-bold transition-all border ${
                           paymentMethod === pm.id
                             ? 'border-primary-500 bg-primary-500/10 text-primary-600 dark:text-primary-400 ring-1 ring-primary-500'
                             : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300'
@@ -674,7 +693,6 @@ export default function Billing() {
         <PaymentSuccess
           onViewInvoice={() => {
             setShowInvoice(true);
-            setShowReceipt(false);
           }}
           onPrintReceipt={handlePrintReceipt}
           onNewBill={handleNewBill}
@@ -682,27 +700,21 @@ export default function Billing() {
       )}
 
       {/* Hidden Receipt print area */}
-      {showReceipt && successInvoice && (
-        <div className="hidden print:block">
-          <div ref={printRef}>
-            <ReceiptView invoice={successInvoice} />
-          </div>
+      {successInvoice && (
+        <div id="printable-receipt" className="print-area hidden print:block">
+          <ReceiptView invoice={successInvoice} />
         </div>
       )}
 
       {/* Invoice view modal */}
       {showInvoice && successInvoice && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 dark:bg-neutral-800">
-            <ReceiptView invoice={successInvoice} />
-            <div className="mt-4 flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setShowInvoice(false)}>
-                Close
-              </Button>
-              <Button onClick={() => window.print()}>Print</Button>
-            </div>
-          </div>
-        </div>
+        <InvoiceView
+          invoice={successInvoice}
+          onClose={() => setShowInvoice(false)}
+          onPrint={() => {
+            window.print();
+          }}
+        />
       )}
     </div>
   );

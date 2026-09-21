@@ -113,7 +113,7 @@ export default function Invoices() {
 
       {/* Print area */}
       {printInvoice && (
-        <div className="hidden print:block">
+        <div id="printable-receipt" className="print-area hidden print:block">
           <ReceiptView invoice={printInvoice} />
         </div>
       )}

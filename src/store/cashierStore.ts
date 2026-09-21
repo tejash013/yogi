@@ -874,14 +874,17 @@ splitPayments: [],
       // Single method
       const amount = round2(totals.grandTotal);
       if (state.paymentMethod === 'cash') {
-        let received = parseFloat(state.cashReceived);
-        if (Number.isNaN(received) || received <= 0) {
+        const rawInput = state.cashReceived.trim();
+        let received = parseFloat(rawInput);
+        if (!rawInput || Number.isNaN(received) || received <= 0) {
           received = amount;
           set({ cashReceived: amount.toString() });
-        }
-        if (received < amount) {
-          received = amount;
-          set({ cashReceived: amount.toString() });
+        } else if (received < amount - 0.01) {
+          useToastStore.getState().showToast(
+            `Insufficient payment! Received ₹${received.toFixed(2)}, required ₹${amount.toFixed(2)}`,
+            'error'
+          );
+          return { ok: false, error: 'Insufficient payment amount' };
         }
       }
     }
