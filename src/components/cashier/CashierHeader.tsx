@@ -76,8 +76,8 @@ export default function CashierHeader({ onLogout }: Props) {
 
   const navItems = [
     {
-      label: 'Dashboard',
-      href: ROUTES.CASHIER.DASHBOARD,
+      label: 'Manager Portal',
+      href: ROUTES.ADMIN.DASHBOARD,
       icon: <FiGrid className="h-4 w-4" />,
       count: null,
     },

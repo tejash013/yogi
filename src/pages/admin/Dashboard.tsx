@@ -25,22 +25,22 @@ export default function AdminDashboard() {
     const loadDashboardData = async () => {
       setIsLoading(true);
       try {
-        const [ordersRes, tablesRes, usersRes, menuRes] = await Promise.all([
+        const [ordersRes, tablesRes, usersRes, rawMenu] = await Promise.all([
           ordersApi.getAll({ page: 1, limit: 100 }).catch(() => ({ data: { data: [] } })),
           tablesApi.getAll().catch(() => ({ data: { data: [] } })),
           usersApi.getAll({ limit: 100 }).catch(() => ({ data: { data: [] } })),
-          menuApi.getAll({ limit: 100 }).catch(() => ({ data: { data: [] } })),
+          menuApi.getAllItems().catch(() => []),
         ]);
 
         const rawOrders = Array.isArray(ordersRes?.data?.data) ? ordersRes.data.data : [];
         const rawTables = Array.isArray(tablesRes?.data?.data) ? tablesRes.data.data : Array.isArray(tablesRes?.data) ? tablesRes.data : [];
         const rawUsers = Array.isArray(usersRes?.data?.data) ? usersRes.data.data : [];
-        const rawMenu = Array.isArray(menuRes?.data?.data) ? menuRes.data.data : Array.isArray(menuRes?.data) ? menuRes.data : [];
+        const menuItemsList = Array.isArray(rawMenu) ? rawMenu : [];
 
         setOrders(rawOrders);
         setTables(rawTables);
         setCustomerCount(rawUsers.filter((u: any) => u.role === 'customer' || !u.role).length || rawUsers.length);
-        setMenuCount(rawMenu.length);
+        setMenuCount(menuItemsList.length);
       } finally {
         setIsLoading(false);
       }

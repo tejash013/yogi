@@ -301,9 +301,8 @@ function RootRedirect() {
   if (!isAuthenticated) return <Navigate to={ROUTES.CUSTOMER.HOME} replace />;
   if (role === 'platformAdmin') return <Navigate to={ROUTES.PLATFORM_ADMIN.DASHBOARD} replace />;
   if (role === 'owner') return <Navigate to={ROUTES.OWNER.DASHBOARD} replace />;
-  if (role === 'manager') return <Navigate to={ROUTES.ADMIN.DASHBOARD} replace />;
+  if (role === 'manager' || role === 'cashier') return <Navigate to={ROUTES.ADMIN.DASHBOARD} replace />;
   if (role === 'chef') return <Navigate to={ROUTES.KITCHEN.DASHBOARD} replace />;
-  if (role === 'cashier') return <Navigate to={ROUTES.CASHIER.DASHBOARD} replace />;
   if (role === 'customer') return <Navigate to={ROUTES.CUSTOMER.HOME} replace />;
   return <Navigate to={ROUTES.CUSTOMER.HOME} replace />;
 }
