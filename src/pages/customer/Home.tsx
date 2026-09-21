@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FoodCard, CategoryCard, OfferBanner } from '@/components/customer';
-import { LocationPickerModal } from '@/components/common';
 import { ROUTES } from '@/constants';
 import { categoriesApi, menuApi, offersApi } from '@/api';
 import { useOrderSyncStore, useTenantStore } from '@/store';
@@ -61,7 +60,6 @@ export default function CustomerHome() {
   const categoryScrollRef = useRef<HTMLDivElement>(null);
   const offerScrollRef = useRef<HTMLDivElement>(null);
   const [activeOfferIndex, setActiveOfferIndex] = useState(0);
-  const [isLocationPanelOpen, setIsLocationPanelOpen] = useState(false);
 
   // Top-level Tenant Hooks
   const branchId = useTenantStore((s) => s.branchId);
@@ -202,34 +200,7 @@ export default function CustomerHome() {
         />
       </form>
 
-      {/* Dine-In Visual Floor Plan Quick Action Banner */}
-      <div className="relative overflow-hidden rounded-[28px] border border-[#524133]/60 bg-gradient-to-r from-[#211a16] via-[#1a1411] to-[#261c16] p-6 shadow-[0_15px_40px_rgba(0,0,0,0.35)]">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="flex h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
-              <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#e0caa7]">
-                Live Restaurant Seating
-              </span>
-            </div>
-            <h3 className="text-xl font-bold text-white sm:text-2xl">
-              Choose Your Dining Table 🍽️
-            </h3>
-            <p className="max-w-md text-xs text-[#cfc1b0]">
-              View our ambient dining hall in real-time, pick Table 1 - 6, and receive instant tableside service.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link
-              to={ROUTES.CUSTOMER.TABLES}
-              className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 px-5 py-3 text-xs font-black text-neutral-950 shadow-lg shadow-amber-500/25 transition-all hover:from-amber-300 hover:to-amber-400 hover:scale-[1.02]"
-            >
-              <span>🖼️ Open Visual Floor Map</span>
-              <span>&rarr;</span>
-            </Link>
-          </div>
-        </div>
-      </div>
+
 
       {/* Outlets Section */}
       <section className="rounded-3xl border border-neutral-200/80 bg-gradient-to-b from-white to-neutral-50/80 p-5 shadow-sm dark:border-neutral-800 dark:from-neutral-900 dark:to-neutral-950">
@@ -281,10 +252,7 @@ export default function CustomerHome() {
         </div>
       </section>
 
-      <LocationPickerModal
-        isOpen={isLocationPanelOpen}
-        onClose={() => setIsLocationPanelOpen(false)}
-      />
+
 
       {/* Offers Banner */}
       <section>
