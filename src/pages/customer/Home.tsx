@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FoodCard, CategoryCard, OfferBanner } from '@/components/customer';
 import { ROUTES } from '@/constants';
 import { categoriesApi, menuApi, offersApi } from '@/api';
-import { useOrderSyncStore, useTenantStore } from '@/store';
+import { useOrderSyncStore } from '@/store';
 import type { MenuItem, Category, Offer } from '@/types';
 
 const normalizeMenuItem = (item: any): MenuItem => ({
@@ -60,11 +60,6 @@ export default function CustomerHome() {
   const categoryScrollRef = useRef<HTMLDivElement>(null);
   const offerScrollRef = useRef<HTMLDivElement>(null);
   const [activeOfferIndex, setActiveOfferIndex] = useState(0);
-
-  // Top-level Tenant Hooks
-  const branchId = useTenantStore((s) => s.branchId);
-  const allBranches = useTenantStore((s) => s.allBranches);
-  const switchBranch = useTenantStore((s) => s.switchBranch);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -199,58 +194,6 @@ export default function CustomerHome() {
           className="w-full rounded-2xl border border-neutral-200/90 bg-white py-3.5 pl-12 pr-4 text-sm text-neutral-900 placeholder-neutral-400 shadow-soft transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-800 dark:bg-neutral-850 dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:border-primary-400"
         />
       </form>
-
-
-
-      {/* Outlets Section */}
-      <section className="rounded-3xl border border-neutral-200/80 bg-gradient-to-b from-white to-neutral-50/80 p-5 shadow-sm dark:border-neutral-800 dark:from-neutral-900 dark:to-neutral-950">
-        <div className="mb-4 flex flex-col gap-1">
-          <h2 className="text-lg font-bold tracking-tight text-neutral-900 dark:text-white sm:text-xl">
-            Our Restaurants & Branches 🏪
-          </h2>
-          <p className="text-xs text-neutral-500 dark:text-neutral-400">
-            Select your preferred dining location
-          </p>
-        </div>
-
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {allBranches.slice(0, 6).map((br) => {
-            const isSelected = br._id === branchId;
-            return (
-              <div
-                key={br._id}
-                onClick={() => switchBranch(br._id)}
-                className={`group cursor-pointer rounded-2xl border p-4 transition-all ${
-                  isSelected
-                    ? 'border-emerald-500 bg-emerald-50/50 shadow-sm dark:border-emerald-500/60 dark:bg-emerald-950/20'
-                    : 'border-neutral-200/80 bg-white hover:border-neutral-300 hover:shadow-sm dark:border-neutral-800 dark:bg-neutral-850 dark:hover:border-neutral-700'
-                }`}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className={`h-2 w-2 rounded-full ${isSelected ? 'bg-emerald-500' : 'bg-neutral-400'}`} />
-                      <h4 className="font-bold text-neutral-900 dark:text-white text-sm">{br.name}</h4>
-                    </div>
-                    {br.address && (
-                      <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">📍 {br.address}</p>
-                    )}
-                  </div>
-                  {isSelected ? (
-                    <span className="shrink-0 rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-bold text-white">
-                      Active
-                    </span>
-                  ) : (
-                    <span className="shrink-0 rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-medium text-neutral-600 group-hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300">
-                      Select
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
 
 
 
