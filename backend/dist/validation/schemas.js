@@ -84,7 +84,7 @@ export const invoiceQuerySchema = paginationQuerySchema.extend({
     status: z.enum(['pending', 'paid', 'cancelled']).optional(),
 });
 export const employeeQuerySchema = paginationQuerySchema;
-export const categoryQuerySchema = paginationQuerySchema.extend({ limit: positiveInt.max(100).default(20) });
+export const categoryQuerySchema = paginationQuerySchema;
 export const menuQuerySchema = paginationQuerySchema.extend({
     category: objectId.optional(),
 });

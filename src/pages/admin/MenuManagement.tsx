@@ -43,9 +43,16 @@ export default function MenuManagement() {
 
   const loadData = async () => {
     try {
+      setError('');
       const [menuItemsList, categoryResponse] = await Promise.all([
-        menuApi.getAllItems(),
-        categoriesApi.getAllItems(),
+        menuApi.getAllItems().catch((err) => {
+          console.warn('Unable to load menu items:', err);
+          return [];
+        }),
+        categoriesApi.getAllItems().catch((err) => {
+          console.warn('Unable to load categories:', err);
+          return [];
+        }),
       ]);
 
       const nextItems = (menuItemsList ?? []).map((item: any) => ({
@@ -68,8 +75,8 @@ export default function MenuManagement() {
         id: category._id ?? category.id,
         name: category.name,
       })));
-    } catch {
-      setError('Unable to load menu items. Please try again later.');
+    } catch (err: any) {
+      setError(err?.message || 'Unable to load menu items. Please try again later.');
     }
   };
 

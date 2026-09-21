@@ -121,15 +121,16 @@ export const menuApi = {
     }),
 
   getAllItems: async (params?: Omit<PaginationParams, 'page' | 'limit'>) => {
-    const limit = 1000;
+    const limit = 500;
     const firstResponse = await apiClient.get<PaginatedResponse<MenuItem>>('/api/menu', {
       params: { ...params, page: 1, limit },
     });
     const firstPage = firstResponse.data;
-    const totalPages = firstPage.pagination?.totalPages ?? 1;
+    const firstItems = Array.isArray(firstPage?.data) ? firstPage.data : [];
+    const totalPages = firstPage?.pagination?.totalPages ?? 1;
 
     if (totalPages <= 1) {
-      return firstPage.data;
+      return firstItems;
     }
 
     const remainingResponses = await Promise.all(
@@ -141,8 +142,8 @@ export const menuApi = {
     );
 
     return [
-      ...firstPage.data,
-      ...remainingResponses.flatMap((response) => response.data.data),
+      ...firstItems,
+      ...remainingResponses.flatMap((response) => (Array.isArray(response?.data?.data) ? response.data.data : [])),
     ];
   },
 
@@ -176,15 +177,16 @@ export const categoriesApi = {
     apiClient.get<PaginatedResponse<Category>>('/api/categories', { params }),
 
   getAllItems: async (params?: Omit<PaginationParams, 'page' | 'limit'>) => {
-    const limit = 1000;
+    const limit = 500;
     const firstResponse = await apiClient.get<PaginatedResponse<Category>>('/api/categories', {
       params: { ...params, page: 1, limit },
     });
     const firstPage = firstResponse.data;
-    const totalPages = firstPage.pagination?.totalPages ?? 1;
+    const firstItems = Array.isArray(firstPage?.data) ? firstPage.data : [];
+    const totalPages = firstPage?.pagination?.totalPages ?? 1;
 
     if (totalPages <= 1) {
-      return firstPage.data;
+      return firstItems;
     }
 
     const remainingResponses = await Promise.all(
@@ -196,8 +198,8 @@ export const categoriesApi = {
     );
 
     return [
-      ...firstPage.data,
-      ...remainingResponses.flatMap((response) => response.data.data),
+      ...firstItems,
+      ...remainingResponses.flatMap((response) => (Array.isArray(response?.data?.data) ? response.data.data : [])),
     ];
   },
 
