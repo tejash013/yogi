@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { tablesApi } from '@/api';
-import { Button, Card, Loader } from '@/components/ui';
+import { Loader } from '@/components/ui';
 import { ROUTES } from '@/constants';
 import { useCartStore, useTenantStore } from '@/store';
 
@@ -10,33 +10,48 @@ export default function ScanTable() {
   const navigate = useNavigate();
   const setTenant = useTenantStore((state) => state.setTenant);
   const setTableContext = useCartStore((state) => state.setTableContext);
-  const [error, setError] = useState('');
 
   useEffect(() => {
     if (!token) {
-      setError('This table QR code is invalid.');
+      navigate(ROUTES.CUSTOMER.HOME, { replace: true });
       return;
     }
-    tablesApi.resolveQrToken(token)
-      .then(async (response) => {
-        const table = response.data.data;
-        await setTenant(table.restaurantId, table.branchId);
-        const parsed = Number.parseInt(String(table.label || '').replace(/\D/g, ''), 10);
-        const validNum = Number.isFinite(parsed) && parsed > 0 && parsed < 1000 ? parsed : undefined;
-        setTableContext({ tableId: table.tableId, tableNumber: validNum });
-        navigate(ROUTES.CUSTOMER.HOME, { replace: true });
+
+    const parsed = Number.parseInt(String(token || '').replace(/\D/g, ''), 10);
+    const validNum = Number.isFinite(parsed) && parsed > 0 && parsed < 1000 ? parsed : undefined;
+
+    // Immediately set table context for instant webapp entry without waiting on network delays
+    setTableContext({ tableId: token, tableNumber: validNum });
+
+    // Background tenant metadata resolution
+    tablesApi
+      .resolveQrToken(token)
+      .then((response) => {
+        const table = response?.data?.data;
+        if (table) {
+          void setTenant(table.restaurantId, table.branchId);
+          const resolvedParsed = Number.parseInt(String(table.label || '').replace(/\D/g, ''), 10);
+          const resolvedNum =
+            Number.isFinite(resolvedParsed) && resolvedParsed > 0 && resolvedParsed < 1000
+              ? resolvedParsed
+              : validNum;
+          setTableContext({ tableId: table.tableId || token, tableNumber: resolvedNum });
+        }
       })
-      .catch(() => {
-        setTableContext({ tableId: token, tableNumber: undefined });
+      .catch(() => {})
+      .finally(() => {
         navigate(ROUTES.CUSTOMER.HOME, { replace: true });
       });
   }, [navigate, setTableContext, setTenant, token]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-neutral-50 p-4 dark:bg-neutral-900">
-      <Card className="w-full max-w-md text-center">
-        {error ? <><h1 className="text-xl font-bold text-neutral-900 dark:text-white">QR code unavailable</h1><p className="mt-2 text-sm text-neutral-500">{error}</p><Button className="mt-6" onClick={() => navigate(ROUTES.CUSTOMER.HOME)}>Go to restaurant</Button></> : <><Loader /><p className="mt-4 text-sm text-neutral-500">Opening your table menu...</p></>}
-      </Card>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-white p-4 dark:bg-neutral-900 text-center">
+      <div className="flex flex-col items-center gap-3">
+        <Loader />
+        <p className="text-sm font-bold text-neutral-700 dark:text-neutral-200 animate-pulse">
+          Opening your table menu...
+        </p>
+      </div>
     </div>
   );
 }
