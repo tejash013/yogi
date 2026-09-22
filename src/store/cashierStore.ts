@@ -362,9 +362,9 @@ const buildRestaurantInfo = (
 ): RestaurantInfo => ({
   name: getFirstNonEmptyString(settings.name, restaurant?.name, defaultRestaurantInfo.name),
   branchName: getFirstNonEmptyString(branch?.name, settings.branchName, defaultRestaurantInfo.branchName),
-  address: formatProperAddress([branch, restaurant, settings], defaultRestaurantInfo.address),
-  phone: getFirstNonEmptyString(branch?.phone, settings.phone, restaurant?.phone, defaultRestaurantInfo.phone),
-  email: getFirstNonEmptyString(branch?.email, settings.email, restaurant?.email, defaultRestaurantInfo.email),
+  address: formatProperAddress([settings, restaurant, branch], defaultRestaurantInfo.address),
+  phone: getFirstNonEmptyString(settings.phone, branch?.phone, restaurant?.phone, defaultRestaurantInfo.phone),
+  email: getFirstNonEmptyString(settings.email, branch?.email, restaurant?.email, defaultRestaurantInfo.email),
   gstNumber: getFirstNonEmptyString(settings.gstNumber, restaurant?.gstNumber, defaultRestaurantInfo.gstNumber),
   tagline: getFirstNonEmptyString(settings.tagline, restaurant?.tagline, defaultRestaurantInfo.tagline),
 });

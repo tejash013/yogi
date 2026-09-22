@@ -5,6 +5,7 @@ import { formatDateTime, formatProperAddress } from '@/utils';
 import type { Order } from '@/types';
 import { FiX, FiDownload } from 'react-icons/fi';
 import { useTenantStore } from '@/store/tenantStore';
+import { useCashierStore } from '@/store/cashierStore';
 
 interface CustomerInvoiceModalProps {
   order: Order | null;
@@ -20,12 +21,13 @@ export default function CustomerInvoiceModal({
   const invoiceRef = useRef<HTMLDivElement>(null);
   const currentRestaurant = useTenantStore((s) => s.currentRestaurant);
   const currentBranch = useTenantStore((s) => s.currentBranch);
+  const cashierInfo = useCashierStore((s) => s.restaurantInfo);
 
-  const restaurantName = currentBranch?.name || currentRestaurant?.name || 'Yogi Restaurant';
-  const restaurantTagline = currentRestaurant?.tagline || 'Authentic Dining & Smart Kitchen';
-  const restaurantAddress = formatProperAddress([currentBranch, currentRestaurant]);
-  const restaurantPhone = currentBranch?.phone || currentRestaurant?.phone || '+91 98251 23456';
-  const restaurantEmail = currentBranch?.email || currentRestaurant?.email || 'contact@yogirestaurant.com';
+  const restaurantName = cashierInfo.name || currentBranch?.name || currentRestaurant?.name || 'Yogi Restaurant';
+  const restaurantTagline = cashierInfo.tagline || currentRestaurant?.tagline || 'Authentic Dining & Smart Kitchen';
+  const restaurantAddress = cashierInfo.address || formatProperAddress([currentBranch, currentRestaurant]);
+  const restaurantPhone = cashierInfo.phone || currentBranch?.phone || currentRestaurant?.phone || '+91 98251 23456';
+  const restaurantEmail = cashierInfo.email || currentBranch?.email || currentRestaurant?.email || 'contact@yogirestaurant.com';
 
   // Close on Escape key
   useEffect(() => {
