@@ -76,30 +76,30 @@ export default function Login() {
 
   return (
     <div>
-      <div className="mb-8 text-center animate-fade-in-up [animation-delay:80ms]">
+      <div className="mb-5 text-center animate-fade-in-up [animation-delay:80ms]">
         <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Welcome Back</h1>
-        <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">Sign in to continue dining</p>
+        <p className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">Sign in to continue dining</p>
       </div>
 
       {error && (
-        <div className="mb-5 animate-slideUp rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300">
+        <div className="mb-4 animate-slideUp rounded-xl border border-red-200 bg-red-50 p-3.5 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300">
           <div className="flex items-center gap-2">
             <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span className="flex-1">{error}</span>
             <button onClick={clearError} className="ml-2 font-medium underline hover:no-underline">Dismiss</button>
-        </div>
+          </div>
         </div>
       )}
 
-      <div className="mb-6 flex rounded-xl bg-neutral-100 p-1 shadow-inner animate-fade-in-up [animation-delay:160ms] dark:bg-neutral-800">
+      <div className="mb-4 flex rounded-xl bg-neutral-100 p-1 shadow-inner animate-fade-in-up [animation-delay:160ms] dark:bg-neutral-800">
         <button
           type="button"
           onClick={() => { setLoginMethod('email'); setValidationErrors({}); }}
-          className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-all ${loginMethod === 'email' ? 'bg-white text-primary-600 shadow-sm dark:bg-neutral-700 dark:text-primary-400' : 'text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-200'}`}
+          className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all ${loginMethod === 'email' ? 'bg-white text-primary-600 shadow-sm dark:bg-neutral-700 dark:text-primary-400' : 'text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-200'}`}
         >
-          <svg className="mx-auto mb-1 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="mx-auto mb-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
           </svg>
           Email
@@ -107,16 +107,16 @@ export default function Login() {
         <button
           type="button"
           onClick={() => { setLoginMethod('mobile'); setValidationErrors({}); }}
-          className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-all ${loginMethod === 'mobile' ? 'bg-white text-primary-600 shadow-sm dark:bg-neutral-700 dark:text-primary-400' : 'text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-200'}`}
+          className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all ${loginMethod === 'mobile' ? 'bg-white text-primary-600 shadow-sm dark:bg-neutral-700 dark:text-primary-400' : 'text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-200'}`}
         >
-          <svg className="mx-auto mb-1 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="mx-auto mb-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
           </svg>
           Mobile
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4 animate-fade-in-up [animation-delay:220ms]">
+      <form onSubmit={handleSubmit} className="space-y-3.5 animate-fade-in-up [animation-delay:220ms]">
         {loginMethod === 'email' ? (
           <Input
             label="Email Address"
@@ -187,7 +187,7 @@ export default function Login() {
         </Button>
       </form>
 
-      <div className="my-6 flex items-center gap-3">
+      <div className="my-4 flex items-center gap-3">
         <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-700" />
         <span className="text-xs font-medium text-neutral-400">OR</span>
         <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-700" />
@@ -195,7 +195,7 @@ export default function Login() {
 
       <GoogleAuthButton mode="signin" />
 
-      <p className="mt-6 text-center text-sm text-neutral-500">
+      <p className="mt-4 text-center text-sm text-neutral-500">
         Don't have an account?{' '}
         <Link to={ROUTES.AUTH.REGISTER} className="font-semibold text-primary-500 transition-colors hover:text-primary-600">
           Create Account

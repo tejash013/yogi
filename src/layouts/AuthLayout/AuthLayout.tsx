@@ -9,8 +9,8 @@ export default function AuthLayout() {
       <div className="pointer-events-none absolute left-[7%] top-[15%] h-3 w-3 rounded-full bg-yellow-300 shadow-[0_0_0_10px_rgba(253,224,71,0.16)] dark:bg-yellow-400/70" />
       <div className="pointer-events-none absolute bottom-[16%] right-[9%] h-4 w-4 rounded-full bg-rose-400 shadow-[0_0_0_12px_rgba(251,113,133,0.14)] dark:bg-rose-400/70" />
 
-      <main className="relative my-auto w-full min-w-0 max-w-[460px] animate-scale-in">
-        <div className="rounded-[1.5rem] border border-white/80 bg-white/95 p-4 text-neutral-900 shadow-[0_16px_50px_rgba(45,37,28,0.14)] backdrop-blur-md sm:rounded-[2rem] sm:p-8 sm:backdrop-blur-xl dark:border-neutral-700/80 dark:bg-neutral-950/95 dark:text-neutral-100">
+      <main className="relative my-auto w-full min-w-0 max-w-[460px] animate-scale-in py-4">
+        <div className="rounded-[1.5rem] border border-white/80 bg-white/95 p-5 text-neutral-900 shadow-[0_16px_50px_rgba(45,37,28,0.14)] backdrop-blur-md sm:rounded-[2rem] sm:p-6.5 sm:backdrop-blur-xl dark:border-neutral-700/80 dark:bg-neutral-950/95 dark:text-neutral-100">
           <Outlet />
         </div>
 
