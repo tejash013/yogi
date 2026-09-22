@@ -17,7 +17,7 @@ export {
 } from './kitchenStore';
 export type { KitchenStatusFilter, OrderTypeFilter } from './kitchenStore';
 
-export { useCashierStore, formatINR, round2 } from './cashierStore';
+export { useCashierStore, formatINR, round2, refreshActiveOrdersOnly } from './cashierStore';
 export type { BillTotals } from './cashierStore';
 export { selectUnpaidOrders } from './cashierStore';
 
