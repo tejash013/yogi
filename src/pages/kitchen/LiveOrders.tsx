@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { PageHeader } from '@/components/common';
 import { OrderBoard, OrderDetails, KitchenFilters } from '@/components/kitchen';
-import { useKitchenStore, isDelayed } from '@/store';
+import { useKitchenStore, useOrderSyncStore, isDelayed } from '@/store';
 
 /**
  * Live Orders board: multi-column view of NEW / CONFIRMED / PREPARING / READY
@@ -15,6 +15,18 @@ export default function LiveOrders() {
   const orderTypeFilter = useKitchenStore((s) => s.orderTypeFilter);
   const activeOrderId = useKitchenStore((s) => s.activeOrderId);
   const setActiveOrder = useKitchenStore((s) => s.setActiveOrder);
+
+  useEffect(() => {
+    void useKitchenStore.getState().refreshKitchenOrdersOnly();
+
+    const unsubscribe = useOrderSyncStore.subscribe((state) => {
+      if (state.lastEvent?.resource === 'order' || !state.lastEvent) {
+        void useKitchenStore.getState().refreshKitchenOrdersOnly();
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const filtered = useMemo(() => {
     return orders.filter((o) => {

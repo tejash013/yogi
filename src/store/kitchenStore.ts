@@ -28,6 +28,7 @@ interface KitchenState {
 
   // Actions
   fetchOrders: () => Promise<void>;
+  refreshKitchenOrdersOnly: () => Promise<void>;
   onlineStatus: (status: 'online' | 'offline') => void;
   setActiveOrder: (id: string | null) => void;
 
@@ -56,10 +57,12 @@ interface KitchenState {
   addNotification: (n: KitchenNotificationShim) => void;
 }
 
-// Auto-subscribe to global order sync events so kitchen updates instantly when cashier creates orders
+// Auto-subscribe to global order sync events so live orders auto-refresh seamlessly
 if (typeof window !== 'undefined') {
-  useOrderSyncStore.subscribe(() => {
-    void useKitchenStore.getState().fetchOrders();
+  useOrderSyncStore.subscribe((state) => {
+    if (state.lastEvent?.resource === 'order' || !state.lastEvent) {
+      void useKitchenStore.getState().refreshKitchenOrdersOnly();
+    }
   });
 }
 
@@ -219,6 +222,34 @@ export const useKitchenStore = create<KitchenState>((set, get) => ({
     } catch {
       set({ isLoading: false });
     }
+  },
+
+  refreshKitchenOrdersOnly: async () => {
+    try {
+      const response = await ordersApi.getAll({ page: 1, limit: 100 }).catch(() => ({ data: { data: [] } }));
+      const list = Array.isArray(response?.data?.data) ? response.data.data : [];
+      const nextOrders = list.map(normalizeKitchenOrder);
+
+      const prevOrders = get().orders;
+      const prevOrderIds = new Set(prevOrders.map((o) => o.id));
+
+      if (prevOrders.length > 0) {
+        const newlyArrived = nextOrders.find(
+          (o) => !prevOrderIds.has(o.id) && (o.status === 'new' || o.status === 'confirmed')
+        );
+        if (newlyArrived) {
+          useToastStore.getState().showToast(
+            `New Order #${newlyArrived.orderNumber} (${newlyArrived.orderType.toUpperCase()})`,
+            'info'
+          );
+        }
+      }
+
+      set({
+        orders: nextOrders,
+        lastUpdated: new Date().toISOString(),
+      });
+    } catch {}
   },
 
   statusFilter: 'all',

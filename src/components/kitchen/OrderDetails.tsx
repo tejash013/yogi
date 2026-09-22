@@ -1,4 +1,4 @@
-import { formatDateTime } from '@/utils';
+import { formatDateTime, extractChefInstructions } from '@/utils';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
@@ -38,6 +38,8 @@ export default function OrderDetails({ order, onClose }: Props) {
   const rejectOrder = useKitchenStore((s) => s.rejectOrder);
 
   if (!order) return null;
+
+  const chefInstructions = extractChefInstructions(order.notes);
 
   const handleAction = (action: () => void) => {
     action();
@@ -106,8 +108,14 @@ export default function OrderDetails({ order, onClose }: Props) {
 
         {/* Notes */}
         {order.notes && (
-          <div className="rounded-lg bg-yellow-50 p-3 text-sm text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">
-            <strong>Notes:</strong> {order.notes}
+          <div className="rounded-xl border border-amber-300 bg-amber-50 p-3.5 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100 shadow-xs space-y-1">
+            <div className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300">
+              <span>👨‍🍳</span>
+              <span>Chef Description & Special Instructions</span>
+            </div>
+            <p className="font-bold text-sm leading-relaxed">
+              {chefInstructions || order.notes}
+            </p>
           </div>
         )}
 
@@ -158,7 +166,7 @@ export default function OrderDetails({ order, onClose }: Props) {
                 className="!bg-amber-500 hover:!bg-amber-600 font-bold"
                 onClick={() => handleAction(() => markReady(order.id))}
               >
-                🔔 Mark Ready for Pickup
+                🔔 Mark Ready
               </Button>
             )}
             {order.status === 'ready' && (
@@ -167,11 +175,10 @@ export default function OrderDetails({ order, onClose }: Props) {
                 className="!bg-green-600 hover:!bg-green-700 font-bold"
                 onClick={() => handleAction(() => completeOrder(order.id))}
               >
-                ✓ Complete / Served
+                ✓ Complete Order
               </Button>
             )}
           </div>
-
           <Button variant="outline" onClick={onClose}>
             Close
           </Button>

@@ -1,4 +1,4 @@
-import { cn, getRelativeTime } from '@/utils';
+import { cn, getRelativeTime, extractChefInstructions } from '@/utils';
 import Button from '@/components/ui/Button';
 import type { KitchenOrder } from '@/types/kitchen';
 import { useKitchenStore, getElapsedMinutes, isDelayed } from '@/store';
@@ -31,6 +31,7 @@ export default function OrderCard({ order, onOpen }: Props) {
   const completeOrder = useKitchenStore((state) => state.completeOrder);
   const delayed = isDelayed(order);
   const elapsed = getElapsedMinutes(order);
+  const chefInstructions = extractChefInstructions(order.notes);
 
   const openDetails = () => {
     if (onOpen) onOpen(order.id);
@@ -149,6 +150,21 @@ export default function OrderCard({ order, onOpen }: Props) {
           </span>
         )}
       </div>
+
+      {/* Chef Instruction Banner */}
+      {chefInstructions && (
+        <div className="mt-2.5 flex items-start gap-2 rounded-xl border border-amber-300/90 bg-amber-50 p-2.5 text-xs font-bold text-amber-900 dark:border-amber-800/80 dark:bg-amber-950/40 dark:text-amber-200 shadow-xs">
+          <span className="text-base shrink-0">👨‍🍳</span>
+          <div className="min-w-0 flex-1">
+            <span className="block text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-400">
+              Chef Description / Instructions
+            </span>
+            <span className="text-xs font-black text-amber-950 dark:text-amber-100 break-words leading-snug">
+              {chefInstructions}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Items */}
       <div className="mt-3 flex-1">

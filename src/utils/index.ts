@@ -167,5 +167,32 @@ export function getAvatarColor(name: string): string {
   return colors[Math.abs(hash) % colors.length];
 }
 
+export function extractChefInstructions(notes?: string): string | undefined {
+  if (!notes || typeof notes !== 'string') return undefined;
+  const trimmed = notes.trim();
+  if (!trimmed) return undefined;
+
+  if (trimmed.includes('|')) {
+    const parts = trimmed.split('|').map((p) => p.trim());
+    const instructionPart = parts.find((p) => /^instructions?:/i.test(p) || /^notes?:/i.test(p));
+    if (instructionPart) {
+      return instructionPart.replace(/^(instructions?|notes?):\s*/i, '').trim();
+    }
+    const customParts = parts.filter(
+      (p) => !/^(customer|phone|table|delivery|payment|address):/i.test(p)
+    );
+    if (customParts.length > 0) {
+      return customParts.join(', ');
+    }
+  }
+
+  if (!/^(customer|phone|table|delivery|payment|address):/i.test(trimmed)) {
+    return trimmed;
+  }
+
+  return undefined;
+}
+
 export * from './address';
+
 
