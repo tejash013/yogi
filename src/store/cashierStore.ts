@@ -90,6 +90,7 @@ interface CashierState {
 
 // Actions
   fetchData: () => Promise<void>;
+  fetchSettings: () => Promise<void>;
   toggleShift: () => void;
   setSelectedOrder: (id: string | null) => void;
   createNewBill: (orderType?: CashierOrder['orderType'], tableNumber?: string, customerName?: string) => void;
@@ -494,6 +495,21 @@ splitPayments: [],
 
   fetchData: async () => {
     await hydrateCashierData();
+  },
+
+  fetchSettings: async () => {
+    try {
+      const settingsResponse = await settingsApi.get().catch(() => ({ data: { data: {} } }));
+      const rawSettings = (settingsResponse?.data?.data ?? {}) as Record<string, any>;
+      const tenantState = useTenantStore.getState();
+      const activeBranch = tenantState.currentBranch;
+      const activeRestaurant = tenantState.currentRestaurant;
+      const restaurantInfo = buildRestaurantInfo(activeRestaurant, activeBranch, {
+        ...rawSettings,
+        address: rawSettings.address,
+      });
+      set({ restaurantInfo });
+    } catch {}
   },
 
   toggleShift: () => {
@@ -1282,6 +1298,7 @@ void hydrateCashierData();
 useOrderSyncStore.subscribe((state) => {
   if (!state.lastEvent) return;
   void refreshActiveOrdersOnly();
+  void useCashierStore.getState().fetchSettings();
 });
 
 if (typeof window !== 'undefined') {

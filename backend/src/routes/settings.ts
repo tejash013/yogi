@@ -29,7 +29,7 @@ router.use(authenticate);
 
 router.get('/', requirePermission(permissions.settingsRead), async (req, res) => {
   const tenant = tenantFilter(req);
-  let restaurant = await Restaurant.findById(tenant.restaurantId).lean().exec();
+  const restaurant = await Restaurant.findById(tenant.restaurantId).lean().exec();
   
   const defaults = {
     name: 'Yogi Restaurant',
@@ -44,25 +44,34 @@ router.get('/', requirePermission(permissions.settingsRead), async (req, res) =>
     businessHours: {},
   };
 
-  if (!restaurant) {
-    return res.json(success(defaults, 'Restaurant settings loaded'));
-  }
-
   const merged = {
     ...defaults,
-    ...restaurant,
+    ...(restaurant || {}),
   };
 
   return res.json(success(merged, 'Restaurant settings loaded'));
 });
 
 router.patch('/', requirePermission(permissions.settingsManage), validateBody(settingsSchema), async (req, res) => {
+  const tenant = tenantFilter(req);
+  const slug = req.body.name
+    ? req.body.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+    : 'yogi-restaurant';
+
+  const updateData: Record<string, any> = { ...req.body };
+  if (req.body.name) {
+    updateData.slug = slug;
+  }
+
   const restaurant = await Restaurant.findByIdAndUpdate(
-    tenantFilter(req).restaurantId,
-    { $set: req.body },
-    { new: true, runValidators: true },
+    tenant.restaurantId,
+    {
+      $set: updateData,
+      $setOnInsert: { slug: slug || 'yogi-restaurant' },
+    },
+    { new: true, upsert: true, setDefaultsOnInsert: true },
   ).lean().exec();
-  if (!restaurant) return res.status(404).json(failure('Restaurant not found'));
+
   return res.json(success(restaurant, 'Restaurant settings updated'));
 });
 

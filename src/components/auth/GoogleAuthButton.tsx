@@ -152,9 +152,9 @@ export default function GoogleAuthButton({
         {googleClientId && (
           <div
             ref={googleBtnContainerRef}
-            className={`w-full flex justify-center items-center rounded-xl overflow-hidden bg-transparent ${
+            className={`w-full max-w-[400px] mx-auto flex justify-center items-center rounded-xl overflow-hidden bg-transparent ${
               isGsiMounted ? 'min-h-[44px]' : 'hidden'
-            } [&>div]:!w-full [&>div]:!flex [&>div]:!justify-center [&>div]:!overflow-hidden [&>div]:!rounded-xl [&>div>iframe]:!w-full [&>div>iframe]:!rounded-xl [&>div>iframe]:!border-0 [&>div>iframe]:!outline-none [&>div>iframe]:!bg-transparent`}
+            } [&>div]:!w-full [&>div]:!flex [&>div]:!justify-center [&>div]:!overflow-hidden [&>div]:!rounded-xl [&>div>iframe]:!rounded-xl [&>div>iframe]:!border-0 [&>div>iframe]:!outline-none [&>div>iframe]:!bg-transparent`}
           />
         )}
 
@@ -163,7 +163,7 @@ export default function GoogleAuthButton({
             type="button"
             onClick={handleManualClick}
             disabled={isLoading}
-            className="flex w-full items-center justify-center gap-3 rounded-xl border border-neutral-300/80 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-700 shadow-xs transition-all hover:bg-neutral-50 active:scale-[0.99] dark:border-neutral-700/80 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-750"
+            className="flex w-full max-w-[400px] mx-auto items-center justify-center gap-3 rounded-xl border border-neutral-300/80 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-700 shadow-xs transition-all hover:bg-neutral-50 active:scale-[0.99] dark:border-neutral-700/80 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-750"
           >
             <svg className="h-5 w-5 flex-shrink-0" viewBox="0 0 24 24">
               <path

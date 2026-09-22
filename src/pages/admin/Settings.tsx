@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Card, Button, Input, Select } from '@/components/ui';
 import { PageHeader } from '@/components/common';
 import { settingsApi } from '@/api';
-import { useOrderSyncStore } from '@/store';
+import { useOrderSyncStore, useCashierStore } from '@/store';
 
 const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -59,6 +59,7 @@ export default function AdminSettings() {
         address: form.address,
         businessHours: form.businessHours,
       });
+      await useCashierStore.getState().fetchSettings();
       useOrderSyncStore.getState().notifyResourceChange({
         type: 'update',
         resource: 'settings',
