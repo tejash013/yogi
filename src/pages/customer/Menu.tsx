@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { FoodCard, LoadingSkeleton } from '@/components/customer';
-import { TenantSelector } from '@/components/common';
 import { categoriesApi, menuApi } from '@/api';
 import { useCartStore, useOrderSyncStore, useTenantStore } from '@/store';
 import type { MenuItem, Category } from '@/types';
@@ -57,7 +56,7 @@ const normalizeCategory = (item: any): Category => ({
 });
 
 export default function Menu() {
-  const { branchId, currentBranch } = useTenantStore();
+  const { branchId } = useTenantStore();
   const { tableNumber, tableId } = useCartStore();
   const [searchParams] = useSearchParams();
   const [search, setSearch] = useState(searchParams.get('q') || searchParams.get('search') || '');
@@ -175,7 +174,7 @@ export default function Menu() {
 
   return (
     <div className="space-y-6">
-      {/* Menu Header with Branch Context */}
+      {/* Menu Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
@@ -187,10 +186,9 @@ export default function Menu() {
             )}
           </div>
           <p className="text-xs text-neutral-500 dark:text-neutral-400">
-            Freshly prepared dishes available at {currentBranch?.name || 'Main Dining Hall'}
+            Freshly prepared dishes & beverages
           </p>
         </div>
-        <TenantSelector variant="pill" />
       </div>
 
       {/* Header with Search */}

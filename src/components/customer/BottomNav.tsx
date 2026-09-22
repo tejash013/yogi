@@ -22,13 +22,6 @@ const navItems = [
     ),
   },
   {
-    label: 'Tables',
-    path: ROUTES.CUSTOMER.TABLES,
-    icon: (_active: boolean) => (
-      <span className="text-xl">🪑</span>
-    ),
-  },
-  {
     label: 'Cart',
     path: ROUTES.CUSTOMER.CART,
     icon: (active: boolean) => (

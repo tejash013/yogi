@@ -32,10 +32,8 @@ const OrderTracking = lazyPage(() => import('@/pages/customer'), 'OrderTracking'
 const MyOrders = lazyPage(() => import('@/pages/customer'), 'MyOrders');
 const CustomerProfile = lazyPage(() => import('@/pages/customer'), 'CustomerProfile');
 const Favorites = lazyPage(() => import('@/pages/customer'), 'Favorites');
-const Rewards = lazyPage(() => import('@/pages/customer'), 'Rewards');
 const Coupons = lazyPage(() => import('@/pages/customer'), 'Coupons');
 const Feedback = lazyPage(() => import('@/pages/customer'), 'Feedback');
-const CustomerTables = lazyPage(() => import('@/pages/customer'), 'CustomerTables');
 const ScanTable = lazyPage(() => import('@/pages/customer'), 'ScanTable');
 const AdminDashboard = lazyPage(() => import('@/pages/admin'), 'AdminDashboard');
 const MenuManagement = lazyPage(() => import('@/pages/admin'), 'MenuManagement');
@@ -156,10 +154,10 @@ const router = createBrowserRouter([
       { path: 'order-tracking/:orderId', element: <OrderTracking /> },
       { path: 'profile', element: <CustomerProfile /> },
       { path: 'favorites', element: <Favorites /> },
-      { path: 'rewards', element: <Rewards /> },
+      { path: 'rewards', element: <Navigate to={ROUTES.CUSTOMER.HOME} replace /> },
       { path: 'coupons', element: <Coupons /> },
       { path: 'feedback', element: <Feedback /> },
-      { path: 'tables', element: <CustomerTables /> },
+      { path: 'tables', element: <Navigate to={ROUTES.CUSTOMER.HOME} replace /> },
     ],
   },
 
