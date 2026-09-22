@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { CashierOrder } from '@/types/cashier';
 import { ORDER_TYPE_LABELS } from '@/types/cashier';
-import { formatINR, useCashierStore } from '@/store';
+import { formatINR, useCashierStore, refreshActiveOrdersOnly } from '@/store';
+import { useOrderSyncStore } from '@/store/orderSyncStore';
 import { getRelativeTime } from '@/utils';
 import { cn } from '@/utils';
 import Search from '@/components/ui/Search';
@@ -50,6 +51,15 @@ export default function OrderList({ orders, onSelect }: Props) {
   const selectedOrderId = useCashierStore((s) => s.selectedOrderId);
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<Filters>(defaultFilters);
+
+  useEffect(() => {
+    const unsubscribe = useOrderSyncStore.subscribe((state) => {
+      if (state.lastEvent) {
+        void refreshActiveOrdersOnly();
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   const searchableOrders = query.length > 0 ? query : orders;
 

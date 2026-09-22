@@ -69,6 +69,7 @@ interface CashierState {
   // Current bill / selected order
   currentBill: CashierOrder | null;
   selectedOrderId: string | null;
+  draftBills: CashierOrder[];
 
   // Discount & payment state
   discount: Discount | null;
@@ -114,6 +115,9 @@ interface CashierState {
   createInvoice: () => Invoice | null;
   clearCurrentBill: () => void;
   resetPaymentState: () => void;
+  saveCurrentAsDraft: () => { ok: boolean; error?: string };
+  loadDraftBill: (draftId: string) => void;
+  deleteDraftBill: (draftId: string) => void;
 }
 
 const uid = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -234,6 +238,7 @@ const normalizeInvoice = (invoice: any): Invoice => {
 const defaultTaxes: TaxRule[] = [];
 
 const POS_CURRENT_BILL_KEY = 'restaurantos_pos_current_bill';
+const POS_DRAFT_BILLS_KEY = 'restaurantos_pos_draft_bills';
 
 const saveActiveBillToStorage = (bill: CashierOrder | null) => {
   try {
@@ -253,6 +258,23 @@ const getActiveBillFromStorage = (): CashierOrder | null => {
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
+  }
+};
+
+const saveDraftBillsToStorage = (drafts: CashierOrder[]) => {
+  try {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(POS_DRAFT_BILLS_KEY, JSON.stringify(drafts));
+  } catch {}
+};
+
+const getDraftBillsFromStorage = (): CashierOrder[] => {
+  try {
+    if (typeof window === 'undefined') return [];
+    const raw = localStorage.getItem(POS_DRAFT_BILLS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
   }
 };
 
@@ -458,6 +480,7 @@ export const useCashierStore = create<CashierState>((set, get) => ({
 
   currentBill: null,
   selectedOrderId: null,
+  draftBills: getDraftBillsFromStorage(),
 
   discount: null,
   couponCodeInput: '',
@@ -1168,13 +1191,97 @@ splitPayments: [],
       splitPayments: [],
       paymentSuccess: null,
     }),
+
+  saveCurrentAsDraft: () => {
+    const current = get().currentBill;
+    if (!current || current.items.length === 0) {
+      useToastStore.getState().showToast('Cannot save empty bill as draft', 'error');
+      return { ok: false, error: 'Empty bill' };
+    }
+
+    const draftId = `draft-${Date.now()}`;
+    const draftNumber = `DRAFT-${Math.floor(100 + Math.random() * 900)}`;
+    const draftBill: CashierOrder = {
+      ...current,
+      id: draftId,
+      orderNumber: draftNumber,
+      createdAt: new Date().toISOString(),
+    };
+
+    const nextDrafts = [draftBill, ...get().draftBills];
+    saveDraftBillsToStorage(nextDrafts);
+    saveActiveBillToStorage(null);
+
+    set({
+      draftBills: nextDrafts,
+      currentBill: null,
+      selectedOrderId: null,
+      discount: null,
+      couponCodeInput: '',
+      percentageDiscount: '',
+      fixedDiscount: '',
+      additionalCharges: 0,
+      paymentMethod: 'cash',
+      cashReceived: '',
+      splitPayments: [],
+      paymentSuccess: null,
+    });
+
+    useToastStore.getState().showToast(`Bill saved as draft (${draftNumber})`, 'success');
+    return { ok: true };
+  },
+
+  loadDraftBill: (draftId: string) => {
+    const drafts = get().draftBills;
+    const target = drafts.find((d) => d.id === draftId);
+    if (!target) return;
+
+    const nextDrafts = drafts.filter((d) => d.id !== draftId);
+    saveDraftBillsToStorage(nextDrafts);
+    saveActiveBillToStorage(target);
+
+    set({
+      draftBills: nextDrafts,
+      currentBill: target,
+      selectedOrderId: target.id,
+      paymentMethod: 'cash',
+      cashReceived: '',
+    });
+
+    useToastStore.getState().showToast(`Restored draft bill (${target.orderNumber})`, 'info');
+  },
+
+  deleteDraftBill: (draftId: string) => {
+    const nextDrafts = get().draftBills.filter((d) => d.id !== draftId);
+    saveDraftBillsToStorage(nextDrafts);
+    set({ draftBills: nextDrafts });
+    useToastStore.getState().showToast('Draft bill deleted', 'info');
+  },
 }));
+
+export const refreshActiveOrdersOnly = async () => {
+  try {
+    const ordersResponse = await ordersApi.getAll({ page: 1, limit: 100 }).catch(() => ({ data: { data: [] } }));
+    const orderList = Array.isArray(ordersResponse?.data?.data) ? ordersResponse.data.data : [];
+    const fetchedOrders = orderList.map(normalizeCashierOrder);
+
+    useCashierStore.setState((prev) => {
+      let merged = [...fetchedOrders];
+      if (prev.currentBill && prev.currentBill.id.startsWith('pos-')) {
+        if (!merged.some((o) => o.id === prev.currentBill!.id)) {
+          merged = [prev.currentBill, ...merged];
+        }
+      }
+      return { orders: merged };
+    });
+  } catch {}
+};
 
 void hydrateCashierData();
 
 useOrderSyncStore.subscribe((state) => {
   if (!state.lastEvent) return;
-  void hydrateCashierData();
+  void refreshActiveOrdersOnly();
 });
 
 if (typeof window !== 'undefined') {

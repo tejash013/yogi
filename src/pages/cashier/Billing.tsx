@@ -53,11 +53,15 @@ export default function Billing() {
   const updateBillInfo = useCashierStore((s) => s.updateBillInfo);
   const addBillItem = useCashierStore((s) => s.addBillItem);
   const updateQuantity = useCashierStore((s) => s.updateQuantity);
-  const calculateTotals = useCashierStore((s) => s.calculateTotals);
+  const draftBills = useCashierStore((s) => s.draftBills);
+  const saveCurrentAsDraft = useCashierStore((s) => s.saveCurrentAsDraft);
+  const loadDraftBill = useCashierStore((s) => s.loadDraftBill);
+  const deleteDraftBill = useCashierStore((s) => s.deleteDraftBill);
 
   const [activeTab, setActiveTab] = useState<'menu' | 'orders'>('menu');
   const [showSplit, setShowSplit] = useState(false);
   const [showInvoice, setShowInvoice] = useState(false);
+  const [showDraftsModal, setShowDraftsModal] = useState(false);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
   const [menuSearch, setMenuSearch] = useState('');
@@ -130,6 +134,13 @@ export default function Billing() {
   };
 
   const handleCompletePayment = () => {
+    if (paymentMethod === 'cash') {
+      const raw = cashReceived.trim();
+      const entered = parseFloat(raw);
+      if (!raw || Number.isNaN(entered) || entered <= 0) {
+        setCashReceived(totals.grandTotal.toString());
+      }
+    }
     completePayment();
   };
 
@@ -211,7 +222,7 @@ export default function Billing() {
     category.name.toLowerCase().includes(categorySearch.trim().toLowerCase())
   );
 
-  const totals = calculateTotals();
+  const totals = useCashierStore.getState().calculateTotals();
 
   return (
     <div className="space-y-4">
@@ -225,6 +236,15 @@ export default function Billing() {
             <Button variant="primary" onClick={handleNewBill} className="shadow-md font-bold">
               <FiPlus className="mr-1.5 h-4 w-4" /> + New POS Bill
             </Button>
+            {draftBills.length > 0 && (
+              <Button
+                variant="outline"
+                onClick={() => setShowDraftsModal(true)}
+                className="border-amber-300 bg-amber-50 text-amber-900 font-bold hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200 shadow-sm"
+              >
+                📑 Draft Bills ({draftBills.length})
+              </Button>
+            )}
             {currentBill && (
               <Button variant="outline" onClick={() => clearCurrentBill()} className="text-red-500 border-red-200 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-950/30">
                 <FiTrash2 className="mr-1.5 h-3.5 w-3.5" /> Clear Bill
@@ -452,39 +472,50 @@ export default function Billing() {
                     </span>
                   </div>
 
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setShowCartMenu(!showCartMenu)}
-                      className="rounded-lg p-1.5 text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800"
-                    >
-                      <FiMoreVertical className="h-5 w-5" />
-                    </button>
-
-                    {showCartMenu && (
-                      <div className="absolute right-0 top-8 z-20 w-44 rounded-xl border border-neutral-200 bg-white p-1 shadow-xl dark:border-neutral-700 dark:bg-neutral-800">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            clearCurrentBill();
-                            setShowCartMenu(false);
-                          }}
-                          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
-                        >
-                          <FiTrash2 className="h-4 w-4" /> Clear All Items
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            handleNewBill();
-                            setShowCartMenu(false);
-                          }}
-                          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold text-neutral-700 hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-700"
-                        >
-                          <FiPlus className="h-4 w-4" /> Start New Bill
-                        </button>
-                      </div>
+                  <div className="flex items-center gap-2">
+                    {currentBill.items.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => saveCurrentAsDraft()}
+                        className="rounded-xl border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-900 shadow-sm transition hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950/50 dark:text-amber-200"
+                      >
+                        💾 Save as Draft
+                      </button>
                     )}
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowCartMenu(!showCartMenu)}
+                        className="rounded-lg p-1.5 text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                      >
+                        <FiMoreVertical className="h-5 w-5" />
+                      </button>
+
+                      {showCartMenu && (
+                        <div className="absolute right-0 top-8 z-20 w-44 rounded-xl border border-neutral-200 bg-white p-1 shadow-xl dark:border-neutral-700 dark:bg-neutral-800">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              clearCurrentBill();
+                              setShowCartMenu(false);
+                            }}
+                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+                          >
+                            <FiTrash2 className="h-4 w-4" /> Clear All Items
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              handleNewBill();
+                              setShowCartMenu(false);
+                            }}
+                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold text-neutral-700 hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-700"
+                          >
+                            <FiPlus className="h-4 w-4" /> Start New Bill
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -597,24 +628,14 @@ export default function Billing() {
                 {showSplit ? (
                   <SplitPayment />
                 ) : (
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    {[
-                      { id: 'cash', label: '💵 Cash Payment' },
-                      { id: 'upi', label: '📱 UPI / QR Code' },
-                    ].map((pm) => (
-                      <button
-                        key={pm.id}
-                        type="button"
-                        onClick={() => setPaymentMethod(pm.id as any)}
-                        className={`rounded-xl p-2.5 text-center text-xs font-bold transition-all border ${
-                          paymentMethod === pm.id
-                            ? 'border-primary-500 bg-primary-500/10 text-primary-600 dark:text-primary-400 ring-1 ring-primary-500'
-                            : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300'
-                        }`}
-                      >
-                        {pm.label}
-                      </button>
-                    ))}
+                  <div className="grid grid-cols-1 gap-2 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('cash')}
+                      className="rounded-xl p-2.5 text-center text-xs font-bold transition-all border border-primary-500 bg-primary-500/10 text-primary-600 dark:text-primary-400 ring-1 ring-primary-500"
+                    >
+                      💵 Cash Payment
+                    </button>
                   </div>
                 )}
 
@@ -624,9 +645,30 @@ export default function Billing() {
                       <label className="font-bold text-amber-900 dark:text-amber-200 uppercase text-[10px]">
                         💵 Cash Received (₹)
                       </label>
-                      <span className="font-semibold text-emerald-600 dark:text-emerald-400 text-[11px]">
-                        Change Due: ₹{Math.max(0, (parseFloat(cashReceived) || totals.grandTotal) - totals.grandTotal).toFixed(2)}
-                      </span>
+                      {(() => {
+                        const raw = cashReceived.trim();
+                        const entered = parseFloat(raw);
+                        if (!raw || Number.isNaN(entered)) {
+                          return (
+                            <span className="font-semibold text-emerald-600 dark:text-emerald-400 text-[11px]">
+                              Exact Payment (₹{totals.grandTotal.toFixed(0)})
+                            </span>
+                          );
+                        }
+                        const diff = entered - totals.grandTotal;
+                        if (diff < 0) {
+                          return (
+                            <span className="font-extrabold text-red-600 dark:text-red-400 text-[11px]">
+                              Shortage: -₹{Math.abs(diff).toFixed(2)} (Amount is lower)
+                            </span>
+                          );
+                        }
+                        return (
+                          <span className="font-extrabold text-emerald-600 dark:text-emerald-400 text-[11px]">
+                            Change Due: ₹{diff.toFixed(2)}
+                          </span>
+                        );
+                      })()}
                     </div>
                     <input
                       type="number"
@@ -715,6 +757,87 @@ export default function Billing() {
             window.print();
           }}
         />
+      )}
+
+      {/* Saved Draft Bills Modal */}
+      {showDraftsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg rounded-2xl border border-neutral-200 bg-white p-6 shadow-xl dark:border-neutral-800 dark:bg-neutral-900">
+            <div className="flex items-center justify-between border-b border-neutral-100 pb-3 dark:border-neutral-800">
+              <h3 className="text-lg font-black text-neutral-900 dark:text-white flex items-center gap-2">
+                <span>📑 Saved Draft Bills</span>
+                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
+                  {draftBills.length}
+                </span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowDraftsModal(false)}
+                className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 dark:hover:bg-neutral-800"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="mt-4 max-h-96 overflow-y-auto space-y-3 pr-1">
+              {draftBills.length === 0 ? (
+                <p className="py-8 text-center text-xs text-neutral-500">No saved draft bills found.</p>
+              ) : (
+                draftBills.map((draft) => (
+                  <div
+                    key={draft.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-neutral-200 bg-neutral-50/60 p-3 dark:border-neutral-800 dark:bg-neutral-850"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-extrabold text-neutral-900 dark:text-white text-sm">{draft.orderNumber}</span>
+                        {draft.tableNumber && (
+                          <span className="rounded-md bg-neutral-200 px-1.5 py-0.5 text-[10px] font-bold text-neutral-700 dark:bg-neutral-700 dark:text-neutral-300">
+                            Table {draft.tableNumber}
+                          </span>
+                        )}
+                        {draft.customer.name && draft.customer.name !== 'Guest Customer' && (
+                          <span className="text-xs text-neutral-500 font-semibold">{draft.customer.name}</span>
+                        )}
+                      </div>
+                      <p className="mt-1 text-xs text-neutral-500">
+                        {draft.items.length} items · ₹{draft.items.reduce((sum, i) => sum + i.totalPrice, 0).toFixed(2)}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        onClick={() => {
+                          loadDraftBill(draft.id);
+                          setShowDraftsModal(false);
+                        }}
+                        className="font-bold text-xs"
+                      >
+                        Load Draft
+                      </Button>
+                      <button
+                        type="button"
+                        onClick={() => deleteDraftBill(draft.id)}
+                        className="rounded-lg p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
+                        title="Delete draft"
+                      >
+                        <FiTrash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="mt-5 flex justify-end">
+              <Button variant="outline" size="sm" onClick={() => setShowDraftsModal(false)}>
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
