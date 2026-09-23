@@ -86,8 +86,8 @@ export default function Menu() {
     const loadData = async () => {
       try {
         const [menuRes, categoriesRes] = await Promise.all([
-          menuApi.getAllItems({ branchId: activeBranchId || undefined, restaurantId: activeRestaurantId || undefined }).catch(() => []),
-          categoriesApi.getAll({ branchId: activeBranchId || undefined, restaurantId: activeRestaurantId || undefined } as any).catch(() => ({ data: { data: [] } })),
+          menuApi.getAllItems().catch(() => []),
+          categoriesApi.getAll().catch(() => ({ data: { data: [] } })),
         ]);
 
         const items = Array.isArray(menuRes) ? menuRes : [];
@@ -105,25 +105,35 @@ export default function Menu() {
 
   let filtered = [...menuItems];
 
-  // Filter menu by current active branch and restaurant
+  // Safely filter menu by current active branch & restaurant
   if (activeBranchId || activeRestaurantId) {
-    filtered = filtered.filter((item: any) => {
+    const scopedItems = filtered.filter((item: any) => {
       const bId = item.branchId || item.branch?._id || item.branch;
       const rId = item.restaurantId || item.restaurant?._id || item.restaurant;
       const bList = Array.isArray(item.branches) ? item.branches.map((b: any) => String(b._id || b)) : null;
 
+      // Match explicit branch assignment, or default system tenant items, or unassigned items
+      const isDefaultTenant = (!bId || String(bId) === '000000000000000000000002') && (!rId || String(rId) === '000000000000000000000001');
+
+      let matchesBranch = true;
       if (bList && bList.length > 0) {
-        if (activeBranchId && !bList.includes(String(activeBranchId))) return false;
-      } else if (bId && activeBranchId && String(bId) !== String(activeBranchId)) {
-        return false;
+        matchesBranch = activeBranchId ? bList.includes(String(activeBranchId)) : true;
+      } else if (bId && activeBranchId) {
+        matchesBranch = String(bId) === String(activeBranchId) || isDefaultTenant;
       }
 
-      if (rId && activeRestaurantId && String(rId) !== String(activeRestaurantId)) {
-        return false;
+      let matchesRestaurant = true;
+      if (rId && activeRestaurantId) {
+        matchesRestaurant = String(rId) === String(activeRestaurantId) || isDefaultTenant;
       }
 
-      return true;
+      return matchesBranch && matchesRestaurant;
     });
+
+    // If specific branch/restaurant items exist, use them. Otherwise fallback to all available items.
+    if (scopedItems.length > 0) {
+      filtered = scopedItems;
+    }
   }
 
   if (search) {
