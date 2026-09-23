@@ -120,10 +120,19 @@ export const menuApi = {
       params: { limit: 5000, ...params },
     }),
 
-  getAllItems: async (params?: Omit<PaginationParams, 'page' | 'limit'>) => {
+  getAllItems: async (params?: Omit<PaginationParams, 'page' | 'limit'> & { branchId?: string; restaurantId?: string }) => {
+    const activeBranchId = params?.branchId || localStorage.getItem('restaurantos-branch-id');
+    const activeRestaurantId = params?.restaurantId || localStorage.getItem('restaurantos-restaurant-id');
     const limit = 500;
+    const queryParams = {
+      branchId: activeBranchId || undefined,
+      restaurantId: activeRestaurantId || undefined,
+      ...params,
+      page: 1,
+      limit,
+    };
     const firstResponse = await apiClient.get<PaginatedResponse<MenuItem>>('/api/menu', {
-      params: { ...params, page: 1, limit },
+      params: queryParams,
     });
     const firstPage = firstResponse.data;
     const firstItems = Array.isArray(firstPage?.data) ? firstPage.data : [];
@@ -136,7 +145,7 @@ export const menuApi = {
     const remainingResponses = await Promise.all(
       Array.from({ length: totalPages - 1 }, (_, index) =>
         apiClient.get<PaginatedResponse<MenuItem>>('/api/menu', {
-          params: { ...params, page: index + 2, limit },
+          params: { ...queryParams, page: index + 2 },
         })
       )
     );

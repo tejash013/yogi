@@ -76,12 +76,15 @@ export default function Menu() {
   const [categories, setCategories] = useState<Category[]>([]);
   const syncVersion = useOrderSyncStore((state) => state.version);
 
+  const activeBranchId = branchId || currentBranch?._id || localStorage.getItem('restaurantos-branch-id');
+  const activeRestaurantId = currentRestaurant?._id || localStorage.getItem('restaurantos-restaurant-id');
+
   useEffect(() => {
     const loadData = async () => {
       try {
         const [menuRes, categoriesRes] = await Promise.all([
-          menuApi.getAllItems().catch(() => []),
-          categoriesApi.getAll().catch(() => ({ data: { data: [] } })),
+          menuApi.getAllItems({ branchId: activeBranchId || undefined, restaurantId: activeRestaurantId || undefined }).catch(() => []),
+          categoriesApi.getAll({ branchId: activeBranchId || undefined, restaurantId: activeRestaurantId || undefined } as any).catch(() => ({ data: { data: [] } })),
         ]);
 
         const items = Array.isArray(menuRes) ? menuRes : [];
@@ -95,9 +98,30 @@ export default function Menu() {
     };
 
     void loadData();
-  }, [syncVersion, branchId]);
+  }, [syncVersion, branchId, activeBranchId, activeRestaurantId]);
 
   let filtered = [...menuItems];
+
+  // Filter menu by current active branch and restaurant
+  if (activeBranchId || activeRestaurantId) {
+    filtered = filtered.filter((item: any) => {
+      const bId = item.branchId || item.branch?._id || item.branch;
+      const rId = item.restaurantId || item.restaurant?._id || item.restaurant;
+      const bList = Array.isArray(item.branches) ? item.branches.map((b: any) => String(b._id || b)) : null;
+
+      if (bList && bList.length > 0) {
+        if (activeBranchId && !bList.includes(String(activeBranchId))) return false;
+      } else if (bId && activeBranchId && String(bId) !== String(activeBranchId)) {
+        return false;
+      }
+
+      if (rId && activeRestaurantId && String(rId) !== String(activeRestaurantId)) {
+        return false;
+      }
+
+      return true;
+    });
+  }
 
   if (search) {
     const q = search.toLowerCase();

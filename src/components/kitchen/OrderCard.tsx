@@ -112,6 +112,32 @@ export default function OrderCard({ order, onOpen }: Props) {
 
   const isPreparing = order.status === 'preparing';
 
+  const customerInfo = (() => {
+    const o = order as any;
+    let name = o.customerName || o.customer?.name || (o.user ? `${o.user.firstName ?? ''} ${o.user.lastName ?? ''}`.trim() : '');
+    let phone = o.customerPhone || o.customer?.phone || o.user?.phone || '';
+
+    if (o.notes && typeof o.notes === 'string') {
+      const custMatch = o.notes.match(/Customer:\s*([^|]+)/i);
+      if (custMatch && custMatch[1]) name = custMatch[1].trim();
+      const phoneMatch = o.notes.match(/Phone:\s*([^|]+)/i);
+      if (phoneMatch && phoneMatch[1]) phone = phoneMatch[1].trim();
+    }
+
+    return {
+      name: name || 'Guest Customer',
+      phone: phone || null,
+    };
+  })();
+
+  const formattedTable = (() => {
+    if (!order.tableNumber) return null;
+    if (typeof order.tableNumber === 'object') {
+      return (order.tableNumber as any).label || ((order.tableNumber as any).number ? `Table ${(order.tableNumber as any).number}` : null);
+    }
+    return `Table ${order.tableNumber}`;
+  })();
+
   return (
     <div
       className={cn(
@@ -132,17 +158,34 @@ export default function OrderCard({ order, onOpen }: Props) {
         <OrderStatusBadge status={order.status} />
       </div>
 
+      {/* Customer & Order Context Badge Card */}
+      <div className="mt-2.5 rounded-xl border border-indigo-200 bg-indigo-50/90 p-2.5 dark:border-indigo-900/60 dark:bg-indigo-950/50">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 font-black text-xs text-indigo-950 dark:text-indigo-100">
+            <span className="text-base">👤</span>
+            <span>{customerInfo.name}</span>
+            {customerInfo.phone && (
+              <span className="text-[11px] font-semibold text-indigo-700 dark:text-indigo-300">
+                ({customerInfo.phone})
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-1.5">
+            {formattedTable && (
+              <span className="rounded-lg bg-amber-500 px-2 py-0.5 text-[11px] font-black text-white shadow-xs">
+                🪑 {formattedTable}
+              </span>
+            )}
+            <span className="rounded-lg bg-indigo-600 px-2 py-0.5 text-[11px] font-black text-white uppercase shadow-xs">
+              {orderTypeLabel[order.orderType] || order.orderType}
+            </span>
+          </div>
+        </div>
+      </div>
+
       {/* Meta row */}
-      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-500 dark:text-neutral-400">
-        {order.tableNumber && (
-          <span>
-            {typeof order.tableNumber === 'object'
-              ? ((order.tableNumber as any).label || ((order.tableNumber as any).number ? `Table ${(order.tableNumber as any).number}` : 'Table'))
-              : `Table ${order.tableNumber}`}
-          </span>
-        )}
-        <span className="uppercase">{orderTypeLabel[order.orderType]}</span>
-        <span>{getRelativeTime(order.createdAt)}</span>
+      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-500 dark:text-neutral-400">
+        <span>Received: {getRelativeTime(order.createdAt)}</span>
         {order.status !== 'new' && <span>- {elapsed} min elapsed</span>}
       </div>
 
