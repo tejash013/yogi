@@ -18,6 +18,35 @@ const startSocket = () => {
   }
 };
 
+// Auto-recover from deployment updates when dynamic chunk hashes change
+if (typeof window !== 'undefined') {
+  sessionStorage.removeItem('yogi_route_chunk_reload');
+
+  window.addEventListener('vite:preloadError', (event) => {
+    event.preventDefault();
+    const count = Number(sessionStorage.getItem('yogi_preload_reload') || '0');
+    if (count < 2) {
+      sessionStorage.setItem('yogi_preload_reload', String(count + 1));
+      window.location.reload();
+    }
+  });
+
+  window.addEventListener('unhandledrejection', (event) => {
+    const msg = String(event.reason?.message || event.reason || '');
+    if (
+      msg.includes('Failed to fetch dynamically imported module') ||
+      msg.includes('Importing a module script failed') ||
+      msg.includes('loading chunk')
+    ) {
+      const count = Number(sessionStorage.getItem('yogi_preload_reload') || '0');
+      if (count < 2) {
+        sessionStorage.setItem('yogi_preload_reload', String(count + 1));
+        window.location.reload();
+      }
+    }
+  });
+}
+
 startSocket();
 
 createRoot(document.getElementById('root')!).render(

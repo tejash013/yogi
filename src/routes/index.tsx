@@ -5,20 +5,47 @@ import { ROUTES } from '@/constants';
 import ProtectedRoute from '@/components/common/ProtectedRoute';
 import { useAuthStore } from '@/store';
 
-function lazyPage<T extends Record<string, React.ComponentType<any>>>(loader: () => Promise<T>, name: keyof T) {
-  return lazy(() => loader().then((module) => ({ default: module[name] })));
+const RELOAD_KEY = 'yogi_route_chunk_reload';
+
+function safeImport<T>(importFn: () => Promise<T>): Promise<T> {
+  return importFn().catch((error) => {
+    const msg = String(error?.message || error || '');
+    const isChunkError =
+      error instanceof TypeError ||
+      msg.includes('Failed to fetch dynamically imported module') ||
+      msg.includes('Importing a module script failed') ||
+      msg.includes('loading chunk');
+
+    if (isChunkError && typeof window !== 'undefined') {
+      const reloadCount = Number(sessionStorage.getItem(RELOAD_KEY) || '0');
+      if (reloadCount < 2) {
+        sessionStorage.setItem(RELOAD_KEY, String(reloadCount + 1));
+        window.location.reload();
+        return new Promise<never>(() => {});
+      }
+    }
+    throw error;
+  });
 }
 
-const AuthLayout = lazy(() => import('@/layouts/AuthLayout'));
-const CustomerLayout = lazy(() => import('@/layouts/CustomerLayout'));
-const AdminLayout = lazy(() => import('@/layouts/AdminLayout'));
-const KitchenLayout = lazy(() => import('@/layouts/KitchenLayout'));
-const CashierLayout = lazy(() => import('@/layouts/CashierLayout'));
-const OwnerLayout = lazy(() => import('@/layouts/OwnerLayout'));
-const PlatformAdminLayout = lazy(() => import('@/layouts/PlatformAdminLayout'));
+function safeLazy<T extends React.ComponentType<any>>(importFn: () => Promise<{ default: T }>) {
+  return lazy(() => safeImport(importFn));
+}
 
-const SplashScreen = lazy(() => import('@/pages/SplashScreen'));
-const WelcomeScreen = lazy(() => import('@/pages/WelcomeScreen'));
+function lazyPage<T extends Record<string, React.ComponentType<any>>>(loader: () => Promise<T>, name: keyof T) {
+  return lazy(() => safeImport(loader).then((module) => ({ default: module[name] })));
+}
+
+const AuthLayout = safeLazy(() => import('@/layouts/AuthLayout'));
+const CustomerLayout = safeLazy(() => import('@/layouts/CustomerLayout'));
+const AdminLayout = safeLazy(() => import('@/layouts/AdminLayout'));
+const KitchenLayout = safeLazy(() => import('@/layouts/KitchenLayout'));
+const CashierLayout = safeLazy(() => import('@/layouts/CashierLayout'));
+const OwnerLayout = safeLazy(() => import('@/layouts/OwnerLayout'));
+const PlatformAdminLayout = safeLazy(() => import('@/layouts/PlatformAdminLayout'));
+
+const SplashScreen = safeLazy(() => import('@/pages/SplashScreen'));
+const WelcomeScreen = safeLazy(() => import('@/pages/WelcomeScreen'));
 const Login = lazyPage(() => import('@/pages/auth'), 'Login');
 const Register = lazyPage(() => import('@/pages/auth'), 'Register');
 const ForgotPassword = lazyPage(() => import('@/pages/auth'), 'ForgotPassword');
@@ -62,7 +89,7 @@ const Revenue = lazyPage(() => import('@/pages/owner'), 'Revenue');
 const Expenses = lazyPage(() => import('@/pages/owner'), 'Expenses');
 const OwnerReports = lazyPage(() => import('@/pages/owner'), 'OwnerReports');
 const OwnerSubscription = lazyPage(() => import('@/pages/owner'), 'OwnerSubscription');
-const Error403 = lazy(() => import('@/pages/errors/Error403'));
+const Error403 = safeLazy(() => import('@/pages/errors/Error403'));
 const Workspace = lazyPage(() => import('@/pages/saas'), 'Workspace');
 const Subscriptions = lazyPage(() => import('@/pages/saas'), 'Subscriptions');
 
