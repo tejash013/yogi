@@ -97,6 +97,8 @@ export default function Checkout() {
         tableId: diningType === 'dine-in' ? (tableId || (activeTableNum ? String(activeTableNum) : undefined)) : undefined,
         items: items.map((item) => ({
           menuItem: item.menuItemId,
+          name: item.name,
+          price: item.price,
           quantity: item.quantity,
           specialInstructions: item.specialInstructions || formData.notes || undefined,
         })),

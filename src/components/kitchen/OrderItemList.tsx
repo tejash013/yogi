@@ -15,6 +15,15 @@ export default function OrderItemList({
   showVariants = true,
   showAddons = true,
 }: Props) {
+  if (!items || items.length === 0) {
+    return (
+      <div className="rounded-xl border border-amber-200 bg-amber-50/90 p-2.5 dark:border-amber-900/60 dark:bg-amber-950/40 text-xs font-bold text-amber-900 dark:text-amber-200 flex items-center gap-2">
+        <span>👨‍🍳</span>
+        <span>Customer Order (Items details in special instructions)</span>
+      </div>
+    );
+  }
+
   return (
     <ul className="space-y-2">
       {items.map((item, index) => {
