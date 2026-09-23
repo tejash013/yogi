@@ -17,14 +17,27 @@ export default function Checkout() {
   const [diningType, setDiningType] = useState<DiningType>('dine-in');
   const [tableNumber, setTableNumber] = useState(cartTableNumber ? String(cartTableNumber) : '');
   const [tableId, setTableId] = useState(cartTableId || '');
-  const [formData, setFormData] = useState({
-    name: user ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Customer' : '',
-    email: user?.email ?? '',
-    phone: user?.phone ?? '',
-    notes: '',
+  const cartSpecialInstructions = useCartStore((state) => state.specialInstructions);
+  const [formData, setFormData] = useState(() => {
+    const defaultNotes = cartSpecialInstructions || items.map((i) => i.specialInstructions).filter(Boolean).join(', ') || '';
+    return {
+      name: user ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Customer' : '',
+      email: user?.email ?? '',
+      phone: user?.phone ?? '',
+      notes: defaultNotes,
+    };
   });
   const [isProcessing, setIsProcessing] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!formData.notes) {
+      const defaultNotes = cartSpecialInstructions || items.map((i) => i.specialInstructions).filter(Boolean).join(', ') || '';
+      if (defaultNotes) {
+        setFormData((prev) => ({ ...prev, notes: defaultNotes }));
+      }
+    }
+  }, [cartSpecialInstructions, items]);
 
   useEffect(() => {
     if (user) {

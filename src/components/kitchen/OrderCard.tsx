@@ -31,7 +31,12 @@ export default function OrderCard({ order, onOpen }: Props) {
   const completeOrder = useKitchenStore((state) => state.completeOrder);
   const delayed = isDelayed(order);
   const elapsed = getElapsedMinutes(order);
-  const chefInstructions = extractChefInstructions(order.notes);
+  const rawInstructions = [
+    (order as any).specialInstructions,
+    extractChefInstructions(order.notes),
+    ...(order.items || []).map((i) => i.specialInstructions).filter(Boolean),
+  ].filter(Boolean);
+  const combinedInstructions = Array.from(new Set(rawInstructions)).join(' • ');
 
   const openDetails = () => {
     if (onOpen) onOpen(order.id);
@@ -152,15 +157,15 @@ export default function OrderCard({ order, onOpen }: Props) {
       </div>
 
       {/* Chef Instruction Banner */}
-      {chefInstructions && (
-        <div className="mt-2.5 flex items-start gap-2 rounded-xl border border-amber-300/90 bg-amber-50 p-2.5 text-xs font-bold text-amber-900 dark:border-amber-800/80 dark:bg-amber-950/40 dark:text-amber-200 shadow-xs">
-          <span className="text-base shrink-0">👨‍🍳</span>
+      {combinedInstructions && (
+        <div className="mt-2.5 flex items-start gap-2.5 rounded-xl border-2 border-amber-400 bg-amber-50 p-3 text-xs font-bold text-amber-950 dark:border-amber-600 dark:bg-amber-950/80 dark:text-amber-100 shadow-md">
+          <span className="text-xl shrink-0">👨‍🍳 🌶️</span>
           <div className="min-w-0 flex-1">
-            <span className="block text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-400">
-              Chef Description / Instructions
+            <span className="block text-[11px] font-black uppercase tracking-wider text-amber-800 dark:text-amber-300">
+              SPECIAL INSTRUCTION / CHEF DESCRIPTION
             </span>
-            <span className="text-xs font-black text-amber-950 dark:text-amber-100 break-words leading-snug">
-              {chefInstructions}
+            <span className="text-sm font-black text-amber-950 dark:text-amber-50 break-words leading-relaxed">
+              {combinedInstructions}
             </span>
           </div>
         </div>

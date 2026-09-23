@@ -11,6 +11,7 @@ interface CartState extends Cart {
   setTableNumber: (tableNumber: number | undefined) => void;
   setTableContext: (context: { tableId: string; tableNumber?: number }) => void;
   setDeliveryAddress: (address: string | undefined) => void;
+  setOrderSpecialInstructions: (instructions: string) => void;
   clearCart: () => void;
   recalculateTotals: () => void;
 }
@@ -132,6 +133,9 @@ export const useCartStore = create<CartState>((set) => ({
 
   setDeliveryAddress: (deliveryAddress: string | undefined) =>
     set({ deliveryAddress }),
+
+  setOrderSpecialInstructions: (specialInstructions: string) =>
+    set({ specialInstructions }),
 
   clearCart: () =>
     set({
