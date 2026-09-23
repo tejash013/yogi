@@ -98,24 +98,6 @@ export default function Users() {
     }
   };
 
-  const updateRestaurantSubscription = async (restaurantId: string, subscriptionStatus: string) => {
-    const isSubscriptionActive = subscriptionStatus === 'active' || subscriptionStatus === 'trial';
-    try {
-      await Promise.all([
-        subscriptionsApi.updateRestaurant(restaurantId, { status: subscriptionStatus as any }).catch(() => null),
-        tenantsApi.updateRestaurant(restaurantId, { isActive: isSubscriptionActive }).catch(() => null),
-      ]);
-      await useTenantStore.getState().loadTenants().catch(() => null);
-      showToast(
-        `Subscription status set to "${subscriptionStatus}". Restaurant is now ${isSubscriptionActive ? 'Active' : 'Paused'}.`,
-        'success'
-      );
-      void loadUsers();
-    } catch {
-      showToast('Failed to update restaurant subscription status', 'error');
-    }
-  };
-
   const createAdministrativeUser = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setCreateError('');
@@ -191,45 +173,6 @@ export default function Users() {
           </select>
         </div>
       ),
-    },
-    {
-      key: 'restaurant',
-      header: 'Restaurant & Subscription Status',
-      render: (user) => {
-        const userRestId = user.restaurantId || (user as any).restaurantId || (user as any).restaurant?._id;
-        const targetRest = restaurants.find((r) => r._id === userRestId);
-
-        if (!userRestId && !targetRest) {
-          return <span className="text-xs text-slate-400 font-semibold italic">General User / System</span>;
-        }
-
-        const restName = targetRest?.name || 'Assigned Restaurant';
-        const isRestActive = targetRest?.isActive ?? true;
-
-        return (
-          <div className="space-y-1.5 py-1">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-xs text-slate-900 dark:text-slate-100">{restName}</span>
-              <span className={`rounded-md px-1.5 py-0.5 text-[9px] font-black text-white ${isRestActive ? 'bg-emerald-600' : 'bg-rose-600'}`}>
-                {isRestActive ? '🟢 Active' : '⏸️ Paused'}
-              </span>
-            </div>
-            <select
-              value={isRestActive ? 'active' : 'suspended'}
-              disabled={savingId === user.id}
-              onChange={(e) => void updateRestaurantSubscription(userRestId!, e.target.value)}
-              className="rounded-xl border border-slate-300 bg-white px-2.5 py-1 text-xs font-bold text-slate-900 shadow-xs focus:border-indigo-600 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-            >
-              <option value="active">Active Plan (Ordering ON)</option>
-              <option value="trial">Free Trial (Ordering ON)</option>
-              <option value="past_due">Past Due (Payment Overdue)</option>
-              <option value="suspended">Suspended (Pause Restaurant)</option>
-              <option value="cancelled">Cancelled (Pause Restaurant)</option>
-              <option value="expired">Expired (Pause Restaurant)</option>
-            </select>
-          </div>
-        );
-      },
     },
     {
       key: 'branch',

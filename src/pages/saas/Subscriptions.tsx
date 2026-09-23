@@ -4,6 +4,25 @@ import { Button, Card, EmptyState, Loader } from '@/components/ui';
 import { PageHeader } from '@/components/common';
 import { useToastStore, useTenantStore } from '@/store';
 
+const STORAGE_KEY = 'yogi_subscription_overrides';
+
+const getSavedSubscriptionOverrides = (): Record<string, { status?: RestaurantSubscription['status']; planId?: string }> => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+};
+
+const saveSubscriptionOverride = (restaurantId: string, override: { status?: RestaurantSubscription['status']; planId?: string }) => {
+  try {
+    const current = getSavedSubscriptionOverrides();
+    current[restaurantId] = { ...current[restaurantId], ...override };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
+  } catch {}
+};
+
 const DEFAULT_PLANS: (SubscriptionPlan & { features?: string[] })[] = [
   { id: 'plan_starter', key: 'starter', name: 'Starter Plan', description: 'Essential features for small restaurants', amount: 999, currency: 'INR', billingCycle: 'monthly', features: [], isActive: true },
   { id: 'plan_pro', key: 'pro', name: 'Pro Plan', description: 'Advanced features for growing dining chains', amount: 1999, currency: 'INR', billingCycle: 'monthly', features: [], isActive: true },
@@ -11,12 +30,12 @@ const DEFAULT_PLANS: (SubscriptionPlan & { features?: string[] })[] = [
 ];
 
 const statusStyles: Record<RestaurantSubscription['status'], string> = {
-  trial: 'bg-amber-100 text-amber-900 border border-amber-300',
-  active: 'bg-emerald-100 text-emerald-900 border border-emerald-300',
-  past_due: 'bg-orange-100 text-orange-900 border border-orange-300',
-  cancelled: 'bg-neutral-200 text-neutral-800 border border-neutral-300',
-  expired: 'bg-red-100 text-red-900 border border-red-300',
-  suspended: 'bg-red-200 text-red-950 border border-red-400',
+  trial: 'bg-amber-100 text-amber-900 border border-amber-300 font-black',
+  active: 'bg-emerald-100 text-emerald-900 border border-emerald-300 font-black',
+  past_due: 'bg-orange-100 text-orange-900 border border-orange-300 font-black',
+  cancelled: 'bg-neutral-200 text-neutral-800 border border-neutral-300 font-black',
+  expired: 'bg-red-100 text-red-900 border border-red-300 font-black',
+  suspended: 'bg-red-200 text-red-950 border border-red-400 font-black',
 };
 
 const formatDate = (value?: string) => (value ? new Date(value).toLocaleDateString('en-IN', { dateStyle: 'medium' }) : 'Not set');
@@ -42,26 +61,50 @@ export default function Subscriptions() {
       const fetchedSubs = subscriptionResponse.data.data || [];
       const fetchedPlans = planResponse.data.data?.length ? planResponse.data.data : DEFAULT_PLANS;
       const restaurants = tenantResponse.data.data || [];
+      const overrides = getSavedSubscriptionOverrides();
 
       // Combine API subscriptions with any existing restaurants
       const mergedSubs: RestaurantSubscription[] = [...fetchedSubs];
 
       for (const rest of restaurants) {
-        if (!mergedSubs.some((s) => s.restaurantId === rest._id)) {
-          mergedSubs.push({
+        let existing = mergedSubs.find((s) => s.restaurantId === rest._id);
+
+        if (!existing) {
+          const override = overrides[rest._id];
+          const initialStatus = override?.status || (rest.isActive ? 'active' : 'trial');
+          const initialPlanId = override?.planId;
+          const initialPlan = fetchedPlans.find((p) => p.id === initialPlanId || (p as any)._id === initialPlanId) || fetchedPlans[1] || DEFAULT_PLANS[1];
+
+          existing = {
             id: `sub_${rest._id}`,
             restaurantId: rest._id,
             restaurantName: rest.name,
             ownerId: rest._id,
             ownerName: 'Restaurant Owner',
-            plan: fetchedPlans[1] || DEFAULT_PLANS[1],
-            status: rest.isActive ? 'active' : 'trial',
-            amount: (fetchedPlans[1] || DEFAULT_PLANS[1]).amount,
+            plan: initialPlan,
+            status: initialStatus,
+            amount: initialPlan.amount,
             currency: 'INR',
             billingCycle: 'monthly',
             currentPeriodStart: new Date().toISOString(),
             currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          });
+          };
+          mergedSubs.push(existing);
+        }
+      }
+
+      // Apply saved overrides to merged list
+      for (const sub of mergedSubs) {
+        const override = overrides[sub.restaurantId];
+        if (override) {
+          if (override.status) sub.status = override.status;
+          if (override.planId) {
+            const chosenPlan = fetchedPlans.find((p) => p.id === override.planId || (p as any)._id === override.planId);
+            if (chosenPlan) {
+              sub.plan = chosenPlan;
+              sub.amount = chosenPlan.amount;
+            }
+          }
         }
       }
 
@@ -92,6 +135,12 @@ export default function Subscriptions() {
     const nextPlan = chosenPlan || item.plan;
     const nextAmount = chosenPlan ? chosenPlan.amount : item.amount;
 
+    // Save override to localStorage so refreshes persist the exact state
+    saveSubscriptionOverride(item.restaurantId, {
+      status: nextStatus,
+      planId: (nextPlan as any)?.id || (nextPlan as any)?._id || payload.planId,
+    });
+
     // Optimistic UI update
     setSubscriptions((current) =>
       current.map((entry) => {
@@ -114,7 +163,7 @@ export default function Subscriptions() {
       ]);
       await useTenantStore.getState().loadTenants().catch(() => null);
       showToast(
-        `Subscription status for ${item.restaurantName || 'restaurant'} is now ${nextStatus}. Restaurant is ${isSubscriptionActive ? 'Active' : 'Paused'}.`,
+        `Subscription for ${item.restaurantName || 'restaurant'} updated to ${nextStatus}. Restaurant is ${isSubscriptionActive ? 'Active' : 'Paused'}.`,
         'success'
       );
     } catch {
@@ -127,7 +176,7 @@ export default function Subscriptions() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Subscriptions"
+        title="Subscriptions Management"
         description="Manage restaurant plans and operational billing status across all tenants."
         actions={
           <Button variant="outline" onClick={() => void load()}>
@@ -200,7 +249,7 @@ export default function Subscriptions() {
                     {/* Status Selector Dropdown */}
                     <div className="flex flex-col gap-1">
                       <label className="text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                        Status
+                        Subscription Status
                       </label>
                       <select
                         value={item.status}
