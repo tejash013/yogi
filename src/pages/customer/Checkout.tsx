@@ -4,13 +4,15 @@ import { Button, Card } from '@/components/ui';
 import { ROUTES } from '@/constants';
 import { ordersApi } from '@/api';
 import { getApiErrorMessage } from '@/api/errors';
-import { useAuthStore, useCartStore, useOrderSyncStore } from '@/store';
+import { useAuthStore, useCartStore, useOrderSyncStore, useTenantStore } from '@/store';
 
 type DiningType = 'dine-in' | 'takeaway';
 
 export default function Checkout() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
+  const { currentRestaurant, currentBranch } = useTenantStore();
+  const isOutletPaused = currentRestaurant?.isActive === false || currentBranch?.isActive === false;
   const cartTableNumber = useCartStore((state) => state.tableNumber);
   const cartTableId = useCartStore((state) => state.tableId);
   const { items, subtotal, clearCart } = useCartStore();
@@ -64,6 +66,11 @@ export default function Checkout() {
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isOutletPaused) {
+      setSubmitError('This restaurant outlet is currently paused by management and cannot accept orders.');
+      return;
+    }
 
     const customerId = user?.id ?? (user as any)?._id;
 
@@ -136,6 +143,20 @@ export default function Checkout() {
         <h1 className="text-2xl font-black text-neutral-900 dark:text-white">Order Checkout</h1>
         <p className="text-xs text-neutral-500">Quickly confirm your order without repetitive forms</p>
       </div>
+
+      {isOutletPaused && (
+        <div className="mb-6 rounded-3xl border-2 border-rose-500 bg-rose-500/10 p-5 text-rose-900 dark:text-rose-200 shadow-md">
+          <div className="flex items-center gap-4">
+            <span className="text-3xl">⏸️</span>
+            <div>
+              <h3 className="font-black text-lg text-rose-900 dark:text-rose-100">Restaurant Outlet Paused</h3>
+              <p className="text-xs font-bold mt-1 text-rose-800 dark:text-rose-300">
+                {currentRestaurant?.name || 'This outlet'} is currently paused or inactive and is not accepting orders.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handlePlaceOrder}>
         <div className="grid gap-6 lg:grid-cols-3">
@@ -247,9 +268,10 @@ export default function Checkout() {
                 fullWidth
                 size="lg"
                 className="mt-6"
+                disabled={isProcessing || isOutletPaused}
                 isLoading={isProcessing}
               >
-                {isProcessing ? 'Placing Order...' : `Place Order · ₹${finalTotal.toFixed(2)}`}
+                {isOutletPaused ? 'Outlet Paused (Orders Disabled)' : isProcessing ? 'Placing Order...' : `Place Order · ₹${finalTotal.toFixed(2)}`}
               </Button>
             </Card>
           </div>

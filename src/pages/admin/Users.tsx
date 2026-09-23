@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Badge, Button, Card, CardContent, Search, Table } from '@/components/ui';
+import { Badge, Search, Table } from '@/components/ui';
 import { PageHeader } from '@/components/common';
 import { usersApi } from '@/api';
 import { useOrderSyncStore } from '@/store';
@@ -11,6 +11,15 @@ type UserRow = User & { _id?: string };
 
 const roles: UserRole[] = ['customer', 'cashier', 'chef', 'manager', 'owner', 'platformAdmin'];
 const statuses: NonNullable<User['status']>[] = ['active', 'inactive', 'suspended'];
+
+const roleBadgeStyles: Record<string, string> = {
+  platformAdmin: 'bg-purple-600 text-white font-black shadow-xs',
+  owner: 'bg-indigo-600 text-white font-black shadow-xs',
+  manager: 'bg-blue-600 text-white font-black shadow-xs',
+  chef: 'bg-amber-600 text-white font-black shadow-xs',
+  cashier: 'bg-emerald-600 text-white font-black shadow-xs',
+  customer: 'bg-slate-700 text-white font-black shadow-xs',
+};
 
 export default function Users() {
   const [users, setUsers] = useState<UserRow[]>([]);
@@ -24,7 +33,16 @@ export default function Users() {
   const branches = useTenantStore((state) => state.allBranches);
   const [showCreate, setShowCreate] = useState(false);
   const [createError, setCreateError] = useState('');
-  const [createForm, setCreateForm] = useState({ firstName: '', lastName: '', email: '', phone: '', password: '', role: 'manager' as 'owner' | 'manager', restaurantId: '', branchId: '' });
+  const [createForm, setCreateForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    password: '',
+    role: 'manager' as 'owner' | 'manager',
+    restaurantId: '',
+    branchId: '',
+  });
 
   const loadUsers = async () => {
     setIsLoading(true);
@@ -84,52 +102,65 @@ export default function Users() {
   const columns: Column<UserRow>[] = [
     {
       key: 'email',
-      header: 'Account',
+      header: 'User Account',
       render: (user) => (
-        <div>
-          <p className="font-medium text-neutral-900 dark:text-white">{user.firstName} {user.lastName}</p>
-          <p className="text-xs text-neutral-500">{user.email}</p>
+        <div className="py-1">
+          <p className="font-black text-slate-900 dark:text-white text-sm">{user.firstName} {user.lastName}</p>
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">{user.email}</p>
         </div>
       ),
     },
     {
       key: 'role',
-      header: 'Role',
+      header: 'Role & Permissions',
       render: (user) => (
-        <select
-          value={user.role}
-          disabled={savingId === user.id}
-          onChange={(event) => void updateAccess(user, { role: event.target.value as UserRole })}
-          className="rounded-lg border border-neutral-200 bg-white px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-900"
-          aria-label={`Role for ${user.email}`}
-        >
-          {visibleRoles.map((role) => <option key={role} value={role}>{role}</option>)}
-        </select>
+        <div className="flex items-center gap-2">
+          <span className={`inline-block rounded-lg px-2.5 py-1 text-xs uppercase tracking-wider ${roleBadgeStyles[user.role] || 'bg-slate-600 text-white'}`}>
+            {user.role}
+          </span>
+          <select
+            value={user.role}
+            disabled={savingId === user.id}
+            onChange={(event) => void updateAccess(user, { role: event.target.value as UserRole })}
+            className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-900 shadow-xs focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            aria-label={`Role for ${user.email}`}
+          >
+            {visibleRoles.map((role) => (
+              <option key={role} value={role}>{role}</option>
+            ))}
+          </select>
+        </div>
       ),
     },
     {
       key: 'status',
-      header: 'Status',
+      header: 'Account Status',
       render: (user) => (
         <div className="flex items-center gap-2">
-          <Badge variant={user.status === 'active' ? 'success' : user.status === 'suspended' ? 'error' : 'neutral'} size="sm">
+          <Badge
+            variant={user.status === 'active' ? 'success' : user.status === 'suspended' ? 'error' : 'neutral'}
+            size="sm"
+            className="font-black text-xs uppercase px-2.5 py-1"
+          >
             {user.status ?? 'active'}
           </Badge>
           <select
             value={user.status ?? 'active'}
             disabled={savingId === user.id}
             onChange={(event) => void updateAccess(user, { status: event.target.value as User['status'] })}
-            className="rounded-lg border border-neutral-200 bg-white px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+            className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-900 shadow-xs focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
             aria-label={`Status for ${user.email}`}
           >
-            {statuses.map((status) => <option key={status} value={status}>{status}</option>)}
+            {statuses.map((status) => (
+              <option key={status} value={status}>{status}</option>
+            ))}
           </select>
         </div>
       ),
     },
     {
       key: 'branch',
-      header: 'Branch',
+      header: 'Assigned Branch',
       render: (user) => (
         <input
           defaultValue={user.branch ?? ''}
@@ -138,7 +169,7 @@ export default function Users() {
           onBlur={(event) => {
             if (event.target.value !== (user.branch ?? '')) void updateAccess(user, { branch: event.target.value });
           }}
-          className="w-32 rounded-lg border border-neutral-200 bg-white px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+          className="w-36 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-900 shadow-xs focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
           aria-label={`Branch for ${user.email}`}
         />
       ),
@@ -148,35 +179,80 @@ export default function Users() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="User Access"
-        description="Manage account roles, status, and branch assignments"
-        actions={<div className="flex items-center gap-3"><Search placeholder="Search users..." value={search} onChange={(event) => setSearch(event.target.value)} onClear={() => setSearch('')} />{currentRole === 'platformAdmin' ? <Button onClick={() => setShowCreate((open) => !open)}>{showCreate ? 'Close' : 'Create Admin'}</Button> : null}</div>}
+        title="User Access Control"
+        description="Manage system permissions, account roles, active status, and branch assignments"
+        actions={
+          <div className="flex items-center gap-3">
+            <Search placeholder="Search user accounts..." value={search} onChange={(event) => setSearch(event.target.value)} onClear={() => setSearch('')} />
+            {currentRole === 'platformAdmin' ? (
+              <button
+                onClick={() => setShowCreate((open) => !open)}
+                className="rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white hover:bg-indigo-700 shadow-sm transition"
+              >
+                {showCreate ? 'Close Form' : '+ Create Admin'}
+              </button>
+            ) : null}
+          </div>
+        }
       />
+
       {showCreate && currentRole === 'platformAdmin' ? (
-        <Card className="border-secondary-200 dark:border-secondary-800">
-          <CardContent>
-            <form onSubmit={createAdministrativeUser} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <input required placeholder="First name" value={createForm.firstName} onChange={(event) => setCreateForm({ ...createForm, firstName: event.target.value })} className="rounded-xl border px-3 py-2 text-sm dark:bg-neutral-900" />
-              <input placeholder="Last name" value={createForm.lastName} onChange={(event) => setCreateForm({ ...createForm, lastName: event.target.value })} className="rounded-xl border px-3 py-2 text-sm dark:bg-neutral-900" />
-              <input required type="email" placeholder="Email" value={createForm.email} onChange={(event) => setCreateForm({ ...createForm, email: event.target.value })} className="rounded-xl border px-3 py-2 text-sm dark:bg-neutral-900" />
-              <input required placeholder="Phone" value={createForm.phone} onChange={(event) => setCreateForm({ ...createForm, phone: event.target.value })} className="rounded-xl border px-3 py-2 text-sm dark:bg-neutral-900" />
-              <input required type="password" minLength={6} placeholder="Temporary password" value={createForm.password} onChange={(event) => setCreateForm({ ...createForm, password: event.target.value })} className="rounded-xl border px-3 py-2 text-sm dark:bg-neutral-900" />
-              <select value={createForm.role} onChange={(event) => setCreateForm({ ...createForm, role: event.target.value as 'owner' | 'manager' })} className="rounded-xl border px-3 py-2 text-sm dark:bg-neutral-900"><option value="owner">owner</option><option value="manager">manager</option></select>
-              <select required value={createForm.restaurantId} onChange={(event) => setCreateForm({ ...createForm, restaurantId: event.target.value, branchId: '' })} className="rounded-xl border px-3 py-2 text-sm dark:bg-neutral-900"><option value="">Select restaurant</option>{restaurants.map((restaurant) => <option key={restaurant._id} value={restaurant._id}>{restaurant.name}</option>)}</select>
-              <select required value={createForm.branchId} onChange={(event) => setCreateForm({ ...createForm, branchId: event.target.value })} className="rounded-xl border px-3 py-2 text-sm dark:bg-neutral-900"><option value="">Select branch</option>{branches.filter((branch) => String(branch.restaurantId) === createForm.restaurantId).map((branch) => <option key={branch._id} value={branch._id}>{branch.name}</option>)}</select>
-              <div className="flex items-center gap-3 sm:col-span-2 lg:col-span-4"><Button type="submit">Create account</Button>{createError ? <span className="text-sm text-red-600">{createError}</span> : null}</div>
-            </form>
-          </CardContent>
-        </Card>
+        <div className="rounded-3xl border border-indigo-200 bg-indigo-50/50 p-6 shadow-md dark:border-indigo-900/60 dark:bg-indigo-950/40">
+          <h3 className="mb-4 font-black text-lg text-slate-900 dark:text-white">Create Administrative Account</h3>
+          <form onSubmit={createAdministrativeUser} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <input required placeholder="First name" value={createForm.firstName} onChange={(event) => setCreateForm({ ...createForm, firstName: event.target.value })} className="rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-900 shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            <input placeholder="Last name" value={createForm.lastName} onChange={(event) => setCreateForm({ ...createForm, lastName: event.target.value })} className="rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-900 shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            <input required type="email" placeholder="Email address" value={createForm.email} onChange={(event) => setCreateForm({ ...createForm, email: event.target.value })} className="rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-900 shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            <input required placeholder="Phone number" value={createForm.phone} onChange={(event) => setCreateForm({ ...createForm, phone: event.target.value })} className="rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-900 shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            <input required type="password" minLength={6} placeholder="Temporary password" value={createForm.password} onChange={(event) => setCreateForm({ ...createForm, password: event.target.value })} className="rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-900 shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            <select value={createForm.role} onChange={(event) => setCreateForm({ ...createForm, role: event.target.value as 'owner' | 'manager' })} className="rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-900 shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:text-white">
+              <option value="owner">Owner</option>
+              <option value="manager">Manager</option>
+            </select>
+            <select required value={createForm.restaurantId} onChange={(event) => setCreateForm({ ...createForm, restaurantId: event.target.value, branchId: '' })} className="rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-900 shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:text-white">
+              <option value="">Select Restaurant</option>
+              {restaurants.map((restaurant) => (
+                <option key={restaurant._id} value={restaurant._id}>{restaurant.name}</option>
+              ))}
+            </select>
+            <select required value={createForm.branchId} onChange={(event) => setCreateForm({ ...createForm, branchId: event.target.value })} className="rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-900 shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:text-white">
+              <option value="">Select Branch Outlet</option>
+              {branches.filter((branch) => String(branch.restaurantId) === createForm.restaurantId).map((branch) => (
+                <option key={branch._id} value={branch._id}>{branch.name}</option>
+              ))}
+            </select>
+            <div className="flex items-center gap-3 sm:col-span-2 lg:col-span-4 mt-2">
+              <button type="submit" className="rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-black text-white hover:bg-indigo-700 shadow-sm transition">
+                Create Account
+              </button>
+              {createError ? <span className="text-xs font-bold text-red-600 dark:text-red-400">{createError}</span> : null}
+            </div>
+          </form>
+        </div>
       ) : null}
-      {error ? <Card className="border-red-200 bg-red-50 text-red-800"><CardContent>{error}</CardContent></Card> : null}
-      <Card padding="none">
-        <CardContent>
-          <Table columns={columns} data={users} isLoading={isLoading} />
-          {!isLoading && users.length === 0 ? <p className="p-6 text-center text-sm text-neutral-500">No user accounts found.</p> : null}
-        </CardContent>
-      </Card>
-      <Button variant="ghost" onClick={() => void loadUsers()} disabled={isLoading}>Refresh accounts</Button>
+
+      {error ? (
+        <div className="rounded-2xl border border-rose-300 bg-rose-50 p-4 font-bold text-xs text-rose-900 dark:border-rose-900 dark:bg-rose-950/60 dark:text-rose-200">
+          {error}
+        </div>
+      ) : null}
+
+      <div className="rounded-3xl border border-slate-200 bg-white shadow-md overflow-hidden dark:border-slate-800 dark:bg-slate-900">
+        <Table columns={columns} data={users} isLoading={isLoading} />
+        {!isLoading && users.length === 0 ? (
+          <p className="p-8 text-center text-sm font-bold text-slate-500">No user accounts found matching your query.</p>
+        ) : null}
+      </div>
+
+      <div className="flex justify-end">
+        <button
+          onClick={() => void loadUsers()}
+          disabled={isLoading}
+          className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-800 hover:border-indigo-600 hover:text-indigo-600 shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+        >
+          {isLoading ? 'Refreshing...' : '🔄 Refresh Accounts'}
+        </button>
+      </div>
     </div>
   );
 }

@@ -56,7 +56,8 @@ const normalizeCategory = (item: any): Category => ({
 });
 
 export default function Menu() {
-  const { branchId } = useTenantStore();
+  const { currentRestaurant, currentBranch, branchId } = useTenantStore();
+  const isOutletPaused = currentRestaurant?.isActive === false || currentBranch?.isActive === false;
   const tableNumber = useCartStore((s) => s.tableNumber);
   const [searchParams] = useSearchParams();
   const [search, setSearch] = useState(searchParams.get('q') || searchParams.get('search') || '');
@@ -183,6 +184,20 @@ export default function Menu() {
           </p>
         </div>
       </div>
+
+      {isOutletPaused && (
+        <div className="rounded-2xl border-2 border-amber-500 bg-amber-500/10 p-4 text-amber-900 dark:text-amber-200">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">⏸️</span>
+            <div>
+              <h3 className="font-black text-sm text-amber-900 dark:text-amber-100">Restaurant Outlet Currently Paused</h3>
+              <p className="text-xs font-semibold mt-0.5 text-amber-800 dark:text-amber-300">
+                {currentRestaurant?.name || 'This outlet'} is paused and not accepting new orders. Checkout is currently disabled.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Header with Search */}
       <div className="relative">

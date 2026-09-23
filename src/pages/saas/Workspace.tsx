@@ -459,12 +459,16 @@ export default function Workspace() {
                             <div className="flex items-center gap-2">
                               <h3 className="font-black text-base text-slate-900 dark:text-white">{restaurant.name}</h3>
                               {isCurrentActive && (
-                                <span className="rounded-full bg-indigo-600 px-2 py-0.5 text-[9px] font-black text-white">
+                                <span className="rounded-full bg-indigo-600 px-2.5 py-0.5 text-[10px] font-black text-white shadow-xs">
                                   Active Context
                                 </span>
                               )}
-                              {!restaurant.isActive && (
-                                <span className="rounded-full bg-rose-100 text-rose-800 px-2 py-0.5 text-[9px] font-black">
+                              {restaurant.isActive ? (
+                                <span className="rounded-full bg-emerald-600 px-2.5 py-0.5 text-[10px] font-black text-white shadow-xs">
+                                  Active
+                                </span>
+                              ) : (
+                                <span className="rounded-full bg-rose-600 px-2.5 py-0.5 text-[10px] font-black text-white shadow-xs">
                                   Paused
                                 </span>
                               )}
@@ -482,10 +486,10 @@ export default function Workspace() {
                                   e.stopPropagation();
                                   void handleToggleRestaurantStatus(restaurant);
                                 }}
-                                className={`rounded-xl border px-3 py-1.5 text-xs font-bold transition ${
+                                className={`rounded-xl border px-3 py-1.5 text-xs font-black shadow-sm transition ${
                                   restaurant.isActive
-                                    ? 'border-emerald-300 bg-emerald-100 text-emerald-900 hover:bg-emerald-200'
-                                    : 'border-amber-300 bg-amber-100 text-amber-900 hover:bg-amber-200'
+                                    ? 'border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700'
+                                    : 'border-rose-600 bg-rose-600 text-white hover:bg-rose-700'
                                 }`}
                               >
                                 {restaurant.isActive ? '🟢 Active' : '⏸️ Paused'}
