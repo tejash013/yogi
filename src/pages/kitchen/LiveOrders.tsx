@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { PageHeader } from '@/components/common';
-import { OrderBoard, OrderDetails, KitchenFilters } from '@/components/kitchen';
+import { OrderBoard, OrderDetails } from '@/components/kitchen';
 import { useKitchenStore, useOrderSyncStore, isDelayed } from '@/store';
 
 /**
@@ -102,8 +102,6 @@ export default function LiveOrders() {
           </button>
         }
       />
-
-      <KitchenFilters />
 
       <OrderBoard columns={columns} onOpenOrder={setActiveOrder} />
 

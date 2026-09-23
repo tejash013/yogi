@@ -8,7 +8,6 @@ import {
   getCurrentBrowserLocation,
   getIpBasedLocation,
   KNOWN_LOCATION_PRESETS,
-  reverseGeocode,
 } from '@/utils/geolocation';
 
 function slugify(value: string) {
@@ -262,24 +261,20 @@ export default function Workspace() {
     setIsLocating(true);
     try {
       const coords = await getCurrentBrowserLocation();
-      const geo = await reverseGeocode();
       setRestaurantForm((prev) => ({
         ...prev,
         latitude: Math.round(coords.latitude * 10000) / 10000,
         longitude: Math.round(coords.longitude * 10000) / 10000,
-        city: geo.city || prev.city,
-        state: coords.state || prev.state,
       }));
-      const locationName = geo.displayName || `${geo.city || 'Nearby'}, Gujarat`;
       setRestaurantGpsTrack({
         status: 'verified',
-        displayName: locationName,
+        displayName: `${restaurantForm.city || 'Custom Location'}, ${restaurantForm.state || ''}`,
         accuracy: coords.accuracy,
         source: 'gps',
       });
       setMessage({
         type: 'success',
-        text: `🎯 GPS Track Acquired: ${locationName} (Accuracy ±${Math.round(coords.accuracy || 10)}m)`,
+        text: `🎯 GPS Coordinates Acquired (${coords.latitude.toFixed(4)}, ${coords.longitude.toFixed(4)})`,
       });
     } catch {
       try {
@@ -288,30 +283,15 @@ export default function Workspace() {
           ...prev,
           latitude: Math.round(ipLoc.latitude * 10000) / 10000,
           longitude: Math.round(ipLoc.longitude * 10000) / 10000,
-          city: ipLoc.city || prev.city,
-          state: ipLoc.state || prev.state,
         }));
         setRestaurantGpsTrack({
           status: 'verified',
-          displayName: ipLoc.displayName || `${ipLoc.city}, ${ipLoc.state}`,
+          displayName: `${restaurantForm.city || ipLoc.city}, ${restaurantForm.state || ipLoc.state}`,
           source: 'ip',
         });
-        setMessage({ type: 'success', text: `📍 Location estimated via network: ${ipLoc.displayName || ipLoc.city}` });
+        setMessage({ type: 'success', text: `📍 Location estimated via network (${ipLoc.latitude.toFixed(4)}, ${ipLoc.longitude.toFixed(4)})` });
       } catch {
-        const preset = KNOWN_LOCATION_PRESETS.find((p) => p.name.toLowerCase() === restaurantForm.city.toLowerCase()) || KNOWN_LOCATION_PRESETS[0];
-        setRestaurantForm((prev) => ({
-          ...prev,
-          latitude: preset.latitude,
-          longitude: preset.longitude,
-          city: preset.name,
-          state: preset.state,
-        }));
-        setRestaurantGpsTrack({
-          status: 'preset',
-          displayName: `${preset.name}, ${preset.state}`,
-          source: 'preset',
-        });
-        setMessage({ type: 'success', text: `📍 GPS Track aligned with ${preset.name}, ${preset.state}` });
+        setMessage({ type: 'error', text: 'Could not fetch GPS coordinates.' });
       }
     } finally {
       setIsLocating(false);
@@ -322,24 +302,20 @@ export default function Workspace() {
     setIsLocating(true);
     try {
       const coords = await getCurrentBrowserLocation();
-      const geo = await reverseGeocode();
       setBranchForm((prev) => ({
         ...prev,
         latitude: Math.round(coords.latitude * 10000) / 10000,
         longitude: Math.round(coords.longitude * 10000) / 10000,
-        city: geo.city || prev.city,
-        state: coords.state || prev.state,
       }));
-      const locationName = geo.displayName || `${geo.city || 'Nearby'}, Gujarat`;
       setBranchGpsTrack({
         status: 'verified',
-        displayName: locationName,
+        displayName: `${branchForm.city || 'Custom Location'}, ${branchForm.state || ''}`,
         accuracy: coords.accuracy,
         source: 'gps',
       });
       setMessage({
         type: 'success',
-        text: `🎯 GPS Track Acquired: ${locationName} (Accuracy ±${Math.round(coords.accuracy || 10)}m)`,
+        text: `🎯 GPS Coordinates Acquired (${coords.latitude.toFixed(4)}, ${coords.longitude.toFixed(4)})`,
       });
     } catch {
       try {
@@ -348,30 +324,15 @@ export default function Workspace() {
           ...prev,
           latitude: Math.round(ipLoc.latitude * 10000) / 10000,
           longitude: Math.round(ipLoc.longitude * 10000) / 10000,
-          city: ipLoc.city || prev.city,
-          state: ipLoc.state || prev.state,
         }));
         setBranchGpsTrack({
           status: 'verified',
-          displayName: ipLoc.displayName || `${ipLoc.city}, ${ipLoc.state}`,
+          displayName: `${branchForm.city || ipLoc.city}, ${branchForm.state || ipLoc.state}`,
           source: 'ip',
         });
-        setMessage({ type: 'success', text: `📍 Location estimated via network: ${ipLoc.displayName || ipLoc.city}` });
+        setMessage({ type: 'success', text: `📍 Location estimated via network (${ipLoc.latitude.toFixed(4)}, ${ipLoc.longitude.toFixed(4)})` });
       } catch {
-        const preset = KNOWN_LOCATION_PRESETS.find((p) => p.name.toLowerCase() === branchForm.city.toLowerCase()) || KNOWN_LOCATION_PRESETS[0];
-        setBranchForm((prev) => ({
-          ...prev,
-          latitude: preset.latitude,
-          longitude: preset.longitude,
-          city: preset.name,
-          state: preset.state,
-        }));
-        setBranchGpsTrack({
-          status: 'preset',
-          displayName: `${preset.name}, ${preset.state}`,
-          source: 'preset',
-        });
-        setMessage({ type: 'success', text: `📍 GPS Track aligned with ${preset.name}, ${preset.state}` });
+        setMessage({ type: 'error', text: 'Could not fetch GPS coordinates.' });
       }
     } finally {
       setIsLocating(false);

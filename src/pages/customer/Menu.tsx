@@ -57,7 +57,7 @@ const normalizeCategory = (item: any): Category => ({
 
 export default function Menu() {
   const { branchId } = useTenantStore();
-  const { tableNumber, tableId } = useCartStore();
+  const tableNumber = useCartStore((s) => s.tableNumber);
   const [searchParams] = useSearchParams();
   const [search, setSearch] = useState(searchParams.get('q') || searchParams.get('search') || '');
   const [selectedCategory, setSelectedCategory] = useState<string>(searchParams.get('category') || 'all');
@@ -156,6 +156,15 @@ export default function Menu() {
     });
   };
 
+  const displayTableNumber = (() => {
+    const raw = String(tableNumber ?? '').trim();
+    if (/^\d+$/.test(raw)) {
+      const num = Number.parseInt(raw, 10);
+      if (num > 0 && num < 1000) return num;
+    }
+    return null;
+  })();
+
   return (
     <div className="space-y-6">
       {/* Menu Header */}
@@ -163,9 +172,9 @@ export default function Menu() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">Our Menu</h1>
-            {(tableNumber || tableId) && (
+            {displayTableNumber && (
               <span className="rounded-full bg-amber-500/15 border border-amber-500/30 px-3 py-1 text-xs font-bold text-amber-700 dark:text-amber-300">
-                🪑 Table #{tableNumber || tableId}
+                🪑 Table #{displayTableNumber}
               </span>
             )}
           </div>

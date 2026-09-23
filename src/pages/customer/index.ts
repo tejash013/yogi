@@ -8,6 +8,5 @@ export { default as OrderTracking } from './OrderTracking';
 export { default as MyOrders } from './MyOrders';
 export { default as CustomerProfile } from './Profile';
 export { default as Favorites } from './Favorites';
-export { default as Coupons } from './Coupons';
 export { default as Feedback } from './Feedback';
 export { default as ScanTable } from './ScanTable';

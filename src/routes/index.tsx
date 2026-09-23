@@ -32,10 +32,6 @@ function safeLazy<T extends React.ComponentType<any>>(importFn: () => Promise<{ 
   return lazy(() => safeImport(importFn));
 }
 
-function lazyPage<T extends Record<string, React.ComponentType<any>>>(loader: () => Promise<T>, name: keyof T) {
-  return lazy(() => safeImport(loader).then((module) => ({ default: module[name] })));
-}
-
 const AuthLayout = safeLazy(() => import('@/layouts/AuthLayout'));
 const CustomerLayout = safeLazy(() => import('@/layouts/CustomerLayout'));
 const AdminLayout = safeLazy(() => import('@/layouts/AdminLayout'));
@@ -46,52 +42,49 @@ const PlatformAdminLayout = safeLazy(() => import('@/layouts/PlatformAdminLayout
 
 const SplashScreen = safeLazy(() => import('@/pages/SplashScreen'));
 const WelcomeScreen = safeLazy(() => import('@/pages/WelcomeScreen'));
-const Login = lazyPage(() => import('@/pages/auth'), 'Login');
-const Register = lazyPage(() => import('@/pages/auth'), 'Register');
-const ForgotPassword = lazyPage(() => import('@/pages/auth'), 'ForgotPassword');
-const CustomerHome = lazyPage(() => import('@/pages/customer'), 'CustomerHome');
-const Menu = lazyPage(() => import('@/pages/customer'), 'Menu');
-const FoodDetails = lazyPage(() => import('@/pages/customer'), 'FoodDetails');
-const Cart = lazyPage(() => import('@/pages/customer'), 'Cart');
-const Checkout = lazyPage(() => import('@/pages/customer'), 'Checkout');
-const OrderSuccess = lazyPage(() => import('@/pages/customer'), 'OrderSuccess');
-const OrderTracking = lazyPage(() => import('@/pages/customer'), 'OrderTracking');
-const MyOrders = lazyPage(() => import('@/pages/customer'), 'MyOrders');
-const CustomerProfile = lazyPage(() => import('@/pages/customer'), 'CustomerProfile');
-const Favorites = lazyPage(() => import('@/pages/customer'), 'Favorites');
-const Coupons = lazyPage(() => import('@/pages/customer'), 'Coupons');
-const Feedback = lazyPage(() => import('@/pages/customer'), 'Feedback');
-const ScanTable = lazyPage(() => import('@/pages/customer'), 'ScanTable');
-const AdminDashboard = lazyPage(() => import('@/pages/admin'), 'AdminDashboard');
-const MenuManagement = lazyPage(() => import('@/pages/admin'), 'MenuManagement');
-const AdminCategories = lazyPage(() => import('@/pages/admin'), 'AdminCategories');
-const AdminOrders = lazyPage(() => import('@/pages/admin'), 'AdminOrders');
-const AdminInvoices = lazyPage(() => import('@/pages/admin'), 'AdminInvoices');
-const AdminCustomers = lazyPage(() => import('@/pages/admin'), 'AdminCustomers');
-const AdminEmployees = lazyPage(() => import('@/pages/admin'), 'AdminEmployees');
-const AdminTables = lazyPage(() => import('@/pages/admin'), 'AdminTables');
-const AdminInventory = lazyPage(() => import('@/pages/admin'), 'AdminInventory');
-const AdminReports = lazyPage(() => import('@/pages/admin'), 'AdminReports');
-const AdminSettings = lazyPage(() => import('@/pages/admin'), 'AdminSettings');
-const AdminUsers = lazyPage(() => import('@/pages/admin'), 'AdminUsers');
-const KitchenDashboard = lazyPage(() => import('@/pages/kitchen'), 'KitchenDashboard');
-const LiveOrders = lazyPage(() => import('@/pages/kitchen'), 'LiveOrders');
-const Preparing = lazyPage(() => import('@/pages/kitchen'), 'Preparing');
-const Ready = lazyPage(() => import('@/pages/kitchen'), 'Ready');
-const Completed = lazyPage(() => import('@/pages/kitchen'), 'Completed');
-const CashierDashboard = lazyPage(() => import('@/pages/cashier'), 'CashierDashboard');
-const Billing = lazyPage(() => import('@/pages/cashier'), 'Billing');
-const Payments = lazyPage(() => import('@/pages/cashier'), 'Payments');
-const Invoices = lazyPage(() => import('@/pages/cashier'), 'Invoices');
-const OwnerDashboard = lazyPage(() => import('@/pages/owner'), 'OwnerDashboard');
-const Analytics = lazyPage(() => import('@/pages/owner'), 'Analytics');
-const Revenue = lazyPage(() => import('@/pages/owner'), 'Revenue');
-const Expenses = lazyPage(() => import('@/pages/owner'), 'Expenses');
-const OwnerReports = lazyPage(() => import('@/pages/owner'), 'OwnerReports');
-const OwnerSubscription = lazyPage(() => import('@/pages/owner'), 'OwnerSubscription');
+const Login = safeLazy(() => import('@/pages/auth/Login'));
+const Register = safeLazy(() => import('@/pages/auth/Register'));
+const ForgotPassword = safeLazy(() => import('@/pages/auth/ForgotPassword'));
+const CustomerHome = safeLazy(() => import('@/pages/customer/Home'));
+const Menu = safeLazy(() => import('@/pages/customer/Menu'));
+const FoodDetails = safeLazy(() => import('@/pages/customer/FoodDetails'));
+const Cart = safeLazy(() => import('@/pages/customer/Cart'));
+const Checkout = safeLazy(() => import('@/pages/customer/Checkout'));
+const OrderSuccess = safeLazy(() => import('@/pages/customer/OrderSuccess'));
+const OrderTracking = safeLazy(() => import('@/pages/customer/OrderTracking'));
+const MyOrders = safeLazy(() => import('@/pages/customer/MyOrders'));
+const CustomerProfile = safeLazy(() => import('@/pages/customer/Profile'));
+const Favorites = safeLazy(() => import('@/pages/customer/Favorites'));
+const Feedback = safeLazy(() => import('@/pages/customer/Feedback'));
+const ScanTable = safeLazy(() => import('@/pages/customer/ScanTable'));
+const AdminDashboard = safeLazy(() => import('@/pages/admin/Dashboard'));
+const MenuManagement = safeLazy(() => import('@/pages/admin/MenuManagement'));
+const AdminCategories = safeLazy(() => import('@/pages/admin/Categories'));
+const AdminOrders = safeLazy(() => import('@/pages/admin/Orders'));
+const AdminInvoices = safeLazy(() => import('@/pages/admin/Invoices'));
+const AdminCustomers = safeLazy(() => import('@/pages/admin/Customers'));
+const AdminEmployees = safeLazy(() => import('@/pages/admin/Employees'));
+const AdminTables = safeLazy(() => import('@/pages/admin/Tables'));
+const AdminInventory = safeLazy(() => import('@/pages/admin/Inventory'));
+const AdminReports = safeLazy(() => import('@/pages/admin/Reports'));
+const AdminSettings = safeLazy(() => import('@/pages/admin/Settings'));
+const AdminUsers = safeLazy(() => import('@/pages/admin/Users'));
+const KitchenDashboard = safeLazy(() => import('@/pages/kitchen/Dashboard'));
+const LiveOrders = safeLazy(() => import('@/pages/kitchen/LiveOrders'));
+const Completed = safeLazy(() => import('@/pages/kitchen/Completed'));
+const CashierDashboard = safeLazy(() => import('@/pages/cashier/Dashboard'));
+const Billing = safeLazy(() => import('@/pages/cashier/Billing'));
+const Payments = safeLazy(() => import('@/pages/cashier/Payments'));
+const Invoices = safeLazy(() => import('@/pages/cashier/Invoices'));
+const OwnerDashboard = safeLazy(() => import('@/pages/owner/Dashboard'));
+const Analytics = safeLazy(() => import('@/pages/owner/Analytics'));
+const Revenue = safeLazy(() => import('@/pages/owner/Revenue'));
+const Expenses = safeLazy(() => import('@/pages/owner/Expenses'));
+const OwnerReports = safeLazy(() => import('@/pages/owner/Reports'));
+const OwnerSubscription = safeLazy(() => import('@/pages/owner/Subscription'));
 const Error403 = safeLazy(() => import('@/pages/errors/Error403'));
-const Workspace = lazyPage(() => import('@/pages/saas'), 'Workspace');
-const Subscriptions = lazyPage(() => import('@/pages/saas'), 'Subscriptions');
+const Workspace = safeLazy(() => import('@/pages/saas/Workspace'));
+const Subscriptions = safeLazy(() => import('@/pages/saas/Subscriptions'));
 
 const router = createBrowserRouter([
   // Root redirect
@@ -182,7 +175,7 @@ const router = createBrowserRouter([
       { path: 'profile', element: <CustomerProfile /> },
       { path: 'favorites', element: <Favorites /> },
       { path: 'rewards', element: <Navigate to={ROUTES.CUSTOMER.HOME} replace /> },
-      { path: 'coupons', element: <Coupons /> },
+      { path: 'coupons', element: <Navigate to={ROUTES.CUSTOMER.HOME} replace /> },
       { path: 'feedback', element: <Feedback /> },
       { path: 'tables', element: <Navigate to={ROUTES.CUSTOMER.HOME} replace /> },
     ],
@@ -239,8 +232,8 @@ const router = createBrowserRouter([
       { index: true, element: <Navigate to={ROUTES.KITCHEN.DASHBOARD} replace /> },
       { path: 'dashboard', element: <KitchenDashboard /> },
       { path: 'live-orders', element: <LiveOrders /> },
-      { path: 'preparing', element: <Preparing /> },
-      { path: 'ready', element: <Ready /> },
+      { path: 'preparing', element: <Navigate to={ROUTES.KITCHEN.LIVE_ORDERS} replace /> },
+      { path: 'ready', element: <Navigate to={ROUTES.KITCHEN.LIVE_ORDERS} replace /> },
       { path: 'completed', element: <Completed /> },
     ],
   },

@@ -6,14 +6,6 @@ import { BottomNav } from '@/components/customer';
 import { ROUTES } from '@/constants';
 import { useAuthStore, useCartStore, useTenantStore } from '@/store';
 
-const navItems: NavItem[] = [
-  { label: 'Home', href: ROUTES.CUSTOMER.HOME },
-  { label: 'Menu', href: ROUTES.CUSTOMER.MENU },
-  { label: 'My Orders', href: ROUTES.CUSTOMER.MY_ORDERS },
-  { label: 'Favorites', href: ROUTES.CUSTOMER.FAVORITES },
-  { label: 'Coupons', href: ROUTES.CUSTOMER.COUPONS },
-  { label: 'Feedback', href: ROUTES.CUSTOMER.FEEDBACK },
-];
 
 export default function CustomerLayout() {
   const navigate = useNavigate();
@@ -32,6 +24,16 @@ export default function CustomerLayout() {
     logout();
     navigate(ROUTES.AUTH.LOGIN);
   };
+
+  const navItems: NavItem[] = [
+    { label: 'Home', href: ROUTES.CUSTOMER.HOME },
+    { label: 'Menu', href: ROUTES.CUSTOMER.MENU },
+    ...(user ? [
+      { label: 'My Orders', href: ROUTES.CUSTOMER.MY_ORDERS },
+      { label: 'Favorites', href: ROUTES.CUSTOMER.FAVORITES },
+    ] : []),
+    { label: 'Feedback', href: ROUTES.CUSTOMER.FEEDBACK },
+  ];
 
   return (
     <div className="flex min-h-screen flex-col bg-neutral-50 pb-16 dark:bg-neutral-900 lg:pb-0">

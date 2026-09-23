@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui';
 import { ROUTES } from '@/constants';
 import type { MenuItem } from '@/types';
+import { useAuthStore } from '@/store';
 import QuickOrderModal from './QuickOrderModal';
 
 interface FoodCardProps {
@@ -14,6 +15,7 @@ interface FoodCardProps {
 export default function FoodCard({ item, onFavoriteToggle, isFavorite }: FoodCardProps) {
   const [imgError, setImgError] = useState(false);
   const [showOrderModal, setShowOrderModal] = useState(false);
+  const user = useAuthStore((s) => s.user);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -22,8 +24,8 @@ export default function FoodCard({ item, onFavoriteToggle, isFavorite }: FoodCar
 
   return (
     <div className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-neutral-200/90 bg-white shadow-soft transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl dark:border-neutral-800 dark:bg-neutral-850/95 dark:hover:border-primary-500/40 dark:hover:shadow-glow">
-      {/* Favorite Button */}
-      {onFavoriteToggle && (
+      {/* Favorite Button (Only when user is authenticated) */}
+      {user && onFavoriteToggle && (
         <button
           onClick={() => onFavoriteToggle(item.id)}
           className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur transition-all hover:scale-110 dark:bg-neutral-900/80 dark:hover:bg-neutral-800"

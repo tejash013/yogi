@@ -2,12 +2,11 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Card } from '@/components/ui';
 import { ROUTES } from '@/constants';
-import { ordersApi, settingsApi } from '@/api';
+import { ordersApi } from '@/api';
 import { getApiErrorMessage } from '@/api/errors';
 import { useAuthStore, useCartStore, useOrderSyncStore } from '@/store';
 
-type DiningType = 'dine-in' | 'takeaway' | 'delivery';
-type PaymentMethod = 'cash' | 'upi';
+type DiningType = 'dine-in' | 'takeaway';
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -18,18 +17,14 @@ export default function Checkout() {
   const [diningType, setDiningType] = useState<DiningType>('dine-in');
   const [tableNumber, setTableNumber] = useState(cartTableNumber ? String(cartTableNumber) : '');
   const [tableId, setTableId] = useState(cartTableId || '');
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [formData, setFormData] = useState({
     name: user ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Customer' : '',
     email: user?.email ?? '',
     phone: user?.phone ?? '',
-    address: (user as any)?.address ?? '',
     notes: '',
   });
-  const [useRewardPoints, setUseRewardPoints] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [standardDeliveryFee, setStandardDeliveryFee] = useState<number>(40);
 
   useEffect(() => {
     if (user) {
@@ -52,20 +47,7 @@ export default function Checkout() {
     if (cartTableId) setTableId(cartTableId);
   }, [cartTableId]);
 
-  useEffect(() => {
-    settingsApi.get()
-      .then((res) => {
-        const s = res.data?.data;
-        if (s) {
-          if (typeof s.deliveryFee === 'number') setStandardDeliveryFee(s.deliveryFee);
-        }
-      })
-      .catch(() => {});
-  }, []);
-
-  const deliveryFee = diningType === 'delivery' ? standardDeliveryFee : 0;
-  const rewardDiscount = useRewardPoints ? Math.min(50, subtotal * 0.2) : 0;
-  const finalTotal = Math.max(0, subtotal + deliveryFee - rewardDiscount);
+  const finalTotal = subtotal;
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,11 +56,6 @@ export default function Checkout() {
 
     if (items.length === 0) {
       setSubmitError('Your cart is empty.');
-      return;
-    }
-
-    if (diningType === 'delivery' && !formData.address.trim()) {
-      setSubmitError('Please enter your delivery address for delivery orders.');
       return;
     }
 
@@ -92,17 +69,16 @@ export default function Checkout() {
         formData.name ? `Customer: ${formData.name.trim()}` : '',
         formData.phone ? `Phone: ${formData.phone.trim()}` : '',
         diningType === 'dine-in' && (activeTableNum || tableNumber) ? `Table ${activeTableNum || tableNumber}` : '',
-        diningType === 'delivery' && formData.address ? `Delivery: ${formData.address.trim()}` : '',
-        paymentMethod ? `Payment: ${paymentMethod}` : '',
+        'Payment: cash',
       ].filter(Boolean).join(' | ');
 
       const response = await ordersApi.create({
         userId: customerId ? String(customerId) : undefined,
         tableId: diningType === 'dine-in' ? (tableId || (activeTableNum ? String(activeTableNum) : undefined)) : undefined,
-        deliveryAddress: diningType === 'delivery' ? formData.address.trim() : undefined,
         items: items.map((item) => ({
           menuItem: item.menuItemId,
           quantity: item.quantity,
+          specialInstructions: item.specialInstructions || formData.notes || undefined,
         })),
         orderType: diningType,
         paymentStatus: 'pending',
@@ -151,11 +127,11 @@ export default function Checkout() {
       <form onSubmit={handlePlaceOrder}>
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2">
-            {/* Dining Type & Table Number */}
+            {/* Dining Type */}
             <Card>
               <h3 className="mb-3 font-bold text-neutral-900 dark:text-white">1. Select Dining Type</h3>
-              <div className="grid grid-cols-3 gap-3">
-                {(['dine-in', 'takeaway', 'delivery'] as const).map((type) => (
+              <div className="grid grid-cols-2 gap-3">
+                {(['dine-in', 'takeaway'] as const).map((type) => (
                   <button
                     key={type}
                     type="button"
@@ -167,32 +143,16 @@ export default function Checkout() {
                     }`}
                   >
                     <span className="text-2xl">
-                      {type === 'dine-in' ? '🍽️' : type === 'takeaway' ? '🛍️' : '🚚'}
+                      {type === 'dine-in' ? '🍽️' : '🛍️'}
                     </span>
                     <p className={`mt-1 text-xs font-bold ${
                       diningType === type ? 'text-primary-600' : 'text-neutral-600 dark:text-neutral-300'
                     }`}>
-                      {type === 'dine-in' ? 'Dine In' : type === 'takeaway' ? 'Takeaway' : 'Delivery'}
+                      {type === 'dine-in' ? 'Dine In' : 'Takeaway'}
                     </p>
                   </button>
                 ))}
               </div>
-
-              {diningType === 'delivery' && (
-                <div className="mt-4 rounded-2xl bg-blue-50/60 p-4 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/40">
-                  <label className="mb-1.5 flex items-center justify-between text-xs font-bold text-blue-900 dark:text-blue-300">
-                    <span>📍 Delivery Address (Required for Delivery)</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    placeholder="Enter complete delivery street, house/flat, area, city, pincode..."
-                    className="w-full rounded-xl border border-blue-300 bg-white px-3.5 py-2.5 text-xs font-medium text-neutral-900 shadow-sm focus:border-primary-500 focus:outline-none dark:border-blue-700 dark:bg-neutral-800 dark:text-white"
-                  />
-                </div>
-              )}
 
               {/* Special Cooking Instructions */}
               <div className="mt-4 pt-3 border-t border-neutral-100 dark:border-neutral-800">
@@ -211,54 +171,22 @@ export default function Checkout() {
 
             {/* Payment Method */}
             <Card>
-              <h3 className="mb-1 font-bold text-neutral-900 dark:text-white">2. Payment Option</h3>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-3.5">
-                Select your payment method (Cash or UPI)
+              <h3 className="mb-1 font-bold text-neutral-900 dark:text-white">2. Payment Method</h3>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-3">
+                Pay directly at counter or table
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {([
-                  {
-                    id: 'cash' as const,
-                    label: 'Cash Payment',
-                    desc: 'Pay with cash at the billing counter or delivery',
-                    icon: '💵',
-                  },
-                  {
-                    id: 'upi' as const,
-                    label: 'UPI / QR Code',
-                    desc: 'Instant Google Pay, PhonePe, Paytm QR',
-                    icon: '📱',
-                  },
-                ]).map((method) => (
-                  <button
-                    key={method.id}
-                    type="button"
-                    onClick={() => setPaymentMethod(method.id)}
-                    className={`flex items-center gap-3.5 rounded-2xl border-2 p-4 text-left transition-all ${
-                      paymentMethod === method.id
-                        ? 'border-primary-500 bg-primary-50/80 dark:bg-primary-950/40 ring-2 ring-primary-500/20'
-                        : 'border-neutral-200 hover:border-neutral-300 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800/40'
-                    }`}
-                  >
-                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm dark:bg-neutral-800 text-2xl">
-                      {method.icon}
-                    </span>
-                    <div>
-                      <p
-                        className={`text-sm font-bold ${
-                          paymentMethod === method.id
-                            ? 'text-primary-600 dark:text-primary-400'
-                            : 'text-neutral-900 dark:text-white'
-                        }`}
-                      >
-                        {method.label}
-                      </p>
-                      <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-                        {method.desc}
-                      </p>
-                    </div>
-                  </button>
-                ))}
+              <div className="flex items-center gap-3.5 rounded-2xl border-2 border-primary-500 bg-primary-50/80 p-4 dark:bg-primary-950/40">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm dark:bg-neutral-800 text-2xl">
+                  💵
+                </span>
+                <div>
+                  <p className="text-sm font-bold text-primary-600 dark:text-primary-400">
+                    Pay at Counter / Table
+                  </p>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                    Cash payment processed upon dining
+                  </p>
+                </div>
               </div>
             </Card>
           </div>
@@ -287,38 +215,6 @@ export default function Checkout() {
                   <span className="text-neutral-500">Subtotal</span>
                   <span>₹{subtotal.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-neutral-500">Delivery Fee</span>
-                  <span>{deliveryFee === 0 ? 'Free' : `₹${deliveryFee.toFixed(2)}`}</span>
-                </div>
-
-                {/* Reward Points */}
-                <div className="flex items-center justify-between rounded-lg bg-amber-50 p-2 dark:bg-amber-900/20">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">⭐</span>
-                    <span className="text-xs text-amber-700 dark:text-amber-300">
-                      Use loyalty points (₹50 discount)
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setUseRewardPoints(!useRewardPoints)}
-                    className={`h-6 w-11 rounded-full transition-colors ${
-                      useRewardPoints ? 'bg-primary-500' : 'bg-neutral-300 dark:bg-neutral-600'
-                    }`}
-                  >
-                    <div className={`h-5 w-5 -translate-y-0.5 rounded-full bg-white shadow transition-transform ${
-                      useRewardPoints ? 'translate-x-5' : 'translate-x-0.5'
-                    }`} />
-                  </button>
-                </div>
-
-                {useRewardPoints && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-green-600">Reward Discount</span>
-                    <span className="font-medium text-green-600">-₹{rewardDiscount.toFixed(2)}</span>
-                  </div>
-                )}
 
                 <hr className="border-neutral-200 dark:border-neutral-600" />
                 <div className="flex justify-between">

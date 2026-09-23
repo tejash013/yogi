@@ -4,7 +4,6 @@ import { useAuthStore, useKitchenStore } from '@/store';
 import NotificationPanel from './NotificationPanel';
 import Logo from '@/components/common/Logo';
 import TenantSelector from '@/components/common/TenantSelector';
-import { unlockAudio, playOrderAlert } from '@/hooks/useOrderAlert';
 
 interface Props {
   onMenuClick: () => void;
@@ -73,17 +72,6 @@ export default function KitchenHeader({ onMenuClick }: Props) {
         <div className="flex items-center gap-2">
           <TenantSelector variant="pill" className="hidden sm:flex" />
 
-          {/* Sound Ringtone Test / Enable Button */}
-          <button
-            onClick={() => {
-              unlockAudio();
-              playOrderAlert();
-            }}
-            className="flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-800 shadow-sm transition hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
-            title="Click to enable or test order ringtone chime sound"
-          >
-            <span>🔔</span> <span className="hidden sm:inline">Enable/Test Sound</span>
-          </button>
 
           {/* Online/Offline toggle */}
           <button

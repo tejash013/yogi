@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FoodCard, CategoryCard, OfferBanner } from '@/components/customer';
+import { FoodCard, CategoryCard } from '@/components/customer';
 import { ROUTES } from '@/constants';
-import { categoriesApi, menuApi, offersApi } from '@/api';
+import { categoriesApi, menuApi } from '@/api';
 import { useOrderSyncStore } from '@/store';
-import type { MenuItem, Category, Offer } from '@/types';
+import type { MenuItem, Category } from '@/types';
 
 const normalizeMenuItem = (item: any): MenuItem => ({
   id: String(item._id ?? item.id ?? ''),
@@ -41,25 +41,11 @@ const normalizeCategory = (item: any): Category => ({
   createdAt: item.createdAt ?? new Date().toISOString(),
 });
 
-const normalizeOffer = (item: any): Offer => ({
-  id: item._id ?? item.id,
-  title: item.title ?? item.name ?? 'Offer',
-  description: item.description ?? '',
-  image: item.image ?? '/images/offer.jpg',
-  discountType: item.discountType ?? 'percentage',
-  discountValue: Number(item.discountValue ?? 0),
-  validUntil: item.validUntil ?? new Date().toISOString(),
-  terms: item.terms ?? [],
-  isActive: item.isActive ?? true,
-});
-
 export default function CustomerHome() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const categoryScrollRef = useRef<HTMLDivElement>(null);
-  const offerScrollRef = useRef<HTMLDivElement>(null);
-  const [activeOfferIndex, setActiveOfferIndex] = useState(0);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,32 +56,26 @@ export default function CustomerHome() {
 
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [offers, setOffers] = useState<Offer[]>([]);
   const syncVersion = useOrderSyncStore((state) => state.version);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [menuRes, categoriesRes, offersRes] = await Promise.all([
+        const [menuRes, categoriesRes] = await Promise.all([
           menuApi.getAllItems().catch(() => []),
           categoriesApi.getAll().catch(() => ({ data: { data: [] } })),
-          offersApi.getAll().catch(() => ({ data: { data: [] } })),
         ]);
 
         const rawMenu = Array.isArray(menuRes) ? menuRes : [];
         const categoryList = Array.isArray(categoriesRes?.data?.data) ? categoriesRes.data.data : Array.isArray(categoriesRes?.data) ? categoriesRes.data : [];
-        const offerList = Array.isArray(offersRes?.data?.data) ? offersRes.data.data : Array.isArray(offersRes?.data) ? offersRes.data : [];
 
         setMenuItems(rawMenu.map(normalizeMenuItem));
         setCategories(categoryList.map(normalizeCategory));
-        setOffers(offerList.map(normalizeOffer));
       } catch {
         setMenuItems([]);
         setCategories([]);
-        setOffers([]);
       }
     };
-
 
     void loadData();
   }, [syncVersion]);
@@ -110,62 +90,6 @@ export default function CustomerHome() {
   const filteredItems = selectedCategory
     ? menuItems.filter((item) => item.categoryId === selectedCategory)
     : [];
-
-  const displayOffers = offers.length > 0 ? [...offers, offers[0]] : [];
-
-  useEffect(() => {
-    if (!offerScrollRef.current || offers.length === 0) {
-      return;
-    }
-
-    let resetTimeout: number | undefined;
-
-    const slideNext = () => {
-      setActiveOfferIndex((prevIndex) => {
-        const container = offerScrollRef.current;
-        const isOnClone = prevIndex === displayOffers.length - 1;
-
-        if (isOnClone) {
-          if (container) {
-            container.scrollLeft = 0;
-          }
-          return 0;
-        }
-
-        const nextIndex = prevIndex + 1;
-        const offerCard = container?.children[nextIndex] as HTMLElement | undefined;
-
-        if (offerCard && container) {
-          const offsetLeft = offerCard.offsetLeft;
-          const offsetWidth = offerCard.offsetWidth;
-          const containerWidth = container.clientWidth;
-          const targetScrollLeft = offsetLeft - (containerWidth - offsetWidth) / 2;
-
-          container.scrollTo({ left: targetScrollLeft, behavior: 'smooth' });
-        }
-
-        if (nextIndex === displayOffers.length - 1) {
-          resetTimeout = window.setTimeout(() => {
-            if (offerScrollRef.current) {
-              offerScrollRef.current.scrollLeft = 0;
-              setActiveOfferIndex(0);
-            }
-          }, 500);
-        }
-
-        return nextIndex;
-      });
-    };
-
-    const interval = window.setInterval(slideNext, 2000);
-
-    return () => {
-      window.clearInterval(interval);
-      if (resetTimeout) {
-        window.clearTimeout(resetTimeout);
-      }
-    };
-  }, [displayOffers.length, offers.length]);
 
   const scrollCategory = (direction: 'left' | 'right') => {
     if (categoryScrollRef.current) {
@@ -197,33 +121,6 @@ export default function CustomerHome() {
 
 
 
-      {/* Offers Banner */}
-      <section>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold tracking-tight text-neutral-900 dark:text-white">Today's Specials & Offers</h2>
-          <Link to={ROUTES.CUSTOMER.COUPONS} className="inline-flex items-center gap-1 text-xs font-semibold text-primary-500 hover:text-primary-600 transition-colors">
-            View All
-            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </Link>
-        </div>
-        <div
-          ref={offerScrollRef}
-          className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide"
-        >
-          {displayOffers.map((offer, index) => (
-            <div
-              key={`${offer.id}-${index}`}
-              className={`min-w-[280px] flex-shrink-0 transition-transform duration-500 ${
-                index === activeOfferIndex ? 'scale-100' : 'scale-95 opacity-80'
-              }`}
-            >
-              <OfferBanner offer={offer} />
-            </div>
-          ))}
-        </div>
-      </section>
 
 
       {/* Categories */}

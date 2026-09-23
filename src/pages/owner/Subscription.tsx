@@ -21,24 +21,36 @@ export default function OwnerSubscription() {
   return (
     <div className="space-y-6">
       <PageHeader title="Subscription" description="Your plan and billing period. All RestaurantOS features remain available." />
-      {loading ? <div className="flex justify-center py-16"><Loader /></div> : subscription ? (
+      {loading ? (
+        <div className="flex justify-center py-16"><Loader /></div>
+      ) : subscription ? (
         <Card padding="lg">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-wider text-neutral-500">Current plan</p>
-              <h2 className="mt-2 text-2xl font-bold text-neutral-900 dark:text-white">{subscription.plan?.name || 'RestaurantOS Plan'}</h2>
-              <p className="mt-1 text-sm text-neutral-500">{subscription.plan?.description || 'Full access to restaurant operations.'}</p>
+              <h2 className="mt-2 text-2xl font-bold text-neutral-900 dark:text-white">{subscription.plan?.name || 'RestaurantOS Pro'}</h2>
+              <p className="mt-1 text-sm text-neutral-500">{subscription.plan?.description || 'Full access to restaurant operations, KDS, POS & digital menu.'}</p>
             </div>
-            <span className="rounded-full bg-emerald-100 px-3 py-1.5 text-sm font-bold capitalize text-emerald-800">{subscription.status.replace('_', ' ')}</span>
+            <span className="rounded-full bg-emerald-100 px-3 py-1.5 text-sm font-bold capitalize text-emerald-800">{subscription.status ? subscription.status.replace('_', ' ') : 'Active'}</span>
           </div>
           <div className="mt-8 grid gap-4 sm:grid-cols-3">
-            <Detail label="Amount" value={`${subscription.amount} ${subscription.currency} / ${subscription.billingCycle}`} />
+            <Detail label="Amount" value={`${subscription.amount || 0} ${subscription.currency || 'INR'} / ${subscription.billingCycle || 'monthly'}`} />
             <Detail label="Period started" value={formatDate(subscription.currentPeriodStart)} />
             <Detail label="Next renewal" value={formatDate(subscription.currentPeriodEnd)} />
           </div>
           <p className="mt-8 rounded-xl bg-neutral-50 p-4 text-sm text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">Subscription status is managed by the platform team. Your restaurant can continue using the complete product while billing is handled.</p>
         </Card>
-      ) : null}
+      ) : (
+        <Card padding="lg">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">Standard Active</span>
+              <h2 className="mt-2 text-xl font-bold text-neutral-900 dark:text-white">RestaurantOS Workspace Plan</h2>
+              <p className="mt-1 text-sm text-neutral-500">Full operational features active across all your branch outlets.</p>
+            </div>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

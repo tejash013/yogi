@@ -1,8 +1,8 @@
 import { Link, useLocation } from 'react-router-dom';
 import { ROUTES } from '@/constants';
-import { useCartStore } from '@/store';
+import { useAuthStore, useCartStore } from '@/store';
 
-const navItems = [
+const allNavItems = [
   {
     label: 'Home',
     path: ROUTES.CUSTOMER.HOME,
@@ -34,6 +34,7 @@ const navItems = [
   {
     label: 'Orders',
     path: ROUTES.CUSTOMER.MY_ORDERS,
+    authRequired: true,
     icon: (active: boolean) => (
       <svg className="h-6 w-6" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
@@ -54,6 +55,9 @@ const navItems = [
 export default function BottomNav() {
   const location = useLocation();
   const cartItems = useCartStore((s) => s.items);
+  const user = useAuthStore((s) => s.user);
+
+  const navItems = allNavItems.filter((item) => !item.authRequired || Boolean(user));
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-neutral-200 bg-white/95 backdrop-blur-lg dark:border-neutral-700 dark:bg-neutral-900/95 lg:hidden">
