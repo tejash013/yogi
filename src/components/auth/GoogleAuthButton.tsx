@@ -84,10 +84,6 @@ export default function GoogleAuthButton({
           cancel_on_tap_outside: true,
         });
 
-        // Determine container width for responsive fit on mobile & desktop
-        const containerWidth = googleBtnContainerRef.current.clientWidth || 320;
-        const targetWidth = Math.min(Math.max(containerWidth, 240), 400);
-
         googleBtnContainerRef.current.innerHTML = '';
         window.google.accounts.id.renderButton(googleBtnContainerRef.current, {
           theme: theme === 'dark' ? 'filled_black' : 'outline',
@@ -95,8 +91,7 @@ export default function GoogleAuthButton({
           type: 'standard',
           text: mode === 'signup' ? 'signup_with' : 'continue_with',
           shape: 'rectangular',
-          logo_alignment: 'left',
-          width: targetWidth,
+          width: 380,
         });
 
         setIsGsiMounted(true);
@@ -143,52 +138,59 @@ export default function GoogleAuthButton({
   return (
     <div className={`w-full ${className}`}>
       {/* 
-        Single Google Sign-in element:
-        When Google's official iframe button is mounted, it is shown.
-        Before it mounts (or as a fallback), the single styled fallback button is shown.
-        They NEVER appear together.
+        Redesigned Custom Animated Google Auth Button:
+        Combines pixel-perfect dark/light theme matching, micro-animations,
+        and zero whitespace by overlaying Google GSI iframe transparently.
       */}
-      <div className="flex w-full justify-center">
+      <div className="relative w-full max-w-[400px] mx-auto group">
+        <button
+          type="button"
+          onClick={handleManualClick}
+          disabled={isLoading}
+          className="relative flex w-full h-11 items-center justify-center gap-3 rounded-xl border border-neutral-200/90 bg-white px-4 text-sm font-semibold text-neutral-800 shadow-sm transition-all duration-200 hover:border-neutral-300 hover:bg-neutral-50 hover:shadow-md active:scale-[0.98] dark:border-neutral-700/80 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:border-neutral-600 dark:hover:bg-neutral-750 overflow-hidden"
+        >
+          {/* Subtle Ambient Shimmer */}
+          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-r from-transparent via-white/10 dark:via-white/5 to-transparent pointer-events-none" />
+
+          {/* Google 4-color Icon */}
+          <svg className="h-5 w-5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110" viewBox="0 0 24 24">
+            <path
+              fill="#EA4335"
+              d="M5.266 9.765A7.077 7.077 0 0112 4.91c1.665 0 3.158.613 4.303 1.626l3.196-3.196A11.954 11.954 0 0012 0C7.667 0 3.855 2.322 1.8 5.715l3.466 4.05z"
+            />
+            <path
+              fill="#34A853"
+              d="M16.693 19.626A7.048 7.048 0 0112 21.09c-3.876 0-7.178-2.623-8.336-6.243l-3.466 4.05A11.96 11.96 0 0012 24c3.27 0 6.286-1.323 8.463-3.596l-3.77-2.778z"
+            />
+            <path
+              fill="#FBBC05"
+              d="M5.337 14.268A7.12 7.12 0 014.89 12c0-.723.12-1.44.348-2.118L1.8 5.715A11.89 11.89 0 000 12c0 2.308.653 4.494 1.82 6.45l3.517-4.182z"
+            />
+            <path
+              fill="#4285F4"
+              d="M12 21.09c2.427 0 4.636-.98 6.255-2.56l3.77 2.778C20.338 21.183 16.478 24 12 24V21.09z"
+            />
+            <path
+              fill="#34A853"
+              d="M22.637 12c0-.789-.07-1.575-.21-2.34H12v4.364h6.016a5.68 5.68 0 01-1.973 2.634l3.77 2.778c2.172-2.052 3.484-5.056 3.484-8.436z"
+            />
+          </svg>
+
+          <span>{mode === 'signup' ? 'Sign up with Google' : 'Continue with Google'}</span>
+        </button>
+
+        {/* 
+          Transparent Google GSI Iframe Overlay:
+          Sits directly on top of custom button so clicks trigger official Google GSI auth,
+          while preserving our animated, zero-whitespace custom UI underneath.
+        */}
         {googleClientId && (
           <div
             ref={googleBtnContainerRef}
-            className={`w-full max-w-[400px] mx-auto flex justify-center items-center rounded-xl overflow-hidden bg-transparent ${
-              isGsiMounted ? 'min-h-[44px]' : 'hidden'
-            } [&>div]:!w-full [&>div]:!flex [&>div]:!justify-center [&>div]:!overflow-hidden [&>div]:!rounded-xl [&>div>iframe]:!rounded-xl [&>div>iframe]:!border-0 [&>div>iframe]:!outline-none [&>div>iframe]:!bg-transparent`}
+            className={`absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer overflow-hidden ${
+              isGsiMounted ? 'block' : 'hidden'
+            } [&>div]:!w-full [&>div]:!h-full [&>div>iframe]:!w-full [&>div>iframe]:!h-full [&>div>iframe]:!cursor-pointer`}
           />
-        )}
-
-        {(!googleClientId || !isGsiMounted) && (
-          <button
-            type="button"
-            onClick={handleManualClick}
-            disabled={isLoading}
-            className="flex w-full max-w-[400px] mx-auto items-center justify-center gap-3 rounded-xl border border-neutral-300/80 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-700 shadow-xs transition-all hover:bg-neutral-50 active:scale-[0.99] dark:border-neutral-700/80 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-750"
-          >
-            <svg className="h-5 w-5 flex-shrink-0" viewBox="0 0 24 24">
-              <path
-                fill="#EA4335"
-                d="M5.266 9.765A7.077 7.077 0 0112 4.91c1.665 0 3.158.613 4.303 1.626l3.196-3.196A11.954 11.954 0 0012 0C7.667 0 3.855 2.322 1.8 5.715l3.466 4.05z"
-              />
-              <path
-                fill="#34A853"
-                d="M16.693 19.626A7.048 7.048 0 0112 21.09c-3.876 0-7.178-2.623-8.336-6.243l-3.466 4.05A11.96 11.96 0 0012 24c3.27 0 6.286-1.323 8.463-3.596l-3.77-2.778z"
-              />
-              <path
-                fill="#FBBC05"
-                d="M5.337 14.268A7.12 7.12 0 014.89 12c0-.723.12-1.44.348-2.118L1.8 5.715A11.89 11.89 0 000 12c0 2.308.653 4.494 1.82 6.45l3.517-4.182z"
-              />
-              <path
-                fill="#4285F4"
-                d="M12 21.09c2.427 0 4.636-.98 6.255-2.56l3.77 2.778C20.338 21.183 16.478 24 12 24V21.09z"
-              />
-              <path
-                fill="#34A853"
-                d="M22.637 12c0-.789-.07-1.575-.21-2.34H12v4.364h6.016a5.68 5.68 0 01-1.973 2.634l3.77 2.778c2.172-2.052 3.484-5.056 3.484-8.436z"
-              />
-            </svg>
-            <span>{mode === 'signup' ? 'Sign up with Google' : 'Continue with Google'}</span>
-          </button>
         )}
       </div>
 

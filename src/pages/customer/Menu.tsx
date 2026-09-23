@@ -62,9 +62,6 @@ export default function Menu() {
   const [search, setSearch] = useState(searchParams.get('q') || searchParams.get('search') || '');
   const [selectedCategory, setSelectedCategory] = useState<string>(searchParams.get('category') || 'all');
   const [sortBy, setSortBy] = useState<string>('recommended');
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 2000]);
-  const [showVegOnly, setShowVegOnly] = useState(false);
-  const [showNonVegOnly, setShowNonVegOnly] = useState(false);
   const [favorites, setFavorites] = useState<string[]>(() => {
     try {
       const stored = localStorage.getItem(FAVORITES_STORAGE_KEY);
@@ -125,19 +122,6 @@ export default function Menu() {
     });
   }
 
-  if (showVegOnly) {
-    filtered = filtered.filter((item) => item.tags.includes('vegetarian'));
-  }
-
-  if (showNonVegOnly) {
-    filtered = filtered.filter((item) => !item.tags.includes('vegetarian'));
-  }
-
-  filtered = filtered.filter(
-    (item) =>
-      (item.discountPrice || item.price) >= priceRange[0] &&
-      (item.discountPrice || item.price) <= priceRange[1]
-  );
 
   switch (sortBy) {
     case 'price-asc':
@@ -243,7 +227,7 @@ export default function Menu() {
       </div>
 
       {/* Filter Row */}
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         {/* Sort */}
         <select
           value={sortBy}
@@ -256,52 +240,6 @@ export default function Menu() {
           <option value="price-low">Price: Low to High</option>
           <option value="price-high">Price: High to Low</option>
         </select>
-
-        {/* Veg / Non-Veg Toggle */}
-        <div className="flex rounded-xl border border-neutral-200/90 bg-white dark:border-neutral-800 dark:bg-neutral-850 shadow-sm overflow-hidden p-0.5">
-          <button
-            onClick={() => {
-              setShowVegOnly(!showVegOnly);
-              if (!showVegOnly) setShowNonVegOnly(false);
-            }}
-            className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
-              showVegOnly
-                ? 'bg-green-500 text-white shadow-sm'
-                : 'text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white'
-            }`}
-          >
-            <span className="mr-1">🌱</span> Veg
-          </button>
-          <button
-            onClick={() => {
-              setShowNonVegOnly(!showNonVegOnly);
-              if (!showNonVegOnly) setShowVegOnly(false);
-            }}
-            className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
-              showNonVegOnly
-                ? 'bg-red-500 text-white shadow-sm'
-                : 'text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white'
-            }`}
-          >
-            <span className="mr-1">🍗</span> Non-Veg
-          </button>
-        </div>
-
-        {/* Price Range */}
-        <div className="flex items-center gap-2 rounded-xl border border-neutral-200/90 bg-white px-3.5 py-2 shadow-sm dark:border-neutral-800 dark:bg-neutral-850">
-          <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400">Max:</span>
-          <input
-            type="range"
-            min={0}
-            max={2000}
-            step={50}
-            value={priceRange[1]}
-            onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
-            className="h-1.5 w-24 accent-primary-500 cursor-pointer"
-          />
-          <span className="text-xs font-extrabold text-primary-500">₹{priceRange[1]}</span>
-        </div>
-
 
         {/* Result count */}
         <span className="text-xs font-semibold text-neutral-500 dark:text-neutral-400">
