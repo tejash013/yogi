@@ -20,7 +20,7 @@ function getCategoryIcon(name: string): string {
   return '🍽️';
 }
 
-const normalizeMenuItem = (item: any): MenuItem => ({
+const normalizeMenuItem = (item: any): MenuItem & { branchId?: string; restaurantId?: string; branches?: string[] } => ({
   id: String(item._id ?? item.id ?? ''),
   name: item.title ?? item.name,
   description: item.description ?? '',
@@ -40,6 +40,9 @@ const normalizeMenuItem = (item: any): MenuItem => ({
   rating: Number(item.rating ?? 4.5),
   totalReviews: Number(item.totalReviews ?? 0),
   tags: item.tags ?? [],
+  branchId: item.branchId ? String(item.branchId) : item.branch?._id ? String(item.branch._id) : item.branch ? String(item.branch) : undefined,
+  restaurantId: item.restaurantId ? String(item.restaurantId) : item.restaurant?._id ? String(item.restaurant._id) : item.restaurant ? String(item.restaurant) : undefined,
+  branches: Array.isArray(item.branches) ? item.branches.map((b: any) => String(b._id || b)) : undefined,
   createdAt: item.createdAt ?? new Date().toISOString(),
 });
 

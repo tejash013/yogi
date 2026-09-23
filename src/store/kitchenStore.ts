@@ -122,15 +122,27 @@ const normalizeKitchenOrder = (order: any): KitchenOrder => {
     status: kitchenStatus,
     priority: /urgent|high/i.test(String(order?.notes ?? '')) ? 'urgent' : 'normal',
     items: Array.isArray(order?.items)
-      ? order.items.map((item: any, index: number) => ({
-          id: String(item?._id ?? item?.id ?? `${orderId}-item-${index}`),
-          name: item?.name ?? item?.menuItem?.title ?? item?.menuItem?.name ?? 'Menu item',
-          quantity: Number(item?.quantity ?? 1),
-          variants: Array.isArray(item?.variants) ? item.variants : undefined,
-          addons: Array.isArray(item?.addons) ? item.addons : undefined,
-          specialInstructions: item?.specialInstructions ?? undefined,
-          prepTimeMin: Number(item?.prepTimeMin ?? 12),
-        }))
+      ? order.items.map((item: any, index: number) => {
+          const resolvedName =
+            item?.name ||
+            item?.title ||
+            item?.menuItemName ||
+            item?.foodName ||
+            item?.menuItem?.name ||
+            item?.menuItem?.title ||
+            item?.menuItem?.label ||
+            `Ordered Dish #${index + 1}`;
+
+          return {
+            id: String(item?._id ?? item?.id ?? `${orderId}-item-${index}`),
+            name: resolvedName,
+            quantity: Number(item?.quantity ?? 1),
+            variants: Array.isArray(item?.variants) ? item.variants : undefined,
+            addons: Array.isArray(item?.addons) ? item.addons : undefined,
+            specialInstructions: item?.specialInstructions ?? undefined,
+            prepTimeMin: Number(item?.prepTimeMin ?? 12),
+          };
+        })
       : [],
     createdAt,
     acceptedAt: order?.acceptedAt ?? (status === 'confirmed' ? new Date().toISOString() : undefined),

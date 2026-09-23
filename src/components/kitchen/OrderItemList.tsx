@@ -17,20 +17,32 @@ export default function OrderItemList({
 }: Props) {
   return (
     <ul className="space-y-2">
-      {items.map((item) => (
-        <li
-          key={item.id}
-          className="rounded-xl border border-neutral-200/80 bg-neutral-50/80 px-3 py-2.5 dark:border-neutral-700/80 dark:bg-neutral-900/80 shadow-xs"
-        >
-          <div className="flex items-start justify-between gap-2">
-            <span className="text-sm font-bold text-neutral-900 dark:text-neutral-100">
-              <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-md bg-primary-100 px-1.5 text-xs font-black text-primary-700 dark:bg-primary-950 dark:text-primary-300 mr-1.5">
-                {item.quantity}x
+      {items.map((item, index) => {
+        const rawItem = item as any;
+        const displayName =
+          item.name ||
+          rawItem.title ||
+          rawItem.menuItemName ||
+          rawItem.foodName ||
+          rawItem.menuItem?.name ||
+          rawItem.menuItem?.title ||
+          rawItem.menuItem?.label ||
+          (typeof rawItem.menuItem === 'string' ? `Dish #${rawItem.menuItem.slice(-4)}` : `Ordered Dish #${index + 1}`);
+
+        return (
+          <li
+            key={item.id || index}
+            className="rounded-xl border border-slate-200 bg-slate-50/90 px-3 py-2.5 dark:border-neutral-700/80 dark:bg-neutral-900/80 shadow-xs"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <span className="text-sm font-black text-slate-900 dark:text-white">
+                <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-md bg-indigo-600 px-1.5 text-xs font-black text-white mr-1.5 shadow-xs">
+                  {item.quantity}x
+                </span>
+                {displayName}
               </span>
-              {item.name}
-            </span>
-            <span className="shrink-0 text-[11px] font-semibold text-neutral-400">~{item.prepTimeMin}m</span>
-          </div>
+              <span className="shrink-0 text-[11px] font-bold text-slate-500 dark:text-neutral-400">~{item.prepTimeMin}m</span>
+            </div>
 
           {showVariants && item.variants && item.variants.length > 0 && (
             <div className="mt-1.5 flex flex-wrap gap-1">
@@ -65,7 +77,9 @@ export default function OrderItemList({
             </div>
           )}
         </li>
-      ))}
-    </ul>
-  );
+      );
+    })}
+  </ul>
+);
 }
+
