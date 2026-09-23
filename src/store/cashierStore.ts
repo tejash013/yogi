@@ -361,13 +361,13 @@ const buildRestaurantInfo = (
   branch: ReturnType<typeof useTenantStore.getState>['currentBranch'],
   settings: Partial<RestaurantInfo> = {},
 ): RestaurantInfo => ({
-  name: getFirstNonEmptyString(settings.name, restaurant?.name, defaultRestaurantInfo.name),
+  name: getFirstNonEmptyString(restaurant?.name, settings.name, defaultRestaurantInfo.name),
   branchName: getFirstNonEmptyString(branch?.name, settings.branchName, defaultRestaurantInfo.branchName),
-  address: formatProperAddress([settings, restaurant, branch], defaultRestaurantInfo.address),
-  phone: getFirstNonEmptyString(settings.phone, branch?.phone, restaurant?.phone, defaultRestaurantInfo.phone),
-  email: getFirstNonEmptyString(settings.email, branch?.email, restaurant?.email, defaultRestaurantInfo.email),
-  gstNumber: getFirstNonEmptyString(settings.gstNumber, restaurant?.gstNumber, defaultRestaurantInfo.gstNumber),
-  tagline: getFirstNonEmptyString(settings.tagline, restaurant?.tagline, defaultRestaurantInfo.tagline),
+  address: formatProperAddress([branch, restaurant, settings], defaultRestaurantInfo.address),
+  phone: getFirstNonEmptyString(branch?.phone, restaurant?.phone, settings.phone, defaultRestaurantInfo.phone),
+  email: getFirstNonEmptyString(branch?.email, restaurant?.email, settings.email, defaultRestaurantInfo.email),
+  gstNumber: getFirstNonEmptyString(restaurant?.gstNumber, settings.gstNumber, defaultRestaurantInfo.gstNumber),
+  tagline: getFirstNonEmptyString(restaurant?.tagline, settings.tagline, defaultRestaurantInfo.tagline),
 });
 
 const hydrateCashierData = async () => {
