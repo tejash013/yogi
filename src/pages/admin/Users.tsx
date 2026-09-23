@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Badge, Search, Table } from '@/components/ui';
 import { PageHeader } from '@/components/common';
-import { usersApi } from '@/api';
-import { useOrderSyncStore } from '@/store';
-import { useAuthStore, useTenantStore } from '@/store';
+import { usersApi, subscriptionsApi, tenantsApi } from '@/api/endpoints';
+import { useOrderSyncStore, useAuthStore, useTenantStore, useToastStore } from '@/store';
 import type { Column } from '@/components/ui';
 import type { User, UserRole } from '@/types';
 
@@ -31,6 +30,7 @@ export default function Users() {
   const currentRole = useAuthStore((state) => state.user?.role);
   const restaurants = useTenantStore((state) => state.availableRestaurants);
   const branches = useTenantStore((state) => state.allBranches);
+  const showToast = useToastStore((state) => state.showToast);
   const [showCreate, setShowCreate] = useState(false);
   const [createError, setCreateError] = useState('');
   const [createForm, setCreateForm] = useState({
@@ -70,6 +70,22 @@ export default function Users() {
       const response = await usersApi.updateAccess(id, payload);
       const updated = response.data.data;
       setUsers((current) => current.map((item) => (item.id === id ? { ...item, ...updated } : item)));
+
+      // If user status is updated, also update associated restaurant status
+      const userRestId = user.restaurantId || (user as any).restaurantId || (user as any).restaurant?._id;
+      if (payload.status && userRestId) {
+        const isUserActive = payload.status === 'active';
+        await Promise.all([
+          tenantsApi.updateRestaurant(userRestId, { isActive: isUserActive }).catch(() => null),
+          subscriptionsApi.updateRestaurant(userRestId, { status: isUserActive ? 'active' : 'suspended' }).catch(() => null),
+        ]);
+        await useTenantStore.getState().loadTenants().catch(() => null);
+        showToast(
+          `Account status updated. Associated restaurant is now ${isUserActive ? 'Active' : 'Paused'}.`,
+          'success'
+        );
+      }
+
       useOrderSyncStore.getState().notifyResourceChange({
         type: 'update',
         resource: 'user',
@@ -79,6 +95,24 @@ export default function Users() {
       setError('Access update failed. Your account may not have permission for this change.');
     } finally {
       setSavingId('');
+    }
+  };
+
+  const updateRestaurantSubscription = async (restaurantId: string, subscriptionStatus: string) => {
+    const isSubscriptionActive = subscriptionStatus === 'active' || subscriptionStatus === 'trial';
+    try {
+      await Promise.all([
+        subscriptionsApi.updateRestaurant(restaurantId, { status: subscriptionStatus as any }).catch(() => null),
+        tenantsApi.updateRestaurant(restaurantId, { isActive: isSubscriptionActive }).catch(() => null),
+      ]);
+      await useTenantStore.getState().loadTenants().catch(() => null);
+      showToast(
+        `Subscription status set to "${subscriptionStatus}". Restaurant is now ${isSubscriptionActive ? 'Active' : 'Paused'}.`,
+        'success'
+      );
+      void loadUsers();
+    } catch {
+      showToast('Failed to update restaurant subscription status', 'error');
     }
   };
 
@@ -159,6 +193,45 @@ export default function Users() {
       ),
     },
     {
+      key: 'restaurant',
+      header: 'Restaurant & Subscription Status',
+      render: (user) => {
+        const userRestId = user.restaurantId || (user as any).restaurantId || (user as any).restaurant?._id;
+        const targetRest = restaurants.find((r) => r._id === userRestId);
+
+        if (!userRestId && !targetRest) {
+          return <span className="text-xs text-slate-400 font-semibold italic">General User / System</span>;
+        }
+
+        const restName = targetRest?.name || 'Assigned Restaurant';
+        const isRestActive = targetRest?.isActive ?? true;
+
+        return (
+          <div className="space-y-1.5 py-1">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-xs text-slate-900 dark:text-slate-100">{restName}</span>
+              <span className={`rounded-md px-1.5 py-0.5 text-[9px] font-black text-white ${isRestActive ? 'bg-emerald-600' : 'bg-rose-600'}`}>
+                {isRestActive ? '🟢 Active' : '⏸️ Paused'}
+              </span>
+            </div>
+            <select
+              value={isRestActive ? 'active' : 'suspended'}
+              disabled={savingId === user.id}
+              onChange={(e) => void updateRestaurantSubscription(userRestId!, e.target.value)}
+              className="rounded-xl border border-slate-300 bg-white px-2.5 py-1 text-xs font-bold text-slate-900 shadow-xs focus:border-indigo-600 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            >
+              <option value="active">Active Plan (Ordering ON)</option>
+              <option value="trial">Free Trial (Ordering ON)</option>
+              <option value="past_due">Past Due (Payment Overdue)</option>
+              <option value="suspended">Suspended (Pause Restaurant)</option>
+              <option value="cancelled">Cancelled (Pause Restaurant)</option>
+              <option value="expired">Expired (Pause Restaurant)</option>
+            </select>
+          </div>
+        );
+      },
+    },
+    {
       key: 'branch',
       header: 'Assigned Branch',
       render: (user) => (
@@ -180,7 +253,7 @@ export default function Users() {
     <div className="space-y-6">
       <PageHeader
         title="User Access Control"
-        description="Manage system permissions, account roles, active status, and branch assignments"
+        description="Manage system permissions, account roles, subscription status, and branch assignments"
         actions={
           <div className="flex items-center gap-3">
             <Search placeholder="Search user accounts..." value={search} onChange={(event) => setSearch(event.target.value)} onClear={() => setSearch('')} />

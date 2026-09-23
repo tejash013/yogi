@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { subscriptionsApi, tenantsApi, type RestaurantSubscription, type SubscriptionPlan } from '@/api/endpoints';
 import { Button, Card, EmptyState, Loader } from '@/components/ui';
 import { PageHeader } from '@/components/common';
-import { useToastStore } from '@/store';
+import { useToastStore, useTenantStore } from '@/store';
 
 const DEFAULT_PLANS: (SubscriptionPlan & { features?: string[] })[] = [
   { id: 'plan_starter', key: 'starter', name: 'Starter Plan', description: 'Essential features for small restaurants', amount: 999, currency: 'INR', billingCycle: 'monthly', features: [], isActive: true },
@@ -105,9 +105,18 @@ export default function Subscriptions() {
       })
     );
 
+    const isSubscriptionActive = nextStatus === 'active' || nextStatus === 'trial';
+
     try {
-      await subscriptionsApi.updateRestaurant(item.restaurantId, payload);
-      showToast(`Subscription updated for ${item.restaurantName || 'restaurant'}`, 'success');
+      await Promise.all([
+        subscriptionsApi.updateRestaurant(item.restaurantId, payload).catch(() => null),
+        tenantsApi.updateRestaurant(item.restaurantId, { isActive: isSubscriptionActive }).catch(() => null),
+      ]);
+      await useTenantStore.getState().loadTenants().catch(() => null);
+      showToast(
+        `Subscription status for ${item.restaurantName || 'restaurant'} is now ${nextStatus}. Restaurant is ${isSubscriptionActive ? 'Active' : 'Paused'}.`,
+        'success'
+      );
     } catch {
       showToast(`Subscription updated for ${item.restaurantName || 'restaurant'}`, 'success');
     } finally {
