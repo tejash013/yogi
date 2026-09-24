@@ -2,6 +2,8 @@ import request from 'supertest';
 import { strict as assert } from 'assert';
 import { app } from '../dist/app.js';
 import User from '../dist/models/User.js';
+import Restaurant from '../dist/models/Restaurant.js';
+import Branch from '../dist/models/Branch.js';
 import { signAccessToken } from '../dist/utils/jwt.js';
 
 describe('User access management', () => {
@@ -68,5 +70,35 @@ describe('User access management', () => {
     const res = await request(app).get('/api/orders').set('Authorization', `Bearer ${target.token}`);
     assert.equal(res.status, 401);
     void owner;
+  });
+
+  it('allows platformAdmin to assign user to a branch and restaurant', async () => {
+    const admin = await createUser('platformAdmin', 'admin');
+    const target = await createUser('manager', 'target');
+    const restaurant = await Restaurant.create({
+      name: 'Access Test Restaurant',
+      slug: `access-test-${Date.now()}`,
+      isActive: true,
+    });
+    const branch = await Branch.create({
+      restaurantId: restaurant._id,
+      name: 'Access Test Branch',
+      slug: `access-branch-${Date.now()}`,
+      isActive: true,
+    });
+
+    const res = await request(app)
+      .patch(`/api/users/${target.user._id}/access`)
+      .set('Authorization', `Bearer ${admin.token}`)
+      .send({
+        restaurantId: String(restaurant._id),
+        branchId: String(branch._id),
+        branch: branch.name,
+      });
+
+    assert.equal(res.status, 200);
+    assert.equal(String(res.body.data.restaurantId), String(restaurant._id));
+    assert.equal(String(res.body.data.branchId), String(branch._id));
+    assert.equal(res.body.data.branch, 'Access Test Branch');
   });
 });

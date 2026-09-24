@@ -332,7 +332,7 @@ export const usersApi = {
   updateProfile: (payload: { firstName?: string; lastName?: string; phone?: string }) =>
     apiClient.patch<ApiResponse<User>>('/api/users/profile', payload),
 
-  updateAccess: (id: string, payload: { role?: User['role']; status?: User['status']; branch?: string }) =>
+  updateAccess: (id: string, payload: { role?: User['role']; status?: User['status']; branch?: string; branchId?: string; restaurantId?: string }) =>
     apiClient.patch<ApiResponse<User>>(`/api/users/${id}/access`, payload),
 };
 

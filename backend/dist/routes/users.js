@@ -115,14 +115,20 @@ router.patch('/:id/access', authenticate, requireRole(['owner', 'manager', 'plat
     if ((restaurantId || branchId) && req.user.role !== 'platformAdmin')
         return res.status(403).json(failure('Only a platform admin can move users between tenants'));
     if (restaurantId || branchId) {
-        const branchRecord = await Branch.findOne({ _id: branchId ?? target.branchId, restaurantId: restaurantId ?? target.restaurantId, isActive: true }).exec();
-        const restaurantRecord = await Restaurant.findOne({ _id: restaurantId ?? target.restaurantId, isActive: true }).exec();
+        const targetRestId = restaurantId ?? target.restaurantId;
+        const targetBranchId = branchId ?? target.branchId;
+        const restaurantRecord = await Restaurant.findById(targetRestId).exec();
+        const branchRecord = await Branch.findOne({ _id: targetBranchId, restaurantId: targetRestId }).exec();
         if (!branchRecord || !restaurantRecord)
             return res.status(400).json(failure('Invalid restaurant or branch'));
         if (restaurantId)
             target.restaurantId = restaurantId;
-        if (branchId)
+        if (branchId) {
             target.branchId = branchId;
+            if (!branch) {
+                target.branch = branchRecord.name;
+            }
+        }
     }
     if (role)
         target.role = role;
@@ -138,7 +144,7 @@ router.patch('/:id/access', authenticate, requireRole(['owner', 'manager', 'plat
         action: 'user.access_updated',
         resourceType: 'User',
         resourceId: String(target._id),
-        metadata: { role, status, branchChanged: branch !== undefined },
+        metadata: { role, status, branchChanged: branch !== undefined || branchId !== undefined, restaurantId, branchId },
         ip: req.ip,
         userAgent: req.get('user-agent'),
     });

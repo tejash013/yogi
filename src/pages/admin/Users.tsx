@@ -49,7 +49,12 @@ export default function Users() {
     setError('');
     try {
       const response = await usersApi.getAll({ q: search, limit: 50 });
-      setUsers(response.data.data.map((user) => ({ ...user, id: user.id ?? String((user as any)._id ?? '') })));
+      setUsers(response.data.data.map((user) => ({
+        ...user,
+        id: user.id ?? String((user as any)._id ?? ''),
+        branchId: user.branchId ? String(user.branchId) : undefined,
+        restaurantId: user.restaurantId ? String(user.restaurantId) : undefined,
+      })));
     } catch {
       setError('Unable to load user accounts. Please try again later.');
     } finally {
@@ -61,7 +66,22 @@ export default function Users() {
     void loadUsers();
   }, [search, syncVersion]);
 
-  const updateAccess = async (user: UserRow, payload: { role?: UserRole; status?: User['status']; branch?: string }) => {
+  useEffect(() => {
+    if (restaurants.length === 0 || branches.length === 0) {
+      void useTenantStore.getState().loadTenants();
+    }
+  }, []);
+
+  const updateAccess = async (
+    user: UserRow,
+    payload: {
+      role?: UserRole;
+      status?: User['status'];
+      branch?: string;
+      branchId?: string;
+      restaurantId?: string;
+    }
+  ) => {
     const id = user.id || user._id;
     if (!id) return;
     setSavingId(id);
@@ -69,10 +89,10 @@ export default function Users() {
     try {
       const response = await usersApi.updateAccess(id, payload);
       const updated = response.data.data;
-      setUsers((current) => current.map((item) => (item.id === id ? { ...item, ...updated } : item)));
+      setUsers((current) => current.map((item) => (item.id === id ? { ...item, ...updated, ...payload } : item)));
 
       // If user status is updated, also update associated restaurant status
-      const userRestId = user.restaurantId || (user as any).restaurantId || (user as any).restaurant?._id;
+      const userRestId = payload.restaurantId || user.restaurantId || (user as any).restaurantId || (user as any).restaurant?._id;
       if (payload.status && userRestId) {
         const isUserActive = payload.status === 'active';
         await Promise.all([
@@ -84,6 +104,8 @@ export default function Users() {
           `Account status updated. Associated restaurant is now ${isUserActive ? 'Active' : 'Paused'}.`,
           'success'
         );
+      } else if (payload.branchId || payload.branch) {
+        showToast('Assigned branch and restaurant updated successfully.', 'success');
       }
 
       useOrderSyncStore.getState().notifyResourceChange({
@@ -176,19 +198,88 @@ export default function Users() {
     },
     {
       key: 'branch',
-      header: 'Assigned Branch',
-      render: (user) => (
-        <input
-          defaultValue={user.branch ?? ''}
-          placeholder="Unassigned"
-          disabled={savingId === user.id}
-          onBlur={(event) => {
-            if (event.target.value !== (user.branch ?? '')) void updateAccess(user, { branch: event.target.value });
-          }}
-          className="w-36 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-900 shadow-xs focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-          aria-label={`Branch for ${user.email}`}
-        />
-      ),
+      header: 'Assigned Branch & Restaurant',
+      render: (user) => {
+        const currentBranchId =
+          branches.find(
+            (b) =>
+              String(b._id) === String(user.branchId) ||
+              (user.branch && b.name.toLowerCase() === user.branch.toLowerCase())
+          )?._id ||
+          (user.branchId ? String(user.branchId) : '');
+
+        if (currentRole !== 'platformAdmin') {
+          const matchedBranch = branches.find((b) => String(b._id) === currentBranchId);
+          const matchedRest = matchedBranch
+            ? restaurants.find((r) => String(r._id) === String(matchedBranch.restaurantId))
+            : restaurants.find((r) => String(r._id) === String(user.restaurantId));
+          return (
+            <div className="text-xs font-bold text-slate-700 dark:text-slate-300">
+              <span className="text-slate-500 dark:text-slate-400 font-semibold">
+                {matchedRest?.name || 'Restaurant'}:
+              </span>{' '}
+              {matchedBranch?.name || user.branch || 'Unassigned'}
+            </div>
+          );
+        }
+
+        return (
+          <div className="flex items-center gap-2 min-w-[220px]">
+            <select
+              value={currentBranchId}
+              disabled={savingId === (user.id || user._id)}
+              onChange={(event) => {
+                const newBranchId = event.target.value;
+                if (!newBranchId) return;
+                const selectedBranch = branches.find((b) => String(b._id) === newBranchId);
+                if (!selectedBranch) return;
+                void updateAccess(user, {
+                  branchId: String(selectedBranch._id),
+                  restaurantId: String(selectedBranch.restaurantId),
+                  branch: selectedBranch.name,
+                });
+              }}
+              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-900 shadow-xs focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              aria-label={`Assigned branch for ${user.email}`}
+            >
+              <option value="" disabled>
+                -- Select Branch & Restaurant --
+              </option>
+              {currentBranchId && !branches.some((b) => String(b._id) === currentBranchId) && (
+                <option value={currentBranchId}>
+                  {user.branch || 'Current Branch'}
+                </option>
+              )}
+              {restaurants.map((restaurant) => {
+                const restBranches = branches.filter(
+                  (b) => String(b.restaurantId) === String(restaurant._id)
+                );
+                if (restBranches.length === 0) return null;
+                return (
+                  <optgroup key={restaurant._id} label={restaurant.name}>
+                    {restBranches.map((branch) => (
+                      <option key={branch._id} value={branch._id}>
+                        {restaurant.name} — {branch.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                );
+              })}
+              {branches.filter((b) => !restaurants.some((r) => String(r._id) === String(b.restaurantId))).length > 0 && (
+                <optgroup label="Other Branches">
+                  {branches
+                    .filter((b) => !restaurants.some((r) => String(r._id) === String(b.restaurantId)))
+                    .map((branch) => (
+                      <option key={branch._id} value={branch._id}>
+                        {branch.name}
+                      </option>
+                    ))}
+                </optgroup>
+              )}
+            </select>
+          </div>
+        );
+      },
     },
   ];
 
