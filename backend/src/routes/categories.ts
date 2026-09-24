@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import Category from '../models/Category.js';
+import Restaurant from '../models/Restaurant.js';
+import Branch from '../models/Branch.js';
 import { paginated, success, failure } from '../utils/response.js';
 import { validateBody, validateParams, validateQuery } from '../middleware/validate.js';
 import { categoryCreateSchema, categoryQuerySchema, categoryUpdateSchema, idParamSchema } from '../validation/schemas.js';
@@ -20,21 +22,24 @@ router.get('/', optionalAuth, validateQuery(categoryQuerySchema), async (req, re
   const q = String(req.query.q ?? '').trim();
   
   const tenant = tenantFilter(req);
+
+  // If the restaurant or branch is restricted/paused, return 0 categories for this outlet
+  const [restaurant, branch] = await Promise.all([
+    Restaurant.findById(tenant.restaurantId).select('isActive').lean().exec(),
+    Branch.findById(tenant.branchId).select('isActive').lean().exec(),
+  ]);
+
+  if ((restaurant && !restaurant.isActive) || (branch && !branch.isActive)) {
+    return res.json(paginate([], page, limit));
+  }
+
   let filter: any = { restaurantId: tenant.restaurantId, branchId: tenant.branchId, isActive: { $ne: false } };
 
   if (q) {
     filter.name = { $regex: q, $options: 'i' };
   }
 
-  let categories = await Category.find(filter).sort({ name: 1 }).exec();
-  if (categories.length === 0) {
-    const fallbackFilter: any = { isActive: { $ne: false } };
-    if (q) {
-      fallbackFilter.name = { $regex: q, $options: 'i' };
-    }
-    categories = await Category.find(fallbackFilter).sort({ name: 1 }).exec();
-  }
-
+  const categories = await Category.find(filter).sort({ name: 1 }).exec();
   return res.json(paginate(categories, page, limit));
 });
 

@@ -4,8 +4,8 @@ export const DEFAULT_RESTAURANT_ID = new Types.ObjectId('00000000000000000000000
 export const DEFAULT_BRANCH_ID = new Types.ObjectId('000000000000000000000002');
 
 export function tenantIdsFromRequest(req: any) {
-  let restaurantId: any = req.headers['x-restaurant-id'] ?? req.user?.restaurantId ?? DEFAULT_RESTAURANT_ID;
-  let branchId: any = req.headers['x-branch-id'] ?? req.user?.branchId ?? DEFAULT_BRANCH_ID;
+  let restaurantId: any = req.headers['x-restaurant-id'] ?? req.query?.restaurantId ?? req.user?.restaurantId ?? DEFAULT_RESTAURANT_ID;
+  let branchId: any = req.headers['x-branch-id'] ?? req.query?.branchId ?? req.user?.branchId ?? DEFAULT_BRANCH_ID;
 
   if (!Types.ObjectId.isValid(String(restaurantId))) {
     restaurantId = DEFAULT_RESTAURANT_ID;

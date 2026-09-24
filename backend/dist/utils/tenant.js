@@ -2,8 +2,8 @@ import { Types } from 'mongoose';
 export const DEFAULT_RESTAURANT_ID = new Types.ObjectId('000000000000000000000001');
 export const DEFAULT_BRANCH_ID = new Types.ObjectId('000000000000000000000002');
 export function tenantIdsFromRequest(req) {
-    let restaurantId = req.headers['x-restaurant-id'] ?? req.user?.restaurantId ?? DEFAULT_RESTAURANT_ID;
-    let branchId = req.headers['x-branch-id'] ?? req.user?.branchId ?? DEFAULT_BRANCH_ID;
+    let restaurantId = req.headers['x-restaurant-id'] ?? req.query?.restaurantId ?? req.user?.restaurantId ?? DEFAULT_RESTAURANT_ID;
+    let branchId = req.headers['x-branch-id'] ?? req.query?.branchId ?? req.user?.branchId ?? DEFAULT_BRANCH_ID;
     if (!Types.ObjectId.isValid(String(restaurantId))) {
         restaurantId = DEFAULT_RESTAURANT_ID;
     }

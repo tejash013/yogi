@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import Category from '../models/Category.js';
 import MenuItem from '../models/MenuItem.js';
+import Restaurant from '../models/Restaurant.js';
+import Branch from '../models/Branch.js';
 import { paginated, success, failure } from '../utils/response.js';
 import { validateBody, validateParams, validateQuery } from '../middleware/validate.js';
 import { idParamSchema, menuCreateSchema, menuQuerySchema, menuUpdateSchema } from '../validation/schemas.js';
@@ -67,6 +69,14 @@ router.get('/', optionalAuth, validateQuery(menuQuerySchema), async (req, res) =
     const q = String(req.query.q ?? '').trim();
     const categoryId = String(req.query.category ?? '').trim();
     const tenant = tenantFilter(req);
+    // If the restaurant or branch is restricted/paused, return 0 items for this outlet
+    const [restaurant, branch] = await Promise.all([
+        Restaurant.findById(tenant.restaurantId).select('isActive').lean().exec(),
+        Branch.findById(tenant.branchId).select('isActive').lean().exec(),
+    ]);
+    if ((restaurant && !restaurant.isActive) || (branch && !branch.isActive)) {
+        return res.json(paginated([], 0, page, limit));
+    }
     let filter = { restaurantId: tenant.restaurantId, branchId: tenant.branchId, isActive: { $ne: false } };
     if (q) {
         filter.$or = [
@@ -77,44 +87,50 @@ router.get('/', optionalAuth, validateQuery(menuQuerySchema), async (req, res) =
     if (categoryId) {
         filter.category = categoryId;
     }
-    let total = await MenuItem.countDocuments(filter).exec();
-    let items = await MenuItem.find(filter)
+    const total = await MenuItem.countDocuments(filter).exec();
+    const items = await MenuItem.find(filter)
         .populate('category', 'name')
         .skip((page - 1) * limit)
         .limit(limit)
         .exec();
-    if (total === 0) {
-        const fallbackFilter = { isActive: { $ne: false } };
-        if (q) {
-            fallbackFilter.$or = [
-                { title: { $regex: q, $options: 'i' } },
-                { description: { $regex: q, $options: 'i' } },
-            ];
-        }
-        if (categoryId) {
-            fallbackFilter.category = categoryId;
-        }
-        total = await MenuItem.countDocuments(fallbackFilter).exec();
-        items = await MenuItem.find(fallbackFilter)
-            .populate('category', 'name')
-            .skip((page - 1) * limit)
-            .limit(limit)
-            .exec();
-    }
     return res.json(paginated(items, total, page, limit));
 });
 router.get('/popular', optionalAuth, async (req, res) => {
-    const items = await MenuItem.find({ ...tenantFilter(req), isPopular: true, isActive: true }).populate('category', 'name').exec();
+    const tenant = tenantFilter(req);
+    const [restaurant, branch] = await Promise.all([
+        Restaurant.findById(tenant.restaurantId).select('isActive').lean().exec(),
+        Branch.findById(tenant.branchId).select('isActive').lean().exec(),
+    ]);
+    if ((restaurant && !restaurant.isActive) || (branch && !branch.isActive)) {
+        return res.json(success([], 'Popular menu items loaded'));
+    }
+    const items = await MenuItem.find({ ...tenant, isPopular: true, isActive: true }).populate('category', 'name').exec();
     return res.json(success(items, 'Popular menu items loaded'));
 });
 router.get('/recommended', optionalAuth, async (req, res) => {
-    const items = await MenuItem.find({ ...tenantFilter(req), isRecommended: true, isActive: true }).populate('category', 'name').exec();
+    const tenant = tenantFilter(req);
+    const [restaurant, branch] = await Promise.all([
+        Restaurant.findById(tenant.restaurantId).select('isActive').lean().exec(),
+        Branch.findById(tenant.branchId).select('isActive').lean().exec(),
+    ]);
+    if ((restaurant && !restaurant.isActive) || (branch && !branch.isActive)) {
+        return res.json(success([], 'Recommended items loaded'));
+    }
+    const items = await MenuItem.find({ ...tenant, isRecommended: true, isActive: true }).populate('category', 'name').exec();
     return res.json(success(items, 'Recommended items loaded'));
 });
 router.get('/search', optionalAuth, validateQuery(menuQuerySchema.pick({ q: true })), async (req, res) => {
     const q = String(req.query.q ?? '').trim();
+    const tenant = tenantFilter(req);
+    const [restaurant, branch] = await Promise.all([
+        Restaurant.findById(tenant.restaurantId).select('isActive').lean().exec(),
+        Branch.findById(tenant.branchId).select('isActive').lean().exec(),
+    ]);
+    if ((restaurant && !restaurant.isActive) || (branch && !branch.isActive)) {
+        return res.json(paginated([], 0, 1, 10));
+    }
     const items = await MenuItem.find({
-        ...tenantFilter(req),
+        ...tenant,
         isActive: true,
         $or: [
             { title: { $regex: q, $options: 'i' } },

@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { FoodCard, LoadingSkeleton } from '@/components/customer';
 import { categoriesApi, menuApi } from '@/api';
 import { useCartStore, useOrderSyncStore, useTenantStore } from '@/store';
+import TenantSelector from '@/components/common/TenantSelector';
 import type { MenuItem, Category } from '@/types';
 
 const FAVORITES_STORAGE_KEY = 'yogi_favorites';
@@ -84,9 +85,16 @@ export default function Menu() {
 
   useEffect(() => {
     const loadData = async () => {
+      setIsLoading(true);
       try {
+        if (isOutletPaused) {
+          setMenuItems([]);
+          setCategories([]);
+          return;
+        }
+
         const [menuRes, categoriesRes] = await Promise.all([
-          menuApi.getAllItems().catch(() => []),
+          menuApi.getAllItems({ branchId: activeBranchId || undefined, restaurantId: activeRestaurantId || undefined }).catch(() => []),
           categoriesApi.getAll().catch(() => ({ data: { data: [] } })),
         ]);
 
@@ -101,40 +109,45 @@ export default function Menu() {
     };
 
     void loadData();
-  }, [syncVersion, branchId, activeBranchId, activeRestaurantId]);
+  }, [syncVersion, branchId, activeBranchId, activeRestaurantId, isOutletPaused]);
 
-  let filtered = [...menuItems];
+  let filtered = isOutletPaused ? [] : [...menuItems];
 
-  // Safely filter menu by current active branch & restaurant
-  if (activeBranchId || activeRestaurantId) {
+  // Strictly filter menu by current active branch & restaurant
+  if (!isOutletPaused && (activeBranchId || activeRestaurantId)) {
     const scopedItems = filtered.filter((item: any) => {
       const bId = item.branchId || item.branch?._id || item.branch;
       const rId = item.restaurantId || item.restaurant?._id || item.restaurant;
       const bList = Array.isArray(item.branches) ? item.branches.map((b: any) => String(b._id || b)) : null;
 
-      // Match explicit branch assignment, or default system tenant items, or unassigned items
-      const isDefaultTenant = (!bId || String(bId) === '000000000000000000000002') && (!rId || String(rId) === '000000000000000000000001');
-
       let matchesBranch = true;
       if (bList && bList.length > 0) {
         matchesBranch = activeBranchId ? bList.includes(String(activeBranchId)) : true;
       } else if (bId && activeBranchId) {
-        matchesBranch = String(bId) === String(activeBranchId) || isDefaultTenant;
+        matchesBranch = String(bId) === String(activeBranchId);
       }
 
       let matchesRestaurant = true;
       if (rId && activeRestaurantId) {
-        matchesRestaurant = String(rId) === String(activeRestaurantId) || isDefaultTenant;
+        matchesRestaurant = String(rId) === String(activeRestaurantId);
       }
 
       return matchesBranch && matchesRestaurant;
     });
 
-    // If specific branch/restaurant items exist, use them. Otherwise fallback to all available items.
-    if (scopedItems.length > 0) {
-      filtered = scopedItems;
-    }
+    filtered = scopedItems;
   }
+
+  // Filter categories strictly to active items or current restaurant
+  const activeCategoryIds = new Set(filtered.map((item) => String(item.categoryId)));
+  const visibleCategories = categories.filter((cat) => {
+    if (activeCategoryIds.has(String(cat.id))) return true;
+    const cRestId = (cat as any).restaurantId;
+    const cBranchId = (cat as any).branchId;
+    if (cRestId && activeRestaurantId && String(cRestId) !== String(activeRestaurantId)) return false;
+    if (cBranchId && activeBranchId && String(cBranchId) !== String(activeBranchId)) return false;
+    return activeCategoryIds.has(String(cat.id)) || (!cRestId && !cBranchId);
+  });
 
   if (search) {
     const q = search.toLowerCase();
@@ -220,6 +233,9 @@ export default function Menu() {
             Freshly prepared dishes & beverages
           </p>
         </div>
+        <div>
+          <TenantSelector variant="pill" />
+        </div>
       </div>
 
       {isOutletPaused && (
@@ -229,7 +245,7 @@ export default function Menu() {
             <div>
               <h3 className="font-black text-sm text-amber-900 dark:text-amber-100">Restaurant Outlet Currently Paused</h3>
               <p className="text-xs font-semibold mt-0.5 text-amber-800 dark:text-amber-300">
-                {currentRestaurant?.name || 'This outlet'} is paused and not accepting new orders. Checkout is currently disabled.
+                {currentRestaurant?.name || 'This outlet'} ({currentBranch?.name || 'Main'}) is currently paused or restricted. Checkout and new orders are disabled.
               </p>
             </div>
           </div>
@@ -272,7 +288,7 @@ export default function Menu() {
         >
           All Items
         </button>
-        {categories.map((cat) => (
+        {visibleCategories.map((cat) => (
           <button
             key={cat.id}
             onClick={() => handleCategoryFilter(cat.id)}

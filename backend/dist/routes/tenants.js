@@ -102,11 +102,11 @@ router.get('/current', optionalAuth, async (req, res) => {
     try {
         const { restaurantId, branchId } = tenantFilter(req);
         const [restaurant, branch] = await Promise.all([
-            Restaurant.findOne({ _id: restaurantId, isActive: true }).lean().exec(),
-            Branch.findOne({ _id: branchId, isActive: true }).lean().exec(),
+            Restaurant.findById(restaurantId).lean().exec(),
+            Branch.findById(branchId).lean().exec(),
         ]);
-        const resolvedRest = restaurant ? withResolvedCoords(restaurant) : { _id: restaurantId, name: 'Yogi Restaurant', slug: 'yogi' };
-        const resolvedBranch = branch ? withResolvedCoords(branch) : { _id: branchId, name: 'Main Branch', slug: 'main' };
+        const resolvedRest = restaurant ? withResolvedCoords(restaurant) : { _id: restaurantId, name: 'Yogi Restaurant', slug: 'yogi', isActive: true };
+        const resolvedBranch = branch ? withResolvedCoords(branch) : { _id: branchId, name: 'Main Branch', slug: 'main', isActive: true };
         return res.json(success({
             restaurantId,
             branchId,
@@ -212,6 +212,10 @@ router.put('/restaurants/:id', authenticate, requireRole(['platformAdmin', 'owne
     const updated = await Restaurant.findByIdAndUpdate(req.params.id, { $set: payload }, { new: true, runValidators: true }).lean().exec();
     if (!updated)
         return res.status(404).json(failure('Restaurant not found'));
+    // Cascade status changes: if restaurant is activated/deactivated, sync child branches
+    if (payload.isActive !== undefined) {
+        await Branch.updateMany({ restaurantId: req.params.id }, { $set: { isActive: payload.isActive } }).exec();
+    }
     return res.json(success(withResolvedCoords(updated), 'Restaurant updated successfully'));
 });
 // DELETE /api/tenants/restaurants/:id - Deactivate or Delete restaurant (Platform Admin or Owner)
@@ -241,6 +245,19 @@ router.get('/branches', optionalAuth, async (req, res) => {
     if (req.query.restaurantId) {
         query.restaurantId = req.query.restaurantId;
     }
+    if (!includeInactive) {
+        // Only return branches whose parent restaurant is active
+        const activeRestaurants = await Restaurant.find({ isActive: true }).select('_id').lean().exec();
+        const activeRestIds = activeRestaurants.map((r) => r._id);
+        if (query.restaurantId) {
+            if (!activeRestIds.some((id) => String(id) === String(query.restaurantId))) {
+                return res.json(success([], 'Branches loaded'));
+            }
+        }
+        else {
+            query.restaurantId = { $in: activeRestIds };
+        }
+    }
     const branches = await Branch.find(query).sort({ name: 1 }).lean().exec();
     const enriched = branches.map(withResolvedCoords);
     return res.json(success(enriched, 'Branches loaded'));
@@ -256,6 +273,12 @@ router.get('/branches/:id', optionalAuth, validateParams(idParamSchema), async (
 // GET /api/tenants/restaurants/:id/branches - List branches for a specific restaurant
 router.get('/restaurants/:id/branches', optionalAuth, validateParams(idParamSchema), async (req, res) => {
     const includeInactive = req.query.includeInactive === 'true' && req.user && ['platformAdmin', 'owner'].includes(req.user.role);
+    if (!includeInactive) {
+        const restaurant = await Restaurant.findOne({ _id: req.params.id, isActive: true }).select('_id').lean().exec();
+        if (!restaurant) {
+            return res.json(success([], 'Branches loaded'));
+        }
+    }
     const filter = { restaurantId: req.params.id };
     if (!includeInactive) {
         filter.isActive = true;

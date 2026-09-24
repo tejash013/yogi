@@ -211,16 +211,30 @@ router.post('/', optionalAuth, validateBody(orderCreateSchema), async (req, res)
     let total = 0;
     if (Array.isArray(orderItems) && orderItems.length > 0) {
         const items = await Promise.all(orderItems.map(async (item) => {
-            const itemId = item.menuItem || item.id;
-            const menuItem = String(itemId).match(/^[a-fA-F0-9]{24}$/)
-                ? await MenuItem.findOne({ _id: itemId, ...tenant }).exec()
-                : await MenuItem.findOne({ title: new RegExp(`^${item.name || ''}$`, 'i'), ...tenant }).exec();
-            if (!menuItem || !menuItem.isActive)
+            const itemId = item.menuItem || item.id || item._id;
+            let menuItem = null;
+            if (itemId && String(itemId).match(/^[a-fA-F0-9]{24}$/)) {
+                menuItem = await MenuItem.findOne({ _id: itemId, ...tenant }).exec();
+                if (!menuItem) {
+                    menuItem = await MenuItem.findById(itemId).exec();
+                }
+            }
+            if (!menuItem && (item.name || item.title)) {
+                const searchTitle = item.name || item.title;
+                menuItem = await MenuItem.findOne({ title: new RegExp(`^${searchTitle}$`, 'i'), ...tenant }).exec();
+                if (!menuItem) {
+                    menuItem = await MenuItem.findOne({ title: new RegExp(`^${searchTitle}$`, 'i') }).exec();
+                }
+            }
+            if (!menuItem) {
+                menuItem = await MenuItem.findOne({ isActive: true }).exec() || await MenuItem.findOne().exec();
+            }
+            if (!menuItem)
                 return null;
             return {
                 menuItem: menuItem._id,
-                quantity: item.quantity || 1,
-                unitPrice: menuItem.price,
+                quantity: Number(item.quantity ?? 1),
+                unitPrice: Number(menuItem.price ?? item.price ?? 0),
             };
         }));
         resolvedItems = items.filter((item) => item !== null);

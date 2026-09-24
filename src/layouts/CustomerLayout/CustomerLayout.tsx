@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
-import { Navbar, Footer } from '@/components/common';
+import { Navbar, Footer, TenantSelector } from '@/components/common';
 import type { NavItem } from '@/components/common/Navbar';
 import { BottomNav } from '@/components/customer';
 import { ROUTES } from '@/constants';
@@ -42,6 +42,7 @@ export default function CustomerLayout() {
         items={navItems}
         rightContent={
           <>
+            <TenantSelector variant="pill" className="mr-1 hidden sm:flex text-xs" />
             <Link
               to={ROUTES.CUSTOMER.CART}
               className="relative rounded-lg p-2 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-neutral-800 dark:hover:text-neutral-300"

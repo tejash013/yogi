@@ -74,7 +74,7 @@ export const orderCreateSchema = z.object({
   userId: z.string().trim().optional(),
   tableId: z.string().trim().optional(),
   items: z.array(z.object({
-    menuItem: z.string().trim(),
+    menuItem: z.string().trim().regex(/^[0-9a-fA-F]{24}$/, 'Invalid ID'),
     quantity: z.coerce.number().int().positive('Number must be greater than 0'),
   })).optional().default([]),
   orderType: z.enum(['dine-in', 'takeaway', 'delivery']).optional(),

@@ -5,6 +5,8 @@ import { validateBody } from '../middleware/validate.js';
 import { userRepo } from '../repos/index.js';
 import RefreshToken from '../models/RefreshToken.js';
 import User from '../models/User.js';
+import Restaurant from '../models/Restaurant.js';
+import Branch from '../models/Branch.js';
 import { failure, success } from '../utils/response.js';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/jwt.js';
 import { sendEmail } from '../utils/email.js';
@@ -98,6 +100,26 @@ router.post('/login', validateBody(loginSchema), async (req, res) => {
   const passwordValid = user && user.password ? verifyPassword(password, user.password) : false;
   if (!user || !user.password || !passwordValid || !isSupportedRole(user.role)) {
     return res.status(401).json(failure('Invalid credentials'));
+  }
+
+  if (user.status !== 'active') {
+    return res.status(403).json(failure('Your account is deactivated or suspended. Please contact your administrator.'));
+  }
+
+  // Prevent staff belonging to restricted/paused restaurant or branch from logging in
+  if (['manager', 'chef', 'cashier'].includes(user.role)) {
+    if (user.restaurantId) {
+      const restaurant = await Restaurant.findById(user.restaurantId).select('isActive').lean().exec();
+      if (restaurant && !restaurant.isActive) {
+        return res.status(403).json(failure('This restaurant outlet is currently paused or restricted. Staff login is disabled.'));
+      }
+    }
+    if (user.branchId) {
+      const branch = await Branch.findById(user.branchId).select('isActive').lean().exec();
+      if (branch && !branch.isActive) {
+        return res.status(403).json(failure('This branch outlet is currently paused or restricted. Staff login is disabled.'));
+      }
+    }
   }
 
   const payload = { id: user._id, role: user.role, email: user.email, tokenVersion: user.tokenVersion, restaurantId: user.restaurantId, branchId: user.branchId };
@@ -206,6 +228,21 @@ router.post('/google', validateBody(googleAuthSchema), async (req, res) => {
     return res.status(403).json(failure('Your account is deactivated or suspended'));
   }
 
+  if (['manager', 'chef', 'cashier'].includes(user.role)) {
+    if (user.restaurantId) {
+      const restaurant = await Restaurant.findById(user.restaurantId).select('isActive').lean().exec();
+      if (restaurant && !restaurant.isActive) {
+        return res.status(403).json(failure('This restaurant outlet is currently paused or restricted. Staff login is disabled.'));
+      }
+    }
+    if (user.branchId) {
+      const branch = await Branch.findById(user.branchId).select('isActive').lean().exec();
+      if (branch && !branch.isActive) {
+        return res.status(403).json(failure('This branch outlet is currently paused or restricted. Staff login is disabled.'));
+      }
+    }
+  }
+
   const payload = {
     id: user._id,
     role: user.role,
@@ -268,6 +305,21 @@ router.post('/refresh', validateBody(z.object({ refreshToken: z.string().min(1).
 
     const user = await userRepo.findById(String(payload.id));
     if (!user || !isSupportedRole(user.role) || user.status !== 'active') return res.status(401).json(failure('Invalid refresh token'));
+
+    if (['manager', 'chef', 'cashier'].includes(user.role)) {
+      if (user.restaurantId) {
+        const restaurant = await Restaurant.findById(user.restaurantId).select('isActive').lean().exec();
+        if (restaurant && !restaurant.isActive) {
+          return res.status(403).json(failure('Restaurant outlet is currently paused or restricted'));
+        }
+      }
+      if (user.branchId) {
+        const branch = await Branch.findById(user.branchId).select('isActive').lean().exec();
+        if (branch && !branch.isActive) {
+          return res.status(403).json(failure('Branch outlet is currently paused or restricted'));
+        }
+      }
+    }
 
     const newRefreshToken = signRefreshToken({ id: user._id, jti: crypto.randomUUID() });
     await persistRefreshToken(user._id, newRefreshToken);

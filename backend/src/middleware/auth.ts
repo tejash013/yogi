@@ -1,6 +1,8 @@
 import { RequestHandler } from 'express';
 import { verifyAccessToken } from '../utils/jwt.js';
 import { userRepo } from '../repos/index.js';
+import Restaurant from '../models/Restaurant.js';
+import Branch from '../models/Branch.js';
 import { hasPermission, isSupportedRole, Permission } from '../auth/permissions.js';
 import { tenantIdsFromRequest } from '../utils/tenant.js';
 
@@ -21,10 +23,33 @@ export const authenticate: RequestHandler = async (req: any, _res, next) => {
     const token = auth.split(' ')[1];
     const payload = verifyAccessToken(token);
     const user = await userRepo.findById(String(payload.id));
-    if (!user || !isSupportedRole(user.role) || user.status !== 'active' || payload.tokenVersion !== user.tokenVersion ||
-      String(payload.restaurantId) !== String(user.restaurantId) || String(payload.branchId) !== String(user.branchId)) {
+    if (!user || !isSupportedRole(user.role) || user.status !== 'active' || payload.tokenVersion !== user.tokenVersion) {
       return next(Object.assign(new Error('Account is inactive or suspended'), { status: 401 }));
     }
+
+    const tenantMismatch = user.role !== 'platformAdmin' && (
+      (payload.restaurantId !== undefined && String(payload.restaurantId) !== String(user.restaurantId)) ||
+      (payload.branchId !== undefined && String(payload.branchId) !== String(user.branchId))
+    );
+    if (tenantMismatch) {
+      return next(Object.assign(new Error('Account is inactive or suspended'), { status: 401 }));
+    }
+
+    if (['manager', 'chef', 'cashier'].includes(user.role)) {
+      if (user.restaurantId) {
+        const restaurant = await Restaurant.findById(user.restaurantId).select('isActive').lean().exec();
+        if (restaurant && !restaurant.isActive) {
+          return next(Object.assign(new Error('Restaurant outlet is currently paused or restricted'), { status: 403 }));
+        }
+      }
+      if (user.branchId) {
+        const branch = await Branch.findById(user.branchId).select('isActive').lean().exec();
+        if (branch && !branch.isActive) {
+          return next(Object.assign(new Error('Branch outlet is currently paused or restricted'), { status: 403 }));
+        }
+      }
+    }
+
     req.user = {
       id: String(user._id),
       role: user.role,
