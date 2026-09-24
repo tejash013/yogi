@@ -120,7 +120,7 @@ router.get('/current', optionalAuth, async (req, res) => {
 });
 // GET /api/tenants/restaurants - Public or Authenticated list of restaurants
 router.get('/restaurants', optionalAuth, async (req, res) => {
-    const includeInactive = req.query.includeInactive === 'true' && req.user && ['platformAdmin', 'owner'].includes(req.user.role);
+    const includeInactive = Boolean(req.user?.role === 'platformAdmin' || (req.query.includeInactive === 'true' && req.user && ['platformAdmin', 'owner'].includes(req.user.role)));
     const filter = includeInactive ? {} : { isActive: true };
     const [restaurants, branches] = await Promise.all([
         Restaurant.find(filter).sort({ name: 1 }).lean().exec(),
@@ -240,7 +240,7 @@ router.delete('/restaurants/:id', authenticate, requireRole(['platformAdmin', 'o
 });
 // GET /api/tenants/branches - Public or filtered list of branches across restaurants
 router.get('/branches', optionalAuth, async (req, res) => {
-    const includeInactive = req.query.includeInactive === 'true' && req.user && ['platformAdmin', 'owner'].includes(req.user.role);
+    const includeInactive = Boolean(req.user?.role === 'platformAdmin' || (req.query.includeInactive === 'true' && req.user && ['platformAdmin', 'owner'].includes(req.user.role)));
     const query = includeInactive ? {} : { isActive: true };
     if (req.query.restaurantId) {
         query.restaurantId = req.query.restaurantId;
@@ -272,7 +272,7 @@ router.get('/branches/:id', optionalAuth, validateParams(idParamSchema), async (
 });
 // GET /api/tenants/restaurants/:id/branches - List branches for a specific restaurant
 router.get('/restaurants/:id/branches', optionalAuth, validateParams(idParamSchema), async (req, res) => {
-    const includeInactive = req.query.includeInactive === 'true' && req.user && ['platformAdmin', 'owner'].includes(req.user.role);
+    const includeInactive = Boolean(req.user?.role === 'platformAdmin' || (req.query.includeInactive === 'true' && req.user && ['platformAdmin', 'owner'].includes(req.user.role)));
     if (!includeInactive) {
         const restaurant = await Restaurant.findOne({ _id: req.params.id, isActive: true }).select('_id').lean().exec();
         if (!restaurant) {

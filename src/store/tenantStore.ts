@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { tenantsApi } from '@/api/endpoints';
+import { useOrderSyncStore } from './orderSyncStore';
 import type { Branch, Restaurant } from '@/types';
 
 export const DEFAULT_RESTAURANT_ID = '000000000000000000000001';
@@ -29,7 +30,7 @@ interface TenantState {
   setModalOpen: (open: boolean) => void;
   setTenant: (restaurantId: string, branchId: string) => Promise<void>;
   switchRestaurant: (restaurantId: string) => Promise<void>;
-  switchBranch: (branchId: string) => void;
+  switchBranch: (branchId: string) => Promise<void> | void;
   loadTenants: () => Promise<void>;
   requestUserLocation: () => Promise<void>;
   setManualLocation: () => void;
@@ -87,8 +88,8 @@ export const useTenantStore = create<TenantState>((set, get) => ({
     set({ isLoading: true });
     try {
       const [rRes, bRes] = await Promise.all([
-        tenantsApi.getRestaurants().catch(() => ({ data: { data: [] } })),
-        tenantsApi.getAllBranches().catch(() => ({ data: { data: [] } })),
+        tenantsApi.getRestaurants({ includeInactive: true }).catch(() => ({ data: { data: [] } })),
+        tenantsApi.getAllBranches({ includeInactive: true }).catch(() => ({ data: { data: [] } })),
       ]);
 
       const restaurants: Restaurant[] = Array.isArray(rRes?.data?.data)
@@ -200,10 +201,17 @@ export const useTenantStore = create<TenantState>((set, get) => ({
 
     set({ isLoading: true });
     try {
-      const targetRest = get().availableRestaurants.find((r) => r._id === restaurantId) || null;
+      let targetRest = get().availableRestaurants.find((r) => r._id === restaurantId) || null;
+      if (!targetRest) {
+        try {
+          const rRes = await tenantsApi.getRestaurant(restaurantId).catch(() => null);
+          targetRest = (rRes?.data?.data as Restaurant | undefined) || null;
+        } catch {}
+      }
+
       let branches = get().allBranches.filter((b) => String(b.restaurantId) === String(restaurantId));
       if (branches.length === 0) {
-        const bRes = await tenantsApi.getBranches(restaurantId).catch(() => ({ data: { data: [] } }));
+        const bRes = await tenantsApi.getBranches(restaurantId, { includeInactive: true }).catch(() => ({ data: { data: [] } }));
         branches = Array.isArray(bRes?.data?.data)
           ? bRes.data.data
           : Array.isArray(bRes?.data)
@@ -217,14 +225,34 @@ export const useTenantStore = create<TenantState>((set, get) => ({
       localStorage.setItem('restaurantos-restaurant-id', restaurantId);
       localStorage.setItem('restaurantos-branch-id', brId);
 
+      const updatedAllBranches = [...get().allBranches];
+      branches.forEach((b) => {
+        if (!updatedAllBranches.some((existing) => existing._id === b._id)) {
+          updatedAllBranches.push(b);
+        }
+      });
+
+      const updatedAvailableRestaurants = [...get().availableRestaurants];
+      if (targetRest && !updatedAvailableRestaurants.some((r) => r._id === targetRest?._id)) {
+        updatedAvailableRestaurants.push(targetRest);
+      }
+
       set({
         restaurantId,
         branchId: brId,
         currentRestaurant: targetRest,
         currentBranch: targetBranch,
         availableBranches: branches,
+        allBranches: updatedAllBranches,
+        availableRestaurants: updatedAvailableRestaurants,
         isViewOnlyBranch: false,
         isLoading: false,
+      });
+
+      useOrderSyncStore.getState().notifyResourceChange({
+        type: 'update',
+        resource: 'tenant',
+        at: new Date().toISOString(),
       });
 
       window.dispatchEvent(new CustomEvent('restaurantos:tenant:change', { detail: { restaurantId, branchId: brId } }));
@@ -233,7 +261,7 @@ export const useTenantStore = create<TenantState>((set, get) => ({
     }
   },
 
-  switchBranch: (branchId: string) => {
+  switchBranch: async (branchId: string) => {
     const storedToken = localStorage.getItem('restaurantos-token');
     if (storedToken) {
       try {
@@ -244,37 +272,56 @@ export const useTenantStore = create<TenantState>((set, get) => ({
       } catch {}
     }
 
-    const targetBranch =
+    let targetBranch =
       get().availableBranches.find((b) => b._id === branchId) ||
       get().allBranches.find((b) => b._id === branchId) ||
       null;
+
+    if (!targetBranch) {
+      try {
+        const bRes = await tenantsApi.getBranch(branchId).catch(() => null);
+        targetBranch = (bRes?.data?.data as Branch | undefined) || null;
+      } catch {}
+    }
 
     if (!targetBranch) return;
 
     localStorage.setItem('restaurantos-branch-id', branchId);
 
-    if (targetBranch.restaurantId && String(targetBranch.restaurantId) !== String(get().restaurantId)) {
-      const restId = String(targetBranch.restaurantId);
-      localStorage.setItem('restaurantos-restaurant-id', restId);
-      const targetRest = get().availableRestaurants.find((r) => r._id === restId) || null;
-      set({
-        restaurantId: restId,
-        branchId,
-        currentRestaurant: targetRest,
-        currentBranch: targetBranch,
-        isViewOnlyBranch: false,
-      });
-    } else {
-      set({
-        branchId,
-        currentBranch: targetBranch,
-        isViewOnlyBranch: false,
-      });
+    const restId = String(targetBranch.restaurantId || get().restaurantId);
+    localStorage.setItem('restaurantos-restaurant-id', restId);
+
+    let targetRest = get().availableRestaurants.find((r) => r._id === restId) || get().currentRestaurant;
+    if (!targetRest && restId) {
+      try {
+        const rRes = await tenantsApi.getRestaurant(restId).catch(() => null);
+        targetRest = (rRes?.data?.data as Restaurant | undefined) || null;
+      } catch {}
     }
+
+    const updatedAllBranches = [...get().allBranches];
+    if (!updatedAllBranches.some((b) => b._id === targetBranch?._id)) {
+      updatedAllBranches.push(targetBranch);
+    }
+
+    set({
+      restaurantId: restId,
+      branchId,
+      currentRestaurant: targetRest,
+      currentBranch: targetBranch,
+      allBranches: updatedAllBranches,
+      isViewOnlyBranch: false,
+    });
+
+    useOrderSyncStore.getState().notifyResourceChange({
+      type: 'update',
+      resource: 'tenant',
+      at: new Date().toISOString(),
+    });
 
     window.dispatchEvent(
       new CustomEvent('restaurantos:tenant:change', {
-        detail: { restaurantId: get().restaurantId, branchId },
+        detail: { restaurantId: restId, branchId },
       })
     );
   },
@@ -284,6 +331,11 @@ export const useTenantStore = create<TenantState>((set, get) => ({
     localStorage.setItem('restaurantos-branch-id', branchId);
     set({ restaurantId, branchId });
     await get().loadTenants();
+    useOrderSyncStore.getState().notifyResourceChange({
+      type: 'update',
+      resource: 'tenant',
+      at: new Date().toISOString(),
+    });
     window.dispatchEvent(new CustomEvent('restaurantos:tenant:change', { detail: { restaurantId, branchId } }));
   },
 }));

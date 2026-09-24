@@ -94,23 +94,26 @@ apiClient.interceptors.request.use(
     }
 
     // Always attach active SaaS Tenant Context (Restaurant ID & Branch ID)
-    const activeRestaurantId =
+    const rawRestId =
       config.params?.restaurantId ||
       localStorage.getItem('restaurantos-restaurant-id') ||
-      payload?.restaurantId ||
-      '000000000000000000000001';
-    const activeBranchId =
+      payload?.restaurantId;
+    const rawBranchId =
       config.params?.branchId ||
       localStorage.getItem('restaurantos-branch-id') ||
-      payload?.branchId ||
-      '000000000000000000000002';
+      payload?.branchId;
 
-    if (activeRestaurantId) {
-      config.headers['x-restaurant-id'] = activeRestaurantId;
-    }
-    if (activeBranchId) {
-      config.headers['x-branch-id'] = activeBranchId;
-    }
+    const activeRestaurantId =
+      rawRestId && rawRestId !== 'undefined' && rawRestId !== 'null'
+        ? rawRestId
+        : '000000000000000000000001';
+    const activeBranchId =
+      rawBranchId && rawBranchId !== 'undefined' && rawBranchId !== 'null'
+        ? rawBranchId
+        : '000000000000000000000002';
+
+    config.headers['x-restaurant-id'] = activeRestaurantId;
+    config.headers['x-branch-id'] = activeBranchId;
 
     return config;
   },

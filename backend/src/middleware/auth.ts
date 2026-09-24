@@ -27,14 +27,6 @@ export const authenticate: RequestHandler = async (req: any, _res, next) => {
       return next(Object.assign(new Error('Account is inactive or suspended'), { status: 401 }));
     }
 
-    const tenantMismatch = user.role !== 'platformAdmin' && (
-      (payload.restaurantId !== undefined && String(payload.restaurantId) !== String(user.restaurantId)) ||
-      (payload.branchId !== undefined && String(payload.branchId) !== String(user.branchId))
-    );
-    if (tenantMismatch) {
-      return next(Object.assign(new Error('Account is inactive or suspended'), { status: 401 }));
-    }
-
     if (['manager', 'chef', 'cashier'].includes(user.role)) {
       if (user.restaurantId) {
         const restaurant = await Restaurant.findById(user.restaurantId).select('isActive').lean().exec();

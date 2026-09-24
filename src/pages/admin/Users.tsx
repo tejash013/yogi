@@ -4,7 +4,7 @@ import { PageHeader } from '@/components/common';
 import { usersApi, subscriptionsApi, tenantsApi } from '@/api/endpoints';
 import { useOrderSyncStore, useAuthStore, useTenantStore, useToastStore } from '@/store';
 import type { Column } from '@/components/ui';
-import type { User, UserRole } from '@/types';
+import type { User, UserRole, Restaurant, Branch } from '@/types';
 
 type UserRow = User & { _id?: string };
 
@@ -28,8 +28,14 @@ export default function Users() {
   const [savingId, setSavingId] = useState('');
   const syncVersion = useOrderSyncStore((state) => state.version);
   const currentRole = useAuthStore((state) => state.user?.role);
-  const restaurants = useTenantStore((state) => state.availableRestaurants);
-  const branches = useTenantStore((state) => state.allBranches);
+  const storeRestaurants = useTenantStore((state) => state.availableRestaurants);
+  const storeBranches = useTenantStore((state) => state.allBranches);
+  const [tenantRestaurants, setTenantRestaurants] = useState<Restaurant[]>([]);
+  const [tenantBranches, setTenantBranches] = useState<Branch[]>([]);
+
+  const restaurants = tenantRestaurants.length > 0 ? tenantRestaurants : storeRestaurants;
+  const branches = tenantBranches.length > 0 ? tenantBranches : storeBranches;
+
   const showToast = useToastStore((state) => state.showToast);
   const [showCreate, setShowCreate] = useState(false);
   const [createError, setCreateError] = useState('');
@@ -44,6 +50,21 @@ export default function Users() {
     branchId: '',
   });
 
+  const loadTenantsAndBranches = async () => {
+    try {
+      const [rRes, bRes] = await Promise.all([
+        tenantsApi.getRestaurants({ includeInactive: true }).catch(() => ({ data: { data: [] } })),
+        tenantsApi.getAllBranches({ includeInactive: true }).catch(() => ({ data: { data: [] } })),
+      ]);
+      const rList = Array.isArray(rRes?.data?.data) ? rRes.data.data : Array.isArray(rRes?.data) ? (rRes.data as any) : [];
+      const bList = Array.isArray(bRes?.data?.data) ? bRes.data.data : Array.isArray(bRes?.data) ? (bRes.data as any) : [];
+      if (rList.length > 0) setTenantRestaurants(rList);
+      if (bList.length > 0) setTenantBranches(bList);
+    } catch (err) {
+      console.warn('Failed to load tenants for User Access Control', err);
+    }
+  };
+
   const loadUsers = async () => {
     setIsLoading(true);
     setError('');
@@ -52,8 +73,8 @@ export default function Users() {
       setUsers(response.data.data.map((user) => ({
         ...user,
         id: user.id ?? String((user as any)._id ?? ''),
-        branchId: user.branchId ? String(user.branchId) : undefined,
-        restaurantId: user.restaurantId ? String(user.restaurantId) : undefined,
+        branchId: user.branchId ? (typeof user.branchId === 'object' ? String((user.branchId as any)._id) : String(user.branchId)) : undefined,
+        restaurantId: user.restaurantId ? (typeof user.restaurantId === 'object' ? String((user.restaurantId as any)._id) : String(user.restaurantId)) : undefined,
       })));
     } catch {
       setError('Unable to load user accounts. Please try again later.');
@@ -64,10 +85,12 @@ export default function Users() {
 
   useEffect(() => {
     void loadUsers();
+    void loadTenantsAndBranches();
   }, [search, syncVersion]);
 
   useEffect(() => {
-    if (restaurants.length === 0 || branches.length === 0) {
+    void loadTenantsAndBranches();
+    if (storeRestaurants.length === 0 || storeBranches.length === 0) {
       void useTenantStore.getState().loadTenants();
     }
   }, []);
@@ -89,7 +112,27 @@ export default function Users() {
     try {
       const response = await usersApi.updateAccess(id, payload);
       const updated = response.data.data;
-      setUsers((current) => current.map((item) => (item.id === id ? { ...item, ...updated, ...payload } : item)));
+      setUsers((current) =>
+        current.map((item) =>
+          item.id === id || item._id === id
+            ? { ...item, ...updated, ...payload }
+            : item
+        )
+      );
+
+      // If the edited user is the currently logged-in user, immediately sync auth and tenant state
+      const currentUser = useAuthStore.getState().user;
+      const currentUserId = currentUser?.id || (currentUser as any)?._id;
+      if (currentUserId === id) {
+        useAuthStore.setState((state) => ({
+          user: state.user ? { ...state.user, ...updated, ...payload } : state.user,
+        }));
+        const newBranchId = payload.branchId || updated?.branchId;
+        const newRestId = payload.restaurantId || updated?.restaurantId;
+        if (newBranchId && newRestId) {
+          void useTenantStore.getState().setTenant(newRestId, newBranchId);
+        }
+      }
 
       // If user status is updated, also update associated restaurant status
       const userRestId = payload.restaurantId || user.restaurantId || (user as any).restaurantId || (user as any).restaurant?._id;
@@ -105,12 +148,19 @@ export default function Users() {
           'success'
         );
       } else if (payload.branchId || payload.branch) {
+        await useTenantStore.getState().loadTenants().catch(() => null);
+        await loadTenantsAndBranches().catch(() => null);
         showToast('Assigned branch and restaurant updated successfully.', 'success');
       }
 
       useOrderSyncStore.getState().notifyResourceChange({
         type: 'update',
         resource: 'user',
+        at: new Date().toISOString(),
+      });
+      useOrderSyncStore.getState().notifyResourceChange({
+        type: 'update',
+        resource: 'tenant',
         at: new Date().toISOString(),
       });
     } catch {

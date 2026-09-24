@@ -12,7 +12,8 @@ interface ResourceEvent {
     | 'report'
     | 'settings'
     | 'user'
-    | 'auth';
+    | 'auth'
+    | 'tenant';
   orderId?: string;
   status?: string;
   at: string;

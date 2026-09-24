@@ -556,9 +556,23 @@ export default function Workspace() {
                         </div>
 
                         <div className="mt-5 pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2">
-                          <span className="text-[11px] font-medium text-slate-500">
-                            Status synced via Subscriptions
-                          </span>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              await storeSwitchBranch(branch._id);
+                              setMessage({
+                                type: 'success',
+                                text: `Switched active outlet to ${branch.name}. All pages now reflect this branch.`,
+                              });
+                            }}
+                            className={`rounded-xl px-3 py-2 text-xs font-black transition shadow-xs ${
+                              activeBranchId === branch._id
+                                ? 'bg-emerald-600 text-white cursor-default'
+                                : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:text-indigo-300 dark:hover:bg-indigo-900/60'
+                            }`}
+                          >
+                            {activeBranchId === branch._id ? '✓ Active Outlet' : 'Switch to Outlet'}
+                          </button>
                           <button
                             type="button"
                             onClick={() => openEditBranchModal(branch)}

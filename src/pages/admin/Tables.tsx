@@ -3,7 +3,7 @@ import { Button, Card } from '@/components/ui';
 import { PageHeader, TenantSelector } from '@/components/common';
 import RestaurantFloorView, { type TableItem } from '@/components/common/RestaurantFloorView';
 import { tablesApi } from '@/api';
-import { useTenantStore } from '@/store';
+import { useTenantStore, useOrderSyncStore } from '@/store';
 import { QRCodeCanvas } from 'qrcode.react';
 
 type TableRow = TableItem;
@@ -25,7 +25,8 @@ const statusConfig: Record<string, { variant: 'success' | 'warning' | 'error' | 
 };
 
 export default function Tables() {
-  const { branchId, currentBranch } = useTenantStore();
+  const { branchId, restaurantId, currentBranch } = useTenantStore();
+  const syncVersion = useOrderSyncStore((state) => state.version);
   const [tables, setTables] = useState<TableRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'floor' | 'cards'>('floor');
@@ -77,7 +78,7 @@ export default function Tables() {
 
   useEffect(() => {
     void loadTables();
-  }, [branchId]);
+  }, [branchId, restaurantId, syncVersion]);
 
   const handleStatusUpdate = async (tableId: string, nextStatus: TableRow['status']) => {
     if (tableId.startsWith('virtual-')) return;

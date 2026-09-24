@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { FoodCard, LoadingSkeleton } from '@/components/customer';
 import { categoriesApi, menuApi } from '@/api';
@@ -85,20 +85,22 @@ export default function Menu() {
   const [categories, setCategories] = useState<Category[]>([]);
   const syncVersion = useOrderSyncStore((state) => state.version);
 
-  const activeBranchId = qBranchId || branchId || currentBranch?._id || localStorage.getItem('restaurantos-branch-id');
-  const activeRestaurantId = qRestId || currentRestaurant?._id || localStorage.getItem('restaurantos-restaurant-id');
-  const isOutletPaused = currentRestaurant?.isActive === false || currentBranch?.isActive === false;
-
+  const qrInitializedRef = useRef(false);
   useEffect(() => {
-    // If arriving with explicit QR code params, sync tenant and table state immediately
-    if (qBranchId && (qBranchId !== branchId || (qRestId && qRestId !== currentRestaurant?._id))) {
+    // If arriving with explicit QR code params, sync tenant and table state once on entry
+    if (!qrInitializedRef.current && qBranchId) {
+      qrInitializedRef.current = true;
       void setTenant(qRestId || currentRestaurant?._id || '', qBranchId);
     }
     if (qTable) {
       const parsed = Number.parseInt(String(qTable).replace(/\D/g, ''), 10);
       setTableContext({ tableId: qTable, tableNumber: Number.isFinite(parsed) ? parsed : undefined });
     }
-  }, [qBranchId, qRestId, qTable, branchId, currentRestaurant?._id, setTenant, setTableContext]);
+  }, [qBranchId, qRestId, qTable, setTenant, setTableContext]);
+
+  const activeBranchId = branchId || currentBranch?._id || qBranchId || localStorage.getItem('restaurantos-branch-id');
+  const activeRestaurantId = currentRestaurant?._id || qRestId || localStorage.getItem('restaurantos-restaurant-id');
+  const isOutletPaused = currentRestaurant?.isActive === false || currentBranch?.isActive === false;
 
   useEffect(() => {
     const loadData = async () => {

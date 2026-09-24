@@ -53,8 +53,8 @@ const hasValidStoredSession = Boolean(
     supportedRoles.includes(normalizedStoredUser.role as UserRole)
 );
 
-// If stored session belongs to staff (non-customer), lock to their assigned tenant
-if (hasValidStoredSession && normalizedStoredUser && normalizedStoredUser.role !== 'customer') {
+// If stored session belongs to fixed outlet staff (cashier, chef, manager), lock to their assigned tenant
+if (hasValidStoredSession && normalizedStoredUser && ['cashier', 'chef', 'manager'].includes(normalizedStoredUser.role)) {
   const targetRestId = normalizedStoredUser.restaurantId || DEFAULT_RESTAURANT_ID;
   const targetBranchId = normalizedStoredUser.branchId || DEFAULT_BRANCH_ID;
   void useTenantStore.getState().setTenant(targetRestId, targetBranchId);
@@ -85,8 +85,8 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       localStorage.setItem('restaurantos-token', token);
 
-      // Lock tenant context for staff (non-customer) roles
-      if (normalizedUser.role !== 'customer') {
+      // Lock tenant context only for fixed outlet staff (cashier, chef, manager)
+      if (['cashier', 'chef', 'manager'].includes(normalizedUser.role)) {
         const targetRestId = normalizedUser.restaurantId || DEFAULT_RESTAURANT_ID;
         const targetBranchId = normalizedUser.branchId || DEFAULT_BRANCH_ID;
         void useTenantStore.getState().setTenant(targetRestId, targetBranchId);

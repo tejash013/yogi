@@ -18,6 +18,7 @@ function publicUser(user: any) {
   delete value.password;
   delete value.resetToken;
   delete value.resetTokenExpires;
+  if (value._id) value.id = String(value._id);
   return value;
 }
 
@@ -109,11 +110,12 @@ router.patch('/:id/access', authenticate, requireRole(['owner', 'manager', 'plat
   const target = await User.findById(req.params.id).exec();
   if (!target) return res.status(404).json(failure('User not found'));
 
-  if (String(target._id) === req.user.id) {
+  const { role, status, branch, restaurantId, branchId } = req.body;
+
+  if (String(target._id) === req.user.id && (role || status)) {
     return res.status(403).json(failure('You cannot change your own access level'));
   }
 
-  const { role, status, branch, restaurantId, branchId } = req.body;
   if (req.user.role !== 'platformAdmin' && !['customer', 'cashier', 'chef'].includes(target.role)) {
     return res.status(403).json(failure('Owners cannot modify administrative accounts'));
   }
@@ -129,18 +131,23 @@ router.patch('/:id/access', authenticate, requireRole(['owner', 'manager', 'plat
 
   if ((restaurantId || branchId) && req.user.role !== 'platformAdmin') return res.status(403).json(failure('Only a platform admin can move users between tenants'));
   if (restaurantId || branchId) {
-    const targetRestId = restaurantId ?? target.restaurantId;
-    const targetBranchId = branchId ?? target.branchId;
-    const restaurantRecord = await Restaurant.findById(targetRestId).exec();
-    const branchRecord = await Branch.findOne({ _id: targetBranchId, restaurantId: targetRestId }).exec();
-    if (!branchRecord || !restaurantRecord) return res.status(400).json(failure('Invalid restaurant or branch'));
-    if (restaurantId) target.restaurantId = restaurantId;
-    if (branchId) {
-      target.branchId = branchId;
-      if (!branch) {
-        target.branch = branchRecord.name;
+    let targetBranchId = branchId;
+    if (!targetBranchId && restaurantId) {
+      const firstBranch = (await Branch.findOne({ restaurantId, isActive: true }).exec()) || (await Branch.findOne({ restaurantId }).exec());
+      if (firstBranch) {
+        targetBranchId = String(firstBranch._id);
       }
     }
+    if (!targetBranchId) {
+      targetBranchId = target.branchId;
+    }
+    const branchRecord = await Branch.findById(targetBranchId).exec();
+    if (!branchRecord) return res.status(400).json(failure('Invalid branch'));
+    const restaurantRecord = await Restaurant.findById(branchRecord.restaurantId).exec();
+    if (!restaurantRecord) return res.status(400).json(failure('Invalid restaurant'));
+    target.restaurantId = branchRecord.restaurantId;
+    target.branchId = branchRecord._id;
+    target.branch = branch !== undefined ? branch : branchRecord.name;
   }
 
   if (role) target.role = role;

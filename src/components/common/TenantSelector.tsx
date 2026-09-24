@@ -38,6 +38,8 @@ export default function TenantSelector({
   const restaurantName = currentRestaurant?.name || 'Yogi Grand Restaurant';
   const branchName = currentBranch?.name || 'Main Dining Hall';
   const isCustomer = !user || user.role === 'customer';
+  const isOwnerOrAdmin = user?.role === 'owner' || user?.role === 'platformAdmin';
+  const canSwitchContext = isCustomer || isOwnerOrAdmin;
 
   if (variant === 'badge') {
     return (
@@ -58,7 +60,7 @@ export default function TenantSelector({
             <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
             {isCustomer ? 'Active Branch' : 'Operating Branch'}
           </span>
-          {isCustomer ? (
+          {canSwitchContext ? (
             <button
               type="button"
               onClick={() => setModalOpen(true)}
@@ -81,9 +83,6 @@ export default function TenantSelector({
       </div>
     );
   }
-
-  const isOwnerOrAdmin = user?.role === 'owner' || user?.role === 'platformAdmin';
-  const canSwitchContext = isCustomer || isOwnerOrAdmin;
 
   if (variant === 'banner') {
     return (

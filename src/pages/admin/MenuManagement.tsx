@@ -3,7 +3,7 @@ import { Button, Card, CardHeader, CardContent, Table, Badge, Search } from '@/c
 import { PageHeader } from '@/components/common';
 import { categoriesApi, menuApi } from '@/api';
 import { APP_CONFIG } from '@/constants';
-import { useOrderSyncStore } from '@/store';
+import { useOrderSyncStore, useTenantStore } from '@/store';
 import type { Column } from '@/components/ui';
 
 type MenuItemRow = {
@@ -28,6 +28,8 @@ export default function MenuManagement() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | undefined>();
   const syncVersion = useOrderSyncStore((state) => state.version);
+  const branchId = useTenantStore((state) => state.branchId);
+  const restaurantId = useTenantStore((state) => state.restaurantId);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [form, setForm] = useState({
@@ -82,7 +84,7 @@ export default function MenuManagement() {
 
   useEffect(() => {
     void loadData();
-  }, [syncVersion]);
+  }, [syncVersion, branchId, restaurantId]);
 
   const filteredItems = useMemo(
     () =>
