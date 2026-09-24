@@ -205,7 +205,10 @@ export default function Tables() {
     setQrLoading(table.id);
     try {
       const response = await tablesApi.generateQrToken(table.id);
-      setQrAsset(response.data.data);
+      const data = response.data.data;
+      const origin = window.location.origin;
+      const url = `${origin}/scan/table/${data.token}`;
+      setQrAsset({ ...data, url });
     } catch (error) {
       console.error('Failed to generate table QR', error);
     } finally {

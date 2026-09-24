@@ -116,21 +116,6 @@ export default function Workspace() {
     [displayRestaurants, selectedRestaurant],
   );
 
-  const handleToggleRestaurantStatus = async (restaurant: Restaurant) => {
-    try {
-      const newStatus = !restaurant.isActive;
-      await tenantsApi.updateRestaurant(restaurant._id, { isActive: newStatus });
-      setMessage({
-        type: 'success',
-        text: `Restaurant "${restaurant.name}" is now ${newStatus ? 'active' : 'paused'}.`,
-      });
-      void fetchRestaurants();
-      void loadTenants();
-    } catch {
-      setMessage({ type: 'error', text: 'Failed to update restaurant status.' });
-    }
-  };
-
   const fetchRestaurants = async () => {
     try {
       const response = await tenantsApi.getRestaurants({ includeInactive: true });
@@ -156,23 +141,6 @@ export default function Workspace() {
       setMessage({ type: 'error', text: 'Branches could not be loaded.' });
     } finally {
       setBranchesLoading(false);
-    }
-  };
-
-  const handleToggleBranchStatus = async (branch: Branch) => {
-    try {
-      const newStatus = !branch.isActive;
-      await tenantsApi.updateBranch(branch._id, { isActive: newStatus });
-      setMessage({
-        type: 'success',
-        text: `Branch "${branch.name}" is now ${newStatus ? 'active' : 'inactive'}.`,
-      });
-      if (selectedRestaurant) {
-        void fetchBranches(selectedRestaurant);
-      }
-      void loadTenants();
-    } catch {
-      setMessage({ type: 'error', text: 'Failed to update branch status.' });
     }
   };
 
@@ -463,15 +431,11 @@ export default function Workspace() {
                                   Active Context
                                 </span>
                               )}
-                              {restaurant.isActive ? (
-                                <span className="rounded-full bg-emerald-600 px-2.5 py-0.5 text-[10px] font-black text-white shadow-xs">
-                                  Active
-                                </span>
-                              ) : (
-                                <span className="rounded-full bg-rose-600 px-2.5 py-0.5 text-[10px] font-black text-white shadow-xs">
-                                  Paused
-                                </span>
-                              )}
+                              <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-black shadow-xs ${
+                                restaurant.isActive ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'
+                              }`}>
+                                {restaurant.isActive ? 'Active (Subscription)' : 'Paused (Subscription)'}
+                              </span>
                             </div>
                             <p className="mt-1 text-xs font-bold text-indigo-700 dark:text-indigo-300">
                               📍 {city || 'Main Office'}
@@ -479,22 +443,12 @@ export default function Workspace() {
                           </button>
 
                           <div className="flex items-center gap-2 shrink-0">
-                            {isOwnerOrAdmin && (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  void handleToggleRestaurantStatus(restaurant);
-                                }}
-                                className={`rounded-xl border px-3 py-1.5 text-xs font-black shadow-sm transition ${
-                                  restaurant.isActive
-                                    ? 'border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700'
-                                    : 'border-rose-600 bg-rose-600 text-white hover:bg-rose-700'
-                                }`}
-                              >
-                                {restaurant.isActive ? '🟢 Active' : '⏸️ Paused'}
-                              </button>
-                            )}
+                            <Link
+                              to="/platform-admin/subscriptions"
+                              className="rounded-xl border border-indigo-200 bg-indigo-50/80 px-2.5 py-1.5 text-xs font-bold text-indigo-700 hover:bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300 shadow-xs"
+                            >
+                              Subscription
+                            </Link>
                             {isOwnerOrAdmin && (
                               <button
                                 type="button"
@@ -568,8 +522,12 @@ export default function Workspace() {
                       >
                         <div>
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-black text-indigo-700 dark:text-indigo-300">
-                              {isActiveOperating ? '⚡ Active Operating Branch' : 'Operating Branch'}
+                            <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-black ${
+                              branch.isActive
+                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                : 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300'
+                            }`}>
+                              {branch.isActive ? '● Active Operating Outlet' : '○ Paused Outlet'}
                             </span>
                             {branch.branchCode && (
                               <span className="rounded-md bg-slate-100 border border-slate-300 px-2 py-0.5 font-mono text-[10px] font-black text-slate-700 dark:bg-slate-800 dark:text-slate-200">
@@ -597,30 +555,10 @@ export default function Workspace() {
                           )}
                         </div>
 
-                        <div className="mt-5 pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center gap-2">
-                          {!isActiveOperating && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                storeSwitchBranch(branch._id);
-                                setMessage({ type: 'success', text: `Switched active branch to ${branch.name}` });
-                              }}
-                              className="flex-1 rounded-xl bg-indigo-600 py-2 px-3 text-xs font-black text-white hover:bg-indigo-700 shadow"
-                            >
-                              Set as Active
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => handleToggleBranchStatus(branch)}
-                            className={`rounded-xl border px-3 py-2 text-xs font-bold shadow-xs ${
-                              branch.isActive
-                                ? 'border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-950 dark:text-emerald-200'
-                                : 'border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
-                            }`}
-                          >
-                            {branch.isActive ? 'Active' : 'Inactive'}
-                          </button>
+                        <div className="mt-5 pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2">
+                          <span className="text-[11px] font-medium text-slate-500">
+                            Status synced via Subscriptions
+                          </span>
                           <button
                             type="button"
                             onClick={() => openEditBranchModal(branch)}

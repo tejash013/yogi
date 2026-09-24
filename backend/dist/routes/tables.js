@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import { createHash, randomBytes } from 'crypto';
+import { Types } from 'mongoose';
 import Table from '../models/Table.js';
+import Restaurant from '../models/Restaurant.js';
+import Branch from '../models/Branch.js';
 import { paginated, success, failure } from '../utils/response.js';
 import { validateBody, validateParams, validateQuery } from '../middleware/validate.js';
 import { idParamSchema, tableCreateSchema, tableQuerySchema, tableStatusSchema, tableUpdateSchema } from '../validation/schemas.js';
@@ -28,18 +31,34 @@ function hashQrToken(token) {
 }
 // Resolve QR identity independently of request tenant headers.
 router.get('/qr/:token', optionalAuth, async (req, res) => {
-    const token = String(req.params.token || '');
-    if (!/^[a-f0-9]{32}$/i.test(token))
+    const token = String(req.params.token || '').trim();
+    if (!token)
         return res.status(404).json(failure('QR code not found'));
-    const table = await Table.findOne({ qrTokenHash: hashQrToken(token) }).lean().exec();
+    let table = null;
+    if (/^[a-f0-9]{32}$/i.test(token)) {
+        table = await Table.findOne({ qrTokenHash: hashQrToken(token) }).lean().exec();
+    }
+    if (!table && Types.ObjectId.isValid(token)) {
+        table = await Table.findById(token).lean().exec();
+    }
+    if (!table) {
+        table = await Table.findOne({ label: token }).lean().exec();
+    }
     if (!table)
         return res.status(404).json(failure('QR code not found or expired'));
+    const [restaurant, branch] = await Promise.all([
+        Restaurant.findById(table.restaurantId).select('name isActive').lean().exec(),
+        Branch.findById(table.branchId).select('name isActive').lean().exec(),
+    ]);
     return res.json(success({
         restaurantId: String(table.restaurantId),
         branchId: String(table.branchId),
         tableId: String(table._id),
         label: table.label,
         status: table.status,
+        restaurantName: restaurant?.name || '',
+        branchName: branch?.name || '',
+        isOutletActive: Boolean(restaurant?.isActive && branch?.isActive),
     }, 'Table QR resolved'));
 });
 // GET /api/tables - Publicly readable for customers and staff directly from database
@@ -76,7 +95,7 @@ router.post('/:id/qr-token', authenticate, requirePermission(permissions.tablesM
         tableId: String(table._id),
         label: table.label,
         token,
-        url: `${process.env.FRONTEND_URL?.split(',')[0] || 'http://localhost:5173'}/scan/table/${token}`,
+        url: `${req.get('origin') || process.env.FRONTEND_URL?.split(',')[0] || 'http://localhost:5173'}/scan/table/${token}`,
     }, 'Table QR generated'));
 });
 // DELETE /api/tables/:id/qr-token - Revoke a table QR token

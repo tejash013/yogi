@@ -12,36 +12,56 @@ export default function ScanTable() {
   const setTableContext = useCartStore((state) => state.setTableContext);
 
   useEffect(() => {
-    if (!token) {
-      navigate(ROUTES.CUSTOMER.HOME, { replace: true });
-      return;
-    }
+    let isCancelled = false;
 
-    const parsed = Number.parseInt(String(token || '').replace(/\D/g, ''), 10);
-    const validNum = Number.isFinite(parsed) && parsed > 0 && parsed < 1000 ? parsed : undefined;
+    async function processScan() {
+      if (!token) {
+        navigate(ROUTES.CUSTOMER.MENU, { replace: true });
+        return;
+      }
 
-    // Immediately set table context for instant webapp entry without waiting on network delays
-    setTableContext({ tableId: token, tableNumber: validNum });
+      const parsed = Number.parseInt(String(token || '').replace(/\D/g, ''), 10);
+      const validNum = Number.isFinite(parsed) && parsed > 0 && parsed < 1000 ? parsed : undefined;
 
-    // Background tenant metadata resolution
-    tablesApi
-      .resolveQrToken(token)
-      .then((response) => {
+      try {
+        const response = await tablesApi.resolveQrToken(token);
         const table = response?.data?.data;
-        if (table) {
-          void setTenant(table.restaurantId, table.branchId);
+        if (table && !isCancelled) {
           const resolvedParsed = Number.parseInt(String(table.label || '').replace(/\D/g, ''), 10);
           const resolvedNum =
             Number.isFinite(resolvedParsed) && resolvedParsed > 0 && resolvedParsed < 1000
               ? resolvedParsed
               : validNum;
+
           setTableContext({ tableId: table.tableId || token, tableNumber: resolvedNum });
+
+          if (table.restaurantId && table.branchId) {
+            await setTenant(String(table.restaurantId), String(table.branchId));
+          }
+
+          if (!isCancelled) {
+            navigate(
+              `${ROUTES.CUSTOMER.MENU}?restaurantId=${encodeURIComponent(String(table.restaurantId))}&branchId=${encodeURIComponent(String(table.branchId))}&table=${encodeURIComponent(String(table.label || resolvedNum || ''))}`,
+              { replace: true }
+            );
+            return;
+          }
         }
-      })
-      .catch(() => {})
-      .finally(() => {
-        navigate(ROUTES.CUSTOMER.HOME, { replace: true });
-      });
+      } catch (err) {
+        console.error('Failed to resolve QR token:', err);
+      }
+
+      if (!isCancelled) {
+        setTableContext({ tableId: token, tableNumber: validNum });
+        navigate(ROUTES.CUSTOMER.MENU, { replace: true });
+      }
+    }
+
+    void processScan();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [navigate, setTableContext, setTenant, token]);
 
   return (

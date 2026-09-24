@@ -95,10 +95,12 @@ apiClient.interceptors.request.use(
 
     // Always attach active SaaS Tenant Context (Restaurant ID & Branch ID)
     const activeRestaurantId =
+      config.params?.restaurantId ||
       localStorage.getItem('restaurantos-restaurant-id') ||
       payload?.restaurantId ||
       '000000000000000000000001';
     const activeBranchId =
+      config.params?.branchId ||
       localStorage.getItem('restaurantos-branch-id') ||
       payload?.branchId ||
       '000000000000000000000002';

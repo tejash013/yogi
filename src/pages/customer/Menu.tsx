@@ -3,7 +3,6 @@ import { useSearchParams } from 'react-router-dom';
 import { FoodCard, LoadingSkeleton } from '@/components/customer';
 import { categoriesApi, menuApi } from '@/api';
 import { useCartStore, useOrderSyncStore, useTenantStore } from '@/store';
-import TenantSelector from '@/components/common/TenantSelector';
 import type { MenuItem, Category } from '@/types';
 
 const FAVORITES_STORAGE_KEY = 'yogi_favorites';
@@ -61,9 +60,15 @@ const normalizeCategory = (item: any): Category => ({
 
 export default function Menu() {
   const { currentRestaurant, currentBranch, branchId } = useTenantStore();
-  const isOutletPaused = currentRestaurant?.isActive === false || currentBranch?.isActive === false;
+  const setTenant = useTenantStore((s) => s.setTenant);
+  const setTableContext = useCartStore((s) => s.setTableContext);
   const tableNumber = useCartStore((s) => s.tableNumber);
   const [searchParams] = useSearchParams();
+
+  const qBranchId = searchParams.get('branchId') || searchParams.get('branch') || undefined;
+  const qRestId = searchParams.get('restaurantId') || searchParams.get('restaurant') || undefined;
+  const qTable = searchParams.get('table') || searchParams.get('tableId') || undefined;
+
   const [search, setSearch] = useState(searchParams.get('q') || searchParams.get('search') || '');
   const [selectedCategory, setSelectedCategory] = useState<string>(searchParams.get('category') || 'all');
   const [sortBy, setSortBy] = useState<string>('recommended');
@@ -80,8 +85,20 @@ export default function Menu() {
   const [categories, setCategories] = useState<Category[]>([]);
   const syncVersion = useOrderSyncStore((state) => state.version);
 
-  const activeBranchId = branchId || currentBranch?._id || localStorage.getItem('restaurantos-branch-id');
-  const activeRestaurantId = currentRestaurant?._id || localStorage.getItem('restaurantos-restaurant-id');
+  const activeBranchId = qBranchId || branchId || currentBranch?._id || localStorage.getItem('restaurantos-branch-id');
+  const activeRestaurantId = qRestId || currentRestaurant?._id || localStorage.getItem('restaurantos-restaurant-id');
+  const isOutletPaused = currentRestaurant?.isActive === false || currentBranch?.isActive === false;
+
+  useEffect(() => {
+    // If arriving with explicit QR code params, sync tenant and table state immediately
+    if (qBranchId && (qBranchId !== branchId || (qRestId && qRestId !== currentRestaurant?._id))) {
+      void setTenant(qRestId || currentRestaurant?._id || '', qBranchId);
+    }
+    if (qTable) {
+      const parsed = Number.parseInt(String(qTable).replace(/\D/g, ''), 10);
+      setTableContext({ tableId: qTable, tableNumber: Number.isFinite(parsed) ? parsed : undefined });
+    }
+  }, [qBranchId, qRestId, qTable, branchId, currentRestaurant?._id, setTenant, setTableContext]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -95,7 +112,7 @@ export default function Menu() {
 
         const [menuRes, categoriesRes] = await Promise.all([
           menuApi.getAllItems({ branchId: activeBranchId || undefined, restaurantId: activeRestaurantId || undefined }).catch(() => []),
-          categoriesApi.getAll().catch(() => ({ data: { data: [] } })),
+          categoriesApi.getAll({ branchId: activeBranchId || undefined, restaurantId: activeRestaurantId || undefined } as any).catch(() => ({ data: { data: [] } })),
         ]);
 
         const items = Array.isArray(menuRes) ? menuRes : [];
@@ -233,8 +250,13 @@ export default function Menu() {
             Freshly prepared dishes & beverages
           </p>
         </div>
-        <div>
-          <TenantSelector variant="pill" />
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 rounded-full border border-neutral-200/90 bg-white px-3.5 py-1.5 text-xs font-bold text-neutral-800 shadow-xs dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200">
+            <span>📍</span>
+            <span>{currentRestaurant?.name || 'Restaurant'}</span>
+            <span className="text-neutral-400">·</span>
+            <span className="text-primary-600 dark:text-primary-400">{currentBranch?.name || 'Main Hall'}</span>
+          </div>
         </div>
       </div>
 

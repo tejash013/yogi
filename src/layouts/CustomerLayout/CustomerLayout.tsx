@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
-import { Navbar, Footer, TenantSelector } from '@/components/common';
+import { Navbar, Footer } from '@/components/common';
 import type { NavItem } from '@/components/common/Navbar';
 import { BottomNav } from '@/components/customer';
 import { ROUTES } from '@/constants';
@@ -11,10 +11,13 @@ export default function CustomerLayout() {
   const navigate = useNavigate();
   const cartItems = useCartStore((s) => s.items);
   const cartCount = cartItems.reduce((sum, i) => sum + i.quantity, 0);
+  const tableNumber = useCartStore((s) => s.tableNumber);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
   const loadTenants = useTenantStore((state) => state.loadTenants);
+  const currentBranch = useTenantStore((s) => s.currentBranch);
+  const currentRestaurant = useTenantStore((s) => s.currentRestaurant);
 
   useEffect(() => {
     void loadTenants();
@@ -42,7 +45,17 @@ export default function CustomerLayout() {
         items={navItems}
         rightContent={
           <>
-            <TenantSelector variant="pill" className="mr-1 hidden sm:flex text-xs" />
+            {(currentBranch || currentRestaurant) && (
+              <div className="mr-1 hidden sm:flex items-center gap-1.5 rounded-full border border-neutral-200/80 bg-neutral-100/80 px-2.5 py-1 text-[11px] font-semibold text-neutral-700 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
+                <span>📍</span>
+                <span className="max-w-[130px] truncate">{currentBranch?.name || currentRestaurant?.name}</span>
+                {tableNumber && (
+                  <span className="ml-1 rounded-full bg-primary-100 px-1.5 py-0.5 text-[10px] font-bold text-primary-800 dark:bg-primary-900/50 dark:text-primary-300">
+                    T{tableNumber}
+                  </span>
+                )}
+              </div>
+            )}
             <Link
               to={ROUTES.CUSTOMER.CART}
               className="relative rounded-lg p-2 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-neutral-800 dark:hover:text-neutral-300"
