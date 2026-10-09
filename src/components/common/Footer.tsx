@@ -7,7 +7,7 @@ export default function Footer() {
   const [activeModal, setActiveModal] = useState<'privacy' | 'support' | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const contactEmail = APP_CONFIG.CONTACT_EMAIL || 'tsubasadigital@gmail.com';
+  const contactEmail = APP_CONFIG.CONTACT_EMAIL || 'tsubasadigitals@gmail.com';
 
   const copyEmail = () => {
     navigator.clipboard.writeText(contactEmail);

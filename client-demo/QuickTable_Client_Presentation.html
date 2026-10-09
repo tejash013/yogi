@@ -6,19 +6,20 @@
   <title>QuickTable - Interactive Client Demo & Video Presentation | tsubasa digital</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #090d16;
-      --card-bg: rgba(17, 24, 39, 0.75);
-      --card-border: rgba(255, 255, 255, 0.08);
+      --bg: #060911;
+      --card-bg: rgba(15, 23, 42, 0.78);
+      --card-border: rgba(255, 255, 255, 0.1);
       --primary: #f97316;
-      --primary-glow: rgba(249, 115, 22, 0.35);
+      --primary-glow: rgba(249, 115, 22, 0.4);
       --emerald: #10b981;
       --blue: #3b82f6;
       --purple: #8b5cf6;
-      --text: #f3f4f6;
-      --text-muted: #9ca3af;
+      --cyan: #06b6d4;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
     }
 
     * {
@@ -36,33 +37,51 @@
       line-height: 1.5;
     }
 
-    /* Ambient background glowing orbs */
+    /* Cinematic Color-Graded Ambient Canvas */
     .ambient-bg {
       position: fixed;
       inset: 0;
       pointer-events: none;
       z-index: 0;
       overflow: hidden;
+      transition: all 0.8s ease-in-out;
     }
     .orb-1 {
       position: absolute;
-      top: -10%;
-      left: 15%;
-      width: 500px;
-      height: 500px;
+      top: -12%;
+      left: 10%;
+      width: 550px;
+      height: 550px;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(249, 115, 22, 0.15) 0%, transparent 70%);
-      filter: blur(60px);
+      background: radial-gradient(circle, rgba(249, 115, 22, 0.18) 0%, rgba(234, 88, 12, 0.05) 50%, transparent 70%);
+      filter: blur(70px);
+      animation: floatOrb 12s infinite alternate ease-in-out;
     }
     .orb-2 {
       position: absolute;
-      bottom: -10%;
-      right: 10%;
-      width: 600px;
-      height: 600px;
+      bottom: -15%;
+      right: 8%;
+      width: 650px;
+      height: 650px;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, transparent 70%);
-      filter: blur(80px);
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.16) 0%, rgba(139, 92, 246, 0.05) 50%, transparent 70%);
+      filter: blur(85px);
+      animation: floatOrb 15s infinite alternate-reverse ease-in-out;
+    }
+    .orb-3 {
+      position: absolute;
+      top: 45%;
+      left: 60%;
+      width: 450px;
+      height: 450px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, transparent 65%);
+      filter: blur(65px);
+    }
+
+    @keyframes floatOrb {
+      from { transform: translate(0, 0) scale(1); }
+      to { transform: translate(40px, 30px) scale(1.08); }
     }
 
     /* Top presentation navigation bar */
@@ -70,10 +89,10 @@
       position: sticky;
       top: 0;
       z-index: 50;
-      background: rgba(9, 13, 22, 0.85);
-      backdrop-filter: blur(16px);
+      background: rgba(6, 9, 17, 0.88);
+      backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--card-border);
-      padding: 0.85rem 1.5rem;
+      padding: 0.85rem 1.75rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -82,33 +101,35 @@
     .brand {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 0.85rem;
     }
     .brand-logo {
-      width: 36px;
-      height: 36px;
-      background: linear-gradient(135deg, #f97316, #ea580c);
-      border-radius: 10px;
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, #f97316 0%, #ea580c 50%, #c2410c 100%);
+      border-radius: 11px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 800;
       color: #fff;
-      font-size: 1.2rem;
-      box-shadow: 0 4px 14px var(--primary-glow);
+      font-size: 1.25rem;
+      box-shadow: 0 4px 16px var(--primary-glow);
+      border: 1px solid rgba(255, 255, 255, 0.2);
     }
     .brand-title {
       font-weight: 800;
-      font-size: 1.15rem;
+      font-size: 1.2rem;
       letter-spacing: -0.02em;
     }
     .brand-badge {
       font-size: 0.72rem;
       color: #cbd5e1;
       background: rgba(255, 255, 255, 0.08);
-      padding: 0.2rem 0.55rem;
+      padding: 0.2rem 0.6rem;
       border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      font-weight: 600;
     }
 
     .nav-actions {
@@ -120,90 +141,92 @@
     .btn {
       display: inline-flex;
       align-items: center;
-      gap: 0.45rem;
-      padding: 0.55rem 1rem;
+      gap: 0.5rem;
+      padding: 0.6rem 1.15rem;
       border-radius: 10px;
       font-size: 0.85rem;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
       border: none;
+      text-decoration: none;
       transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .btn-primary {
       background: linear-gradient(135deg, #f97316, #ea580c);
       color: #fff;
-      box-shadow: 0 4px 14px var(--primary-glow);
+      box-shadow: 0 4px 16px var(--primary-glow);
+      border: 1px solid rgba(255, 255, 255, 0.15);
     }
     .btn-primary:hover {
       transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(249, 115, 22, 0.5);
+      box-shadow: 0 6px 24px rgba(249, 115, 22, 0.55);
     }
     .btn-secondary {
       background: rgba(255, 255, 255, 0.06);
       color: var(--text);
       border: 1px solid var(--card-border);
+      backdrop-filter: blur(10px);
     }
     .btn-secondary:hover {
       background: rgba(255, 255, 255, 0.12);
-      border-color: rgba(255, 255, 255, 0.2);
-    }
-    .btn-emerald {
-      background: linear-gradient(135deg, #10b981, #059669);
-      color: white;
+      border-color: rgba(255, 255, 255, 0.25);
     }
 
     /* Main Container */
     main {
       position: relative;
       z-index: 10;
-      max-width: 1240px;
+      max-width: 1260px;
       margin: 0 auto;
-      padding: 2rem 1.5rem 5rem;
+      padding: 2.2rem 1.5rem 5rem;
     }
 
     /* Hero Headline */
     .hero {
       text-align: center;
-      margin-bottom: 2rem;
+      margin-bottom: 2.2rem;
     }
     .hero-pill {
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      background: rgba(249, 115, 22, 0.12);
-      border: 1px solid rgba(249, 115, 22, 0.3);
-      padding: 0.35rem 0.85rem;
+      background: linear-gradient(90deg, rgba(249, 115, 22, 0.15), rgba(244, 63, 94, 0.15));
+      border: 1px solid rgba(249, 115, 22, 0.35);
+      padding: 0.35rem 0.95rem;
       border-radius: 999px;
       font-size: 0.8rem;
-      font-weight: 600;
+      font-weight: 700;
       color: #fb923c;
-      margin-bottom: 1rem;
+      margin-bottom: 1.1rem;
+      box-shadow: 0 2px 10px rgba(249, 115, 22, 0.15);
     }
     .hero h1 {
-      font-size: clamp(2rem, 4vw, 3.2rem);
+      font-size: clamp(2.2rem, 4.2vw, 3.4rem);
       font-weight: 800;
-      letter-spacing: -0.03em;
-      line-height: 1.15;
-      margin-bottom: 0.75rem;
+      letter-spacing: -0.035em;
+      line-height: 1.12;
+      margin-bottom: 0.85rem;
     }
     .hero h1 span {
-      background: linear-gradient(135deg, #f97316 20%, #f43f5e 60%, #a855f7 100%);
+      background: linear-gradient(135deg, #fb923c 10%, #f43f5e 50%, #c084fc 90%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 4px 16px rgba(244, 63, 94, 0.3));
     }
     .hero p {
       color: var(--text-muted);
       font-size: 1.05rem;
-      max-width: 680px;
+      max-width: 720px;
       margin: 0 auto;
+      line-height: 1.6;
     }
 
-    /* Video Player Frame */
+    /* Video Player Frame with Cinema Color Grading */
     .video-viewport {
-      background: #0f172a;
-      border-radius: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 40px -10px var(--primary-glow);
+      background: #090e1a;
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.9), 0 0 50px -15px var(--primary-glow);
       overflow: hidden;
       display: flex;
       flex-direction: column;
@@ -214,13 +237,14 @@
     .video-stage {
       position: relative;
       aspect-ratio: 16 / 9;
-      min-height: 480px;
-      background: radial-gradient(circle at center, #1e293b 0%, #0a0f1d 100%);
+      min-height: 500px;
+      background: radial-gradient(circle at center, #131c31 0%, #080d19 100%);
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 2.5rem;
+      padding: 2.75rem;
       overflow: hidden;
+      transition: background 0.7s ease;
     }
 
     /* Scene Container */
@@ -230,11 +254,11 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      animation: fadeIn 0.4s ease-out;
+      animation: fadeInScene 0.45s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px) scale(0.99); }
+    @keyframes fadeInScene {
+      from { opacity: 0; transform: translateY(12px) scale(0.985); }
       to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
@@ -242,99 +266,116 @@
     .scene-meta {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
+      align-items: center;
     }
     .scene-badge {
       display: inline-flex;
       align-items: center;
-      gap: 0.4rem;
+      gap: 0.5rem;
       font-size: 0.75rem;
-      font-weight: 700;
+      font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      padding: 0.35rem 0.75rem;
+      letter-spacing: 0.06em;
+      padding: 0.4rem 0.85rem;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.08);
       border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(8px);
     }
     .scene-counter {
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.85rem;
-      color: var(--text-muted);
-      background: rgba(0, 0, 0, 0.4);
-      padding: 0.3rem 0.65rem;
+      color: #94a3b8;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 0.3rem 0.75rem;
       border-radius: 8px;
+      font-weight: 700;
     }
 
     /* Scene Body */
     .scene-center {
       display: grid;
-      grid-template-columns: 1.1fr 1fr;
-      gap: 2.5rem;
+      grid-template-columns: 1.15fr 1fr;
+      gap: 2.75rem;
       align-items: center;
-      margin: 1rem 0;
+      margin: 1.25rem 0;
     }
     .scene-text h2 {
-      font-size: clamp(1.6rem, 2.8vw, 2.4rem);
+      font-size: clamp(1.8rem, 3vw, 2.6rem);
       font-weight: 800;
       line-height: 1.15;
-      margin-bottom: 0.75rem;
+      margin-bottom: 0.85rem;
+      letter-spacing: -0.025em;
     }
     .scene-text p {
       color: #94a3b8;
-      font-size: 0.98rem;
+      font-size: 1rem;
       line-height: 1.6;
-      margin-bottom: 1.25rem;
+      margin-bottom: 1.35rem;
     }
     .scene-highlights {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: 0.6rem;
     }
     .highlight-item {
       display: flex;
       align-items: center;
-      gap: 0.6rem;
-      font-size: 0.9rem;
-      color: #cbd5e1;
+      gap: 0.7rem;
+      font-size: 0.92rem;
+      color: #e2e8f0;
     }
     .highlight-icon {
-      color: var(--emerald);
-      font-weight: bold;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 800;
     }
 
-    /* UI Device Mockup */
+    /* UI Device Mockup with Titanium Glow */
     .scene-mockup {
       position: relative;
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 16px;
-      padding: 1.25rem;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
-      min-height: 250px;
+      background: rgba(13, 19, 34, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 18px;
+      padding: 1.35rem;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      min-height: 270px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      backdrop-filter: blur(16px);
     }
     .mockup-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding-bottom: 0.75rem;
+      padding-bottom: 0.85rem;
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      font-size: 0.8rem;
-      font-weight: 600;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #cbd5e1;
     }
     .mockup-dots {
       display: flex;
-      gap: 5px;
+      gap: 6px;
     }
     .mockup-dots span {
-      width: 8px;
-      height: 8px;
+      width: 9px;
+      height: 9px;
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.25);
     }
+    .mockup-dots span:nth-child(1) { background: #ef4444; }
+    .mockup-dots span:nth-child(2) { background: #f59e0b; }
+    .mockup-dots span:nth-child(3) { background: #10b981; }
+
     .mockup-body {
       padding: 1rem 0;
       flex: 1;
@@ -342,17 +383,17 @@
 
     /* Video Player Controls Bar */
     .player-controls {
-      background: rgba(10, 15, 29, 0.98);
-      padding: 1rem 1.5rem;
+      background: rgba(8, 12, 22, 0.98);
+      padding: 1.15rem 1.75rem;
       border-top: 1px solid var(--card-border);
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
+      gap: 0.85rem;
     }
     .scrubber-track {
       width: 100%;
-      height: 6px;
-      background: rgba(255, 255, 255, 0.1);
+      height: 7px;
+      background: rgba(255, 255, 255, 0.08);
       border-radius: 999px;
       cursor: pointer;
       position: relative;
@@ -363,9 +404,10 @@
       left: 0;
       top: 0;
       height: 100%;
-      background: linear-gradient(90deg, #f97316, #f43f5e);
+      background: linear-gradient(90deg, #f97316 0%, #f43f5e 50%, #a855f7 100%);
       border-radius: 999px;
       width: 0%;
+      box-shadow: 0 0 12px rgba(249, 115, 22, 0.8);
       transition: width 0.1s linear;
     }
 
@@ -379,29 +421,30 @@
     .playback-buttons {
       display: flex;
       align-items: center;
-      gap: 0.6rem;
+      gap: 0.65rem;
     }
     .play-btn {
-      width: 42px;
-      height: 42px;
+      width: 44px;
+      height: 44px;
       border-radius: 12px;
       background: linear-gradient(135deg, #f97316, #ea580c);
       color: white;
-      border: none;
+      border: 1px solid rgba(255, 255, 255, 0.2);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.1rem;
-      box-shadow: 0 4px 12px var(--primary-glow);
-      transition: transform 0.15s;
+      font-size: 1.15rem;
+      box-shadow: 0 4px 16px var(--primary-glow);
+      transition: all 0.15s;
     }
     .play-btn:hover {
       transform: scale(1.05);
+      box-shadow: 0 6px 20px rgba(249, 115, 22, 0.6);
     }
     .ctrl-btn {
-      width: 36px;
-      height: 36px;
+      width: 38px;
+      height: 38px;
       border-radius: 10px;
       background: rgba(255, 255, 255, 0.06);
       color: #94a3b8;
@@ -410,26 +453,28 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      font-size: 0.95rem;
       transition: all 0.15s;
     }
     .ctrl-btn:hover {
       background: rgba(255, 255, 255, 0.15);
       color: white;
+      border-color: rgba(255, 255, 255, 0.25);
     }
 
     .chapter-tabs {
       display: flex;
       align-items: center;
-      gap: 0.35rem;
+      gap: 0.4rem;
       overflow-x: auto;
       max-width: 100%;
       padding-bottom: 2px;
     }
     .chapter-tab {
-      padding: 0.35rem 0.65rem;
+      padding: 0.4rem 0.75rem;
       border-radius: 8px;
-      font-size: 0.72rem;
-      font-weight: 600;
+      font-size: 0.74rem;
+      font-weight: 700;
       background: rgba(255, 255, 255, 0.04);
       border: 1px solid transparent;
       color: #64748b;
@@ -437,124 +482,167 @@
       white-space: nowrap;
       transition: all 0.15s;
     }
+    .chapter-tab:hover {
+      color: #cbd5e1;
+      background: rgba(255, 255, 255, 0.08);
+    }
     .chapter-tab.active {
-      background: rgba(249, 115, 22, 0.15);
-      border-color: rgba(249, 115, 22, 0.4);
+      background: rgba(249, 115, 22, 0.18);
+      border-color: rgba(249, 115, 22, 0.45);
       color: #fb923c;
+      box-shadow: 0 0 12px rgba(249, 115, 22, 0.2);
     }
 
-    /* ROI Calculator Section */
+    /* ROI Calculator Section with Radiant Contrast */
     .calc-section {
       margin-top: 4rem;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 20px;
-      padding: 2.5rem;
-      backdrop-filter: blur(16px);
+      background: linear-gradient(135deg, rgba(17, 24, 39, 0.85) 0%, rgba(15, 23, 42, 0.7) 100%);
+      border: 1px solid rgba(249, 115, 22, 0.25);
+      border-radius: 22px;
+      padding: 2.75rem;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
     }
     .calc-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2.5rem;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 2.75rem;
       align-items: center;
     }
     .calc-input-group {
-      margin-bottom: 1.25rem;
+      margin-bottom: 1.35rem;
     }
     .calc-input-group label {
       display: block;
-      font-size: 0.85rem;
-      font-weight: 600;
+      font-size: 0.88rem;
+      font-weight: 700;
       color: #cbd5e1;
-      margin-bottom: 0.4rem;
+      margin-bottom: 0.45rem;
     }
     .calc-input-group input[type="range"] {
       width: 100%;
       accent-color: var(--primary);
+      cursor: pointer;
     }
     .calc-input-val {
       font-family: 'JetBrains Mono', monospace;
       color: #fb923c;
-      font-weight: 700;
+      font-weight: 800;
       float: right;
     }
     .calc-result-box {
-      background: rgba(15, 23, 42, 0.8);
-      border: 1px solid rgba(249, 115, 22, 0.3);
-      border-radius: 16px;
-      padding: 2rem;
+      background: radial-gradient(circle at top, rgba(16, 185, 129, 0.15) 0%, rgba(15, 23, 42, 0.95) 70%);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      border-radius: 18px;
+      padding: 2.25rem 2rem;
       text-align: center;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
     }
     .calc-result-val {
-      font-size: 3rem;
+      font-size: 3.2rem;
       font-weight: 800;
       color: #34d399;
-      letter-spacing: -0.03em;
+      letter-spacing: -0.035em;
       margin: 0.5rem 0;
+      text-shadow: 0 0 25px rgba(52, 211, 153, 0.4);
     }
 
-    /* Comparison / Features Grid */
+    /* Key Operational Modules Grid */
     .features-section {
-      margin-top: 4rem;
+      margin-top: 4.5rem;
     }
     .features-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
       gap: 1.5rem;
       margin-top: 2rem;
     }
     .feature-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 1.5rem;
-      transition: transform 0.2s, border-color 0.2s;
+      border-radius: 18px;
+      padding: 1.65rem;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    .feature-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: transparent;
+      transition: background 0.25s;
     }
     .feature-card:hover {
-      transform: translateY(-3px);
-      border-color: rgba(249, 115, 22, 0.4);
+      transform: translateY(-4px);
+      border-color: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    }
+    .feature-card:hover::before {
+      background: linear-gradient(90deg, #f97316, #3b82f6);
     }
     .feature-icon {
-      font-size: 2rem;
-      margin-bottom: 0.75rem;
+      font-size: 2.1rem;
+      margin-bottom: 0.85rem;
+      display: inline-block;
     }
     .feature-card h3 {
-      font-size: 1.1rem;
-      font-weight: 700;
+      font-size: 1.15rem;
+      font-weight: 800;
       margin-bottom: 0.5rem;
+      letter-spacing: -0.015em;
     }
     .feature-card p {
-      font-size: 0.88rem;
+      font-size: 0.9rem;
       color: var(--text-muted);
-      line-height: 1.5;
+      line-height: 1.55;
     }
 
     /* Client Contact & Call to Action */
     .cta-section {
-      margin-top: 4rem;
-      background: linear-gradient(135deg, rgba(249, 115, 22, 0.15), rgba(139, 92, 246, 0.15));
-      border: 1px solid rgba(249, 115, 22, 0.3);
-      border-radius: 20px;
-      padding: 3rem 2rem;
+      margin-top: 4.5rem;
+      background: linear-gradient(135deg, rgba(249, 115, 22, 0.18) 0%, rgba(99, 102, 241, 0.18) 100%);
+      border: 1px solid rgba(249, 115, 22, 0.35);
+      border-radius: 24px;
+      padding: 3.25rem 2rem;
       text-align: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
     }
     .cta-section h2 {
-      font-size: 2rem;
+      font-size: 2.2rem;
       font-weight: 800;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.6rem;
+      letter-spacing: -0.025em;
     }
     .cta-email-box {
       display: inline-flex;
       align-items: center;
-      gap: 0.75rem;
-      background: rgba(0, 0, 0, 0.5);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      padding: 0.75rem 1.5rem;
-      border-radius: 12px;
+      gap: 0.85rem;
+      background: rgba(0, 0, 0, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      padding: 0.85rem 1.75rem;
+      border-radius: 14px;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 1.1rem;
+      font-size: 1.15rem;
       color: #fb923c;
+      font-weight: 700;
       margin-top: 1.5rem;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Footer */
+    footer {
+      margin-top: 4rem;
+      text-align: center;
+      border-top: 1px solid var(--card-border);
+      padding-top: 2rem;
+      color: var(--text-muted);
+      font-size: 0.85rem;
     }
 
     /* Print / PDF Mode */
@@ -582,16 +670,17 @@
       }
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 820px) {
       .scene-center {
         grid-template-columns: 1fr;
+        gap: 1.5rem;
       }
       .calc-grid {
         grid-template-columns: 1fr;
       }
       .video-stage {
-        min-height: 540px;
-        padding: 1.25rem;
+        min-height: 560px;
+        padding: 1.5rem;
       }
     }
   </style>
@@ -599,9 +688,10 @@
 <body>
 
   <!-- Ambient Glowing Backdrop -->
-  <div class="ambient-bg">
-    <div class="orb-1"></div>
-    <div class="orb-2"></div>
+  <div class="ambient-bg" id="ambientBg">
+    <div class="orb-1" id="ambientOrb1"></div>
+    <div class="orb-2" id="ambientOrb2"></div>
+    <div class="orb-3"></div>
   </div>
 
   <!-- Header -->
@@ -617,7 +707,7 @@
       <button class="btn btn-secondary" onclick="window.print()" title="Save as clean PDF proposal">
         🖨️ Export PDF Pitch
       </button>
-      <a href="mailto:tsubasadigital@gmail.com?subject=QuickTable%20Restaurant%20Demo%20Inquiry" class="btn btn-primary">
+      <a href="mailto:tsubasadigitals@gmail.com?subject=QuickTable%20Restaurant%20Demo%20Inquiry" class="btn btn-primary">
         ✉️ Contact tsubasa digital
       </a>
     </div>
@@ -631,7 +721,7 @@
       <p>A self-running presentation demo engineered for restaurant owners, general managers, and hospitality directors.</p>
     </section>
 
-    <!-- Cinema Video / Slide Player -->
+    <!-- Cinema Video / Slide Player with Adaptive Stage Grading -->
     <div class="video-viewport">
       <div class="video-stage" id="stage">
         <!-- Injected via JavaScript -->
@@ -673,10 +763,10 @@
     <section class="calc-section">
       <div class="calc-grid">
         <div>
-          <span style="color: var(--primary); font-weight: 700; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em;">Client Financial Return</span>
-          <h2 style="font-size: 1.8rem; font-weight: 800; margin: 0.35rem 0 1rem;">How Much Does QuickTable Earn Your Restaurant?</h2>
-          <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">
-            Faster table turn times (+25%), zero cashier order-entry bottlenecks, and automated upselling directly increase monthly gross profit.
+          <span style="color: var(--primary); font-weight: 800; text-transform: uppercase; font-size: 0.78rem; letter-spacing: 0.06em;">Client Financial Return</span>
+          <h2 style="font-size: 1.9rem; font-weight: 800; margin: 0.35rem 0 1rem; line-height: 1.2;">How Much Extra Revenue Does QuickTable Generate?</h2>
+          <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem; line-height: 1.55;">
+            Faster table turn times (+28%), zero waiter order-taking delays, and automated photo menu upselling directly increase monthly gross profit.
           </p>
 
           <div class="calc-input-group">
@@ -705,14 +795,14 @@
         </div>
 
         <div class="calc-result-box">
-          <span style="font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Estimated Monthly Revenue Boost</span>
+          <span style="font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Estimated Monthly Revenue Boost</span>
           <div class="calc-result-val" id="roiResult">+$4,725</div>
-          <p style="font-size: 0.88rem; color: #cbd5e1; line-height: 1.5;">
-            Based on a conservative <strong>15% table turnaround boost</strong> and <strong>8% higher dessert/beverage upselling</strong> via the digital QR menu.
+          <p style="font-size: 0.9rem; color: #cbd5e1; line-height: 1.55;">
+            Based on a realistic <strong>15% table turnaround boost</strong> and <strong>8% higher dessert/beverage upselling</strong> driven by digital QR ordering.
           </p>
-          <div style="margin-top: 1.5rem; display: flex; justify-content: center; gap: 0.5rem;">
-            <span style="font-size: 0.75rem; background: rgba(16, 185, 129, 0.15); color: #34d399; padding: 0.3rem 0.6rem; border-radius: 6px;">✓ Pays for itself in 3 days</span>
-            <span style="font-size: 0.75rem; background: rgba(59, 130, 246, 0.15); color: #60a5fa; padding: 0.3rem 0.6rem; border-radius: 6px;">✓ Zero hardware lock-in</span>
+          <div style="margin-top: 1.5rem; display: flex; justify-content: center; gap: 0.6rem; flex-wrap: wrap;">
+            <span style="font-size: 0.78rem; font-weight: 700; background: rgba(16, 185, 129, 0.18); color: #34d399; padding: 0.35rem 0.75rem; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.3);">✓ Pays for itself in 3 days</span>
+            <span style="font-size: 0.78rem; font-weight: 700; background: rgba(59, 130, 246, 0.18); color: #60a5fa; padding: 0.35rem 0.75rem; border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.3);">✓ Zero hardware lock-in</span>
           </div>
         </div>
       </div>
@@ -720,75 +810,75 @@
 
     <!-- Key Feature Breakdown -->
     <section class="features-section">
-      <div style="text-align: center; max-width: 600px; margin: 0 auto;">
-        <h2 style="font-size: 1.8rem; font-weight: 800;">Everything a Modern Restaurant Demands</h2>
-        <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.4rem;">Built from the ground up for speed, reliability, and delightful customer experiences.</p>
+      <div style="text-align: center; max-width: 650px; margin: 0 auto;">
+        <h2 style="font-size: 2rem; font-weight: 800; letter-spacing: -0.025em;">Everything a Modern Restaurant Demands</h2>
+        <p style="color: var(--text-muted); font-size: 0.98rem; margin-top: 0.5rem;">Built from the ground up for speed, reliability, and delightful customer experiences.</p>
       </div>
 
       <div class="features-grid">
         <div class="feature-card">
           <div class="feature-icon">📱</div>
           <h3>Zero-App Table QR Ordering</h3>
-          <p>Guests scan table QR codes using standard camera apps. No app download required. Instant high-resolution menu browsing and live dietary filters.</p>
+          <p>Guests scan table acrylic QR codes using standard camera apps. No app download required. Instant high-resolution menu browsing, dietary badges, and live cooking notes.</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon">🍳</div>
           <h3>Kitchen Display System (KDS)</h3>
-          <p>Paperless ticket routing directly to chef tablets. Real-time cooking timers, prep stages, and audible alerts for expedited service.</p>
+          <p>Paperless ticket routing directly to chef tablets in &lt;500ms. Real-time urgency countdown timers (Green/Amber/Red), prep stages, and audible order alerts.</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon">💳</div>
           <h3>Ultra-Fast POS & Split Billing</h3>
-          <p>Instant table settlement with cash, card, and dynamic UPI QR codes. One-click split bills and automated 80mm thermal receipt printing.</p>
+          <p>Instant table settlement with cash, card, and dynamic UPI QR codes. One-click split bills (by seat or equal share) and automated 80mm thermal receipt printing.</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon">📊</div>
           <h3>Real-Time Owner Insights</h3>
-          <p>Hourly sales velocity, category revenue breakdown, table turnover analytics, and food cost margin tracking on any mobile phone.</p>
+          <p>Hourly sales velocity, category revenue breakdown, table turnover analytics, and food cost margin tracking on any smartphone from anywhere in the world.</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon">🏢</div>
           <h3>Multi-Outlet Branch Support</h3>
-          <p>Manage 1 to 50+ restaurant branches with isolated tenant data, central franchise reporting, and custom staff permission roles.</p>
+          <p>Manage 1 to 50+ restaurant branches with isolated tenant data, central franchise reporting, and custom staff permission roles (Chef, Cashier, Waiter, Manager).</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon">🔒</div>
           <h3>Rock-Solid Cloud Architecture</h3>
-          <p>99.9% uptime SLA, automated real-time backups, and dedicated priority support provided by tsubasa digital engineers.</p>
+          <p>99.9% uptime SLA, automated real-time backups, bank-grade encryption, and dedicated priority support provided by tsubasa digital engineers.</p>
         </div>
       </div>
     </section>
 
     <!-- Call to Action -->
     <section class="cta-section">
-      <span style="font-size: 0.8rem; font-weight: 700; color: #fb923c; text-transform: uppercase; letter-spacing: 0.05em;">Get Started Today</span>
+      <span style="font-size: 0.82rem; font-weight: 800; color: #fb923c; text-transform: uppercase; letter-spacing: 0.07em;">Get Started Today</span>
       <h2>Deploy QuickTable in Your Restaurant This Week</h2>
-      <p style="color: #cbd5e1; max-width: 520px; margin: 0.5rem auto 0; font-size: 1rem;">
-        Contact tsubasa digital for customized deployment, on-site staff training, and menu digitization.
+      <p style="color: #cbd5e1; max-width: 540px; margin: 0.6rem auto 0; font-size: 1.05rem; line-height: 1.55;">
+        Contact tsubasa digital for customized deployment, on-site staff training, and full digital menu onboarding.
       </p>
 
       <div>
         <div class="cta-email-box">
           <span>✉️</span>
-          <span>tsubasadigital@gmail.com</span>
+          <span>tsubasadigitals@gmail.com</span>
         </div>
       </div>
 
-      <div style="margin-top: 1.5rem;">
-        <a href="mailto:tsubasadigital@gmail.com?subject=QuickTable%20Restaurant%20Onboarding" class="btn btn-primary" style="font-size: 1rem; padding: 0.75rem 1.75rem;">
+      <div style="margin-top: 1.75rem;">
+        <a href="mailto:tsubasadigitals@gmail.com?subject=QuickTable%20Restaurant%20Onboarding" class="btn btn-primary" style="font-size: 1.05rem; padding: 0.85rem 2rem;">
           Schedule Live Onboarding
         </a>
       </div>
     </section>
 
     <!-- Footer -->
-    <footer style="margin-top: 4rem; text-align: center; border-top: 1px solid var(--card-border); padding-top: 2rem; color: var(--text-muted); font-size: 0.85rem;">
+    <footer>
       <p>© 2026 QuickTable by tsubasa digital. All rights reserved.</p>
-      <p style="margin-top: 0.35rem; font-size: 0.75rem;">Enterprise Restaurant Technology Solutions • Contact: tsubasadigital@gmail.com</p>
+      <p style="margin-top: 0.35rem; font-size: 0.78rem;">Enterprise Restaurant Technology Solutions • Contact: tsubasadigitals@gmail.com</p>
     </footer>
   </main>
 
-  <!-- Interactive Scene & Video Script -->
+  <!-- Interactive Scene & Video Script with Adaptive Color Grading -->
   <script>
     const SCENES = [
       {
@@ -796,29 +886,31 @@
         title: "The Problem & The Solution",
         badge: "01. Executive Overview",
         badgeBg: "#f97316",
+        stageGradient: "radial-gradient(circle at 60% 40%, rgba(249, 115, 22, 0.22) 0%, rgba(194, 65, 12, 0.08) 45%, #080d19 80%)",
+        orb1Color: "radial-gradient(circle, rgba(249, 115, 22, 0.25) 0%, transparent 70%)",
         headline: "Cut Waiter Bottlenecks by 60%",
         desc: "Traditional paper menus and busy waiters cause customer frustration and lost dessert revenue. QuickTable creates a frictionless, instant ordering pipeline.",
         highlights: [
           "Zero app download for diners",
-          "Direct kitchen ticket dispatch in < 1 second",
+          "Direct kitchen ticket dispatch in < 500ms",
           "Works on any smartphone, iPad, or POS terminal"
         ],
         mockupHeader: "QuickTable Architecture",
         mockupHtml: `
           <div style="display:flex; flex-direction:column; gap:0.75rem; justify-content:center; height:100%;">
-            <div style="display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.05); padding:0.6rem 0.8rem; border-radius:8px;">
-              <span style="font-size:0.85rem;">📱 Table QR Order</span>
-              <span style="font-size:0.75rem; color:#34d399; font-weight:600;">Instant Web</span>
+            <div style="display:flex; align-items:center; justify-content:space-between; background:rgba(249,115,22,0.1); border:1px solid rgba(249,115,22,0.3); padding:0.65rem 0.85rem; border-radius:10px;">
+              <span style="font-size:0.88rem; font-weight:700;">📱 Table QR Order</span>
+              <span style="font-size:0.75rem; color:#34d399; font-weight:700; background:rgba(16,185,129,0.15); padding:2px 8px; border-radius:6px;">Instant Web</span>
             </div>
-            <div style="text-align:center; color:#f97316; font-size:0.8rem;">⬇️ Real-Time WebSocket Sync</div>
-            <div style="display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.05); padding:0.6rem 0.8rem; border-radius:8px;">
-              <span style="font-size:0.85rem;">🍳 Kitchen KDS Display</span>
-              <span style="font-size:0.75rem; color:#60a5fa; font-weight:600;">Chef Priority</span>
+            <div style="text-align:center; color:#fb923c; font-size:0.8rem; font-weight:700; letter-spacing:0.04em;">⬇️ Real-Time WebSocket Sync</div>
+            <div style="display:flex; align-items:center; justify-content:space-between; background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); padding:0.65rem 0.85rem; border-radius:10px;">
+              <span style="font-size:0.88rem; font-weight:700;">🍳 Kitchen KDS Display</span>
+              <span style="font-size:0.75rem; color:#60a5fa; font-weight:700; background:rgba(59,130,246,0.15); padding:2px 8px; border-radius:6px;">Chef Priority</span>
             </div>
-            <div style="text-align:center; color:#f97316; font-size:0.8rem;">⬇️ Auto Billing Sync</div>
-            <div style="display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.05); padding:0.6rem 0.8rem; border-radius:8px;">
-              <span style="font-size:0.85rem;">💳 Cashier POS & Owner App</span>
-              <span style="font-size:0.75rem; color:#fbbf24; font-weight:600;">80mm Tax Bill</span>
+            <div style="text-align:center; color:#fb923c; font-size:0.8rem; font-weight:700; letter-spacing:0.04em;">⬇️ Auto Billing Sync</div>
+            <div style="display:flex; align-items:center; justify-content:space-between; background:rgba(168,85,247,0.1); border:1px solid rgba(168,85,247,0.3); padding:0.65rem 0.85rem; border-radius:10px;">
+              <span style="font-size:0.88rem; font-weight:700;">💳 Cashier POS & Owner App</span>
+              <span style="font-size:0.75rem; color:#c084fc; font-weight:700; background:rgba(168,85,247,0.15); padding:2px 8px; border-radius:6px;">80mm Tax Bill</span>
             </div>
           </div>
         `
@@ -828,6 +920,8 @@
         title: "Guest Experience: Instant Table QR",
         badge: "02. Customer Mobile",
         badgeBg: "#10b981",
+        stageGradient: "radial-gradient(circle at 60% 40%, rgba(16, 185, 129, 0.22) 0%, rgba(5, 150, 105, 0.08) 45%, #080d19 80%)",
+        orb1Color: "radial-gradient(circle, rgba(16, 185, 129, 0.25) 0%, transparent 70%)",
         headline: "Diners Order Directly From Their Phone",
         desc: "Customers scan a unique table acrylic QR code. They view appetizing photo menus, ingredient warnings, dietary tags, and submit orders in seconds.",
         highlights: [
@@ -837,17 +931,21 @@
         ],
         mockupHeader: "Guest View • Table #04",
         mockupHtml: `
-          <div style="background:#111827; border-radius:12px; padding:0.75rem; border:1px solid #1f2937;">
-            <div style="display:flex; gap:0.6rem; align-items:center; margin-bottom:0.6rem;">
-              <div style="width:40px; height:40px; background:#f97316; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.2rem;">🍕</div>
+          <div style="background:#0f172a; border-radius:14px; padding:0.85rem; border:1px solid rgba(16,185,129,0.3); box-shadow:0 10px 25px rgba(0,0,0,0.5);">
+            <div style="display:flex; gap:0.75rem; align-items:center; margin-bottom:0.75rem;">
+              <div style="width:44px; height:44px; background:linear-gradient(135deg, #10b981, #059669); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.35rem; box-shadow:0 4px 12px rgba(16,185,129,0.3);">🍕</div>
               <div style="flex:1;">
-                <div style="font-size:0.85rem; font-weight:700;">Wood-Fired Truffle Pizza</div>
-                <div style="font-size:0.7rem; color:#9ca3af;">Fresh mozzarella, truffle oil</div>
+                <div style="font-size:0.92rem; font-weight:800; color:#fff;">Wood-Fired Truffle Pizza</div>
+                <div style="font-size:0.72rem; color:#94a3b8;">Fresh mozzarella, black truffle oil</div>
+                <div style="display:flex; gap:4px; margin-top:3px;">
+                  <span style="font-size:0.65rem; background:rgba(16,185,129,0.15); color:#34d399; padding:1px 5px; border-radius:4px; font-weight:700;">🌱 Vegetarian</span>
+                  <span style="font-size:0.65rem; background:rgba(239,68,68,0.15); color:#f87171; padding:1px 5px; border-radius:4px; font-weight:700;">🔥 Mild Spice</span>
+                </div>
               </div>
-              <div style="font-weight:700; color:#34d399; font-size:0.85rem;">$18.50</div>
+              <div style="font-weight:800; color:#34d399; font-size:0.95rem;">$18.50</div>
             </div>
-            <div style="background:rgba(16,185,129,0.15); color:#34d399; padding:0.4rem; border-radius:6px; font-size:0.75rem; text-align:center; font-weight:600;">
-              ✓ Sent to Kitchen (Prep Time: ~12m)
+            <div style="background:rgba(16,185,129,0.18); border:1px solid rgba(16,185,129,0.35); color:#34d399; padding:0.45rem; border-radius:8px; font-size:0.78rem; text-align:center; font-weight:700;">
+              ✓ Dispatched to Kitchen (Prep Time: ~12 mins)
             </div>
           </div>
         `
@@ -857,25 +955,27 @@
         title: "Kitchen Display System (KDS)",
         badge: "03. Chef Display",
         badgeBg: "#3b82f6",
+        stageGradient: "radial-gradient(circle at 60% 40%, rgba(59, 130, 246, 0.22) 0%, rgba(37, 99, 235, 0.08) 45%, #080d19 80%)",
+        orb1Color: "radial-gradient(circle, rgba(59, 130, 246, 0.25) 0%, transparent 70%)",
         headline: "Zero Lost Tickets. Zero Screaming.",
         desc: "Replaces dirty paper slips with color-coded tablet stations. Chefs see order timestamp urgencies, allergen alerts, and tap to notify waitstaff.",
         highlights: [
-          "Color-coded countdown clocks",
+          "Color-coded countdown clocks (Green/Amber/Red)",
           "Audible chime upon incoming orders",
           "Table number, seat notes, and modifications clearly listed"
         ],
         mockupHeader: "Kitchen Live Ticket • Table #04",
         mockupHtml: `
-          <div style="background:#1e1b4b; border:1px solid #4338ca; border-radius:10px; padding:0.75rem;">
-            <div style="display:flex; justify-content:space-between; font-size:0.75rem; font-weight:700; color:#a5b4fc; margin-bottom:0.5rem;">
+          <div style="background:#131c38; border:1px solid rgba(59,130,246,0.35); border-radius:12px; padding:0.85rem; box-shadow:0 10px 25px rgba(0,0,0,0.5);">
+            <div style="display:flex; justify-content:space-between; font-size:0.78rem; font-weight:800; color:#93c5fd; margin-bottom:0.5rem;">
               <span>TICKET #108 • TABLE 4</span>
-              <span style="color:#f87171;">⏳ 04:12</span>
+              <span style="color:#f87171; font-family:'JetBrains Mono',monospace; background:rgba(239,68,68,0.15); padding:2px 6px; border-radius:4px;">⏳ 04:12 RUSH</span>
             </div>
-            <div style="font-size:0.85rem; font-weight:600; color:white;">1x Wood-Fired Truffle Pizza</div>
-            <div style="font-size:0.7rem; color:#cbd5e1; margin-bottom:0.75rem;">Note: Extra crispy crust</div>
-            <div style="display:flex; gap:0.4rem;">
-              <button style="flex:1; background:#4f46e5; color:white; border:none; padding:0.35rem; border-radius:6px; font-size:0.7rem; font-weight:600;">Cooking</button>
-              <button style="flex:1; background:#059669; color:white; border:none; padding:0.35rem; border-radius:6px; font-size:0.7rem; font-weight:600;">Mark Ready</button>
+            <div style="font-size:0.92rem; font-weight:800; color:white;">1x Wood-Fired Truffle Pizza</div>
+            <div style="font-size:0.74rem; color:#cbd5e1; margin-bottom:0.85rem;">Note: <em>Extra crispy crust, slice into 8</em></div>
+            <div style="display:flex; gap:0.5rem;">
+              <button style="flex:1; background:linear-gradient(135deg, #3b82f6, #2563eb); color:white; border:none; padding:0.45rem; border-radius:8px; font-size:0.75rem; font-weight:800; cursor:pointer;">🍳 Cooking</button>
+              <button style="flex:1; background:linear-gradient(135deg, #10b981, #059669); color:white; border:none; padding:0.45rem; border-radius:8px; font-size:0.75rem; font-weight:800; cursor:pointer;">✓ Mark Ready</button>
             </div>
           </div>
         `
@@ -885,6 +985,8 @@
         title: "Cashier POS & Split Invoicing",
         badge: "04. Cashier Desk",
         badgeBg: "#8b5cf6",
+        stageGradient: "radial-gradient(circle at 60% 40%, rgba(139, 92, 246, 0.22) 0%, rgba(124, 58, 237, 0.08) 45%, #080d19 80%)",
+        orb1Color: "radial-gradient(circle, rgba(139, 92, 246, 0.25) 0%, transparent 70%)",
         headline: "10-Second Checkout with Dynamic QR",
         desc: "Tables can settle instantly with Cash, Card, or Dynamic UPI QR codes. One click splits the bill evenly and triggers thermal invoice printing.",
         highlights: [
@@ -892,24 +994,24 @@
           "Dynamic UPI QR generation for instant smartphone payments",
           "Auto-calculates local taxes (GST / VAT) and service charge"
         ],
-        mockupHeader: "POS Billing Terminal",
+        mockupHeader: "POS Billing Terminal • Table #04",
         mockupHtml: `
-          <div style="display:flex; flex-direction:column; gap:0.5rem;">
-            <div style="display:flex; justify-content:space-between; font-size:0.85rem;">
+          <div style="display:flex; flex-direction:column; gap:0.5rem; background:#121829; border:1px solid rgba(139,92,246,0.3); padding:0.85rem; border-radius:12px;">
+            <div style="display:flex; justify-content:space-between; font-size:0.88rem;">
               <span style="color:#94a3b8;">Subtotal (3 items):</span>
-              <span style="font-weight:600;">$42.00</span>
+              <span style="font-weight:700;">$42.00</span>
             </div>
-            <div style="display:flex; justify-content:space-between; font-size:0.85rem;">
-              <span style="color:#94a3b8;">Tax (8.25%):</span>
-              <span style="font-weight:600;">$3.47</span>
+            <div style="display:flex; justify-content:space-between; font-size:0.88rem;">
+              <span style="color:#94a3b8;">Tax (GST / VAT 8.25%):</span>
+              <span style="font-weight:700;">$3.47</span>
             </div>
-            <div style="display:flex; justify-content:space-between; font-size:1rem; font-weight:800; border-top:1px dashed #334155; padding-top:0.4rem;">
-              <span>Total Bill:</span>
+            <div style="display:flex; justify-content:space-between; font-size:1.05rem; font-weight:800; border-top:1px dashed rgba(255,255,255,0.15); padding-top:0.45rem;">
+              <span>Total Settle:</span>
               <span style="color:#34d399;">$45.47</span>
             </div>
-            <div style="display:flex; gap:0.4rem; margin-top:0.4rem;">
-              <button style="flex:1; background:#10b981; color:white; border:none; padding:0.4rem; border-radius:6px; font-size:0.75rem; font-weight:600;">Print Bill</button>
-              <button style="flex:1; background:#3b82f6; color:white; border:none; padding:0.4rem; border-radius:6px; font-size:0.75rem; font-weight:600;">UPI QR Code</button>
+            <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
+              <button style="flex:1; background:linear-gradient(135deg, #10b981, #059669); color:white; border:none; padding:0.45rem; border-radius:8px; font-size:0.78rem; font-weight:800; cursor:pointer;">🖨️ Print 80mm</button>
+              <button style="flex:1; background:linear-gradient(135deg, #8b5cf6, #7c3aed); color:white; border:none; padding:0.45rem; border-radius:8px; font-size:0.78rem; font-weight:800; cursor:pointer;">📱 Dynamic UPI QR</button>
             </div>
           </div>
         `
@@ -919,6 +1021,8 @@
         title: "Owner Analytics & Staff Hub",
         badge: "05. Owner Command",
         badgeBg: "#06b6d4",
+        stageGradient: "radial-gradient(circle at 60% 40%, rgba(6, 182, 212, 0.22) 0%, rgba(14, 165, 233, 0.08) 45%, #080d19 80%)",
+        orb1Color: "radial-gradient(circle, rgba(6, 182, 212, 0.25) 0%, transparent 70%)",
         headline: "Track Everything From Anywhere",
         desc: "Whether on vacation or in the back office, owners monitor gross margins, best-selling dishes, labor shifts, and multi-location branch performances.",
         highlights: [
@@ -928,21 +1032,21 @@
         ],
         mockupHeader: "Owner Live Dashboard",
         mockupHtml: `
-          <div style="display:flex; flex-direction:column; gap:0.7rem;">
+          <div style="display:flex; flex-direction:column; gap:0.75rem; background:#0c1829; border:1px solid rgba(6,182,212,0.3); padding:0.85rem; border-radius:12px;">
             <div style="display:flex; justify-content:space-between; align-items:center;">
               <div>
-                <div style="font-size:0.7rem; color:#94a3b8;">TODAY'S REVENUE</div>
-                <div style="font-size:1.3rem; font-weight:800; color:#38bdf8;">$2,840.50</div>
+                <div style="font-size:0.72rem; color:#94a3b8; font-weight:700;">TODAY'S GROSS SALES</div>
+                <div style="font-size:1.45rem; font-weight:800; color:#38bdf8;">$2,840.50</div>
               </div>
-              <div style="background:rgba(56,189,248,0.15); color:#38bdf8; font-size:0.75rem; padding:0.25rem 0.6rem; border-radius:6px; font-weight:700;">
+              <div style="background:rgba(56,189,248,0.18); border:1px solid rgba(56,189,248,0.35); color:#38bdf8; font-size:0.78rem; padding:0.3rem 0.75rem; border-radius:8px; font-weight:800;">
                 +24.6% vs yesterday
               </div>
             </div>
-            <div style="height:60px; background:linear-gradient(to top, rgba(56,189,248,0.1), transparent); border-bottom:2px solid #38bdf8; border-radius:4px; display:flex; align-items:flex-end; justify-content:space-around; padding-bottom:4px;">
-              <span style="font-size:0.6rem; color:#64748b;">12 PM</span>
-              <span style="font-size:0.6rem; color:#64748b;">2 PM</span>
-              <span style="font-size:0.6rem; color:#64748b;">6 PM</span>
-              <span style="font-size:0.6rem; color:#64748b;">9 PM</span>
+            <div style="height:65px; background:linear-gradient(to top, rgba(56,189,248,0.15), transparent); border-bottom:2px solid #38bdf8; border-radius:6px; display:flex; align-items:flex-end; justify-content:space-around; padding-bottom:4px;">
+              <span style="font-size:0.65rem; color:#94a3b8; font-weight:600;">12 PM</span>
+              <span style="font-size:0.65rem; color:#94a3b8; font-weight:600;">2 PM</span>
+              <span style="font-size:0.65rem; color:#94a3b8; font-weight:600;">6 PM</span>
+              <span style="font-size:0.65rem; color:#94a3b8; font-weight:600;">9 PM (Peak)</span>
             </div>
           </div>
         `
@@ -952,21 +1056,23 @@
         title: "Engineered by tsubasa digital",
         badge: "06. Enterprise Guarantee",
         badgeBg: "#eab308",
+        stageGradient: "radial-gradient(circle at 60% 40%, rgba(234, 179, 8, 0.22) 0%, rgba(202, 138, 4, 0.08) 45%, #080d19 80%)",
+        orb1Color: "radial-gradient(circle, rgba(234, 179, 8, 0.25) 0%, transparent 70%)",
         headline: "Reliable, Dedicated & Customized",
         desc: "We don't just sell software. tsubasa digital handles full setup, menu input, staff training, and provides round-the-clock priority technical support.",
         highlights: [
-          "Dedicated technical contact: tsubasadigital@gmail.com",
+          "Dedicated technical contact: tsubasadigitals@gmail.com",
           "Cloud database encryption & automated daily backups",
           "Custom integrations with local payment gateways and hardware"
         ],
         mockupHeader: "tsubasa digital Support SLA",
         mockupHtml: `
-          <div style="text-align:center; padding:0.5rem 0;">
-            <div style="font-size:1.5rem; margin-bottom:0.25rem;">🛡️</div>
-            <div style="font-weight:700; font-size:0.95rem; color:#fde047;">99.9% Uptime Commitment</div>
-            <div style="font-size:0.75rem; color:#94a3b8; margin:0.35rem 0 0.75rem;">Zero loss of sales during peak rush hour</div>
-            <div style="background:rgba(255,255,255,0.06); padding:0.5rem; border-radius:8px; font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:#cbd5e1;">
-              Direct Email: tsubasadigital@gmail.com
+          <div style="text-align:center; padding:0.75rem 0; background:#1c1809; border:1px solid rgba(234,179,8,0.3); border-radius:12px;">
+            <div style="font-size:1.75rem; margin-bottom:0.25rem;">🛡️</div>
+            <div style="font-weight:800; font-size:1rem; color:#fde047;">99.9% Cloud Uptime Commitment</div>
+            <div style="font-size:0.78rem; color:#cbd5e1; margin:0.35rem 0 0.85rem;">Zero loss of sales during peak dinner rush</div>
+            <div style="background:rgba(255,255,255,0.08); padding:0.6rem 0.85rem; border-radius:8px; font-family:'JetBrains Mono',monospace; font-size:0.85rem; color:#fbbf24; display:inline-block; font-weight:700;">
+              Direct Email: tsubasadigitals@gmail.com
             </div>
           </div>
         `
@@ -993,7 +1099,7 @@
         osc.type = 'sine';
         osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
         osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15); // A5
-        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.setValueAtTime(0.09, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
         osc.connect(gain);
         gain.connect(ctx.destination);
@@ -1005,10 +1111,18 @@
     function renderStage() {
       const s = SCENES[currentScene];
       const stage = document.getElementById('stage');
+      const orb1 = document.getElementById('ambientOrb1');
+
+      // Update adaptive color grading backdrops
+      stage.style.background = s.stageGradient;
+      if (orb1 && s.orb1Color) {
+        orb1.style.background = s.orb1Color;
+      }
+
       stage.innerHTML = `
         <div class="scene-content">
           <div class="scene-meta">
-            <span class="scene-badge" style="background:${s.badgeBg}22; border-color:${s.badgeBg}55; color:${s.badgeBg}">
+            <span class="scene-badge" style="background:${s.badgeBg}22; border-color:${s.badgeBg}66; color:${s.badgeBg}; box-shadow:0 0 15px ${s.badgeBg}33">
               ${s.badge}
             </span>
             <span class="scene-counter">${currentScene + 1} / ${SCENES.length}</span>
@@ -1041,7 +1155,7 @@
             </div>
           </div>
 
-          <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:#64748b; border-top:1px solid rgba(255,255,255,0.06); padding-top:0.75rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:#64748b; border-top:1px solid rgba(255,255,255,0.08); padding-top:0.75rem;">
             <span>Chapter: <strong>${s.title}</strong></span>
             <span>Auto-Tour Mode (${(progress / 100 * (SCENE_DURATION_MS / 1000)).toFixed(1)}s / ${(SCENE_DURATION_MS / 1000)}s)</span>
           </div>

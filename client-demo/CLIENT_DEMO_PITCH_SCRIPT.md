@@ -1,5 +1,5 @@
 # QuickTable — Client Demo & Pitch Playbook
-**Powered by tsubasa digital** • Contact: `tsubasadigital@gmail.com`
+**Powered by tsubasa digital** • Contact: `tsubasadigitals@gmail.com`
 
 ---
 
@@ -71,7 +71,7 @@
 | **"Do customers actually use QR codes?"** | *"Yes! 74% of diners prefer ordering on their phone because they don't have to wait. But traditional waiters can still take orders manually on the POS if an elderly customer prefers it. You get the best of both worlds."* |
 | **"Do I have to buy expensive new hardware?"** | *"No. QuickTable runs on whatever you already have—standard Android tablets, iPads, existing Windows POS, and thermal receipt printers."* |
 | **"What if my internet goes down?"** | *"The software has local session persistence and auto-reconnects as soon as the line recovers, ensuring zero lost tickets or double charges."* |
-| **"Who helps us if something goes wrong?"** | *"tsubasa digital provides dedicated priority engineering support directly via `tsubasadigital@gmail.com` with guaranteed uptime SLA."* |
+| **"Who helps us if something goes wrong?"** | *"tsubasa digital provides dedicated priority engineering support directly via `tsubasadigitals@gmail.com` with guaranteed uptime SLA."* |
 
 ---
 
@@ -87,11 +87,11 @@ Thank you for your time today discussing [Restaurant Name]'s dine-in workflow.
 As discussed, I have attached our QuickTable Executive Overview brochure. QuickTable streamlines table QR ordering, kitchen line tickets, and cashier billing to increase table turnover by up to 28% without requiring expensive proprietary hardware.
 
 Attached:
-- QuickTable_Executive_Brochure.pdf (Overview & Deployment Packages)
+- QuickTable_Executive_Brochure.pdf (Overview & Capabilities)
 
 Would you be open to a 20-minute live trial setup next Tuesday or Wednesday?
 
 Best regards,
 tsubasa digital Team
-Email: tsubasadigital@gmail.com
+Email: tsubasadigitals@gmail.com
 ```

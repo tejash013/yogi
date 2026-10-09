@@ -4,8 +4,8 @@ const config = {
     description: 'Complete Restaurant Management System',
     version: '1.0.0',
     company: 'QuickTable by tsubasa digital',
-    supportEmail: 'tsubasadigital@gmail.com',
-    contactEmail: 'tsubasadigital@gmail.com',
+    supportEmail: 'tsubasadigitals@gmail.com',
+    contactEmail: 'tsubasadigitals@gmail.com',
     supportPhone: '+1-800-QUICKTABLE',
   },
   api: {
