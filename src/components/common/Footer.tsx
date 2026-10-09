@@ -23,7 +23,7 @@ export default function Footer() {
             &copy; {new Date().getFullYear()} <span className="font-semibold text-neutral-800 dark:text-neutral-200">{APP_CONFIG.APP_NAME}</span> by <span className="font-medium text-primary-600 dark:text-primary-400">tsubasa digital</span>. All rights reserved.
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-5 text-sm">
+          <div className="flex flex-wrap items-center justify-center gap-6 text-sm">
             <button
               type="button"
               onClick={() => setActiveModal('privacy')}
@@ -39,16 +39,6 @@ export default function Footer() {
             >
               Support
             </button>
-
-            <a
-              href={`mailto:${contactEmail}`}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-xs font-medium text-neutral-700 transition hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:border-primary-500/50 dark:hover:bg-primary-950/30 dark:hover:text-primary-300"
-              title={`Send an email to ${contactEmail}`}
-            >
-              <FiMail className="h-3.5 w-3.5 text-primary-500" />
-              <span>Contact:</span>
-              <span className="font-semibold text-primary-600 dark:text-primary-400">{contactEmail}</span>
-            </a>
           </div>
         </div>
       </div>
