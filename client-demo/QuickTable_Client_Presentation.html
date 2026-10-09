@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuickTable - Interactive Client Demo & Video Presentation | tsubasa digital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(17, 24, 39, 0.75);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --primary: #f97316;
+      --primary-glow: rgba(249, 115, 22, 0.35);
+      --emerald: #10b981;
+      --blue: #3b82f6;
+      --purple: #8b5cf6;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.5;
+    }
+
+    /* Ambient background glowing orbs */
+    .ambient-bg {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .orb-1 {
+      position: absolute;
+      top: -10%;
+      left: 15%;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(249, 115, 22, 0.15) 0%, transparent 70%);
+      filter: blur(60px);
+    }
+    .orb-2 {
+      position: absolute;
+      bottom: -10%;
+      right: 10%;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, transparent 70%);
+      filter: blur(80px);
+    }
+
+    /* Top presentation navigation bar */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(9, 13, 22, 0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--card-border);
+      padding: 0.85rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: #fff;
+      font-size: 1.2rem;
+      box-shadow: 0 4px 14px var(--primary-glow);
+    }
+    .brand-title {
+      font-weight: 800;
+      font-size: 1.15rem;
+      letter-spacing: -0.02em;
+    }
+    .brand-badge {
+      font-size: 0.72rem;
+      color: #cbd5e1;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.55rem 1rem;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      color: #fff;
+      box-shadow: 0 4px 14px var(--primary-glow);
+    }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(249, 115, 22, 0.5);
+    }
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid var(--card-border);
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+    .btn-emerald {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+    }
+
+    /* Main Container */
+    main {
+      position: relative;
+      z-index: 10;
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 5rem;
+    }
+
+    /* Hero Headline */
+    .hero {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .hero-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(249, 115, 22, 0.12);
+      border: 1px solid rgba(249, 115, 22, 0.3);
+      padding: 0.35rem 0.85rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #fb923c;
+      margin-bottom: 1rem;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 0.75rem;
+    }
+    .hero h1 span {
+      background: linear-gradient(135deg, #f97316 20%, #f43f5e 60%, #a855f7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero p {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    /* Video Player Frame */
+    .video-viewport {
+      background: #0f172a;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 40px -10px var(--primary-glow);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Video Screen Viewport */
+    .video-stage {
+      position: relative;
+      aspect-ratio: 16 / 9;
+      min-height: 480px;
+      background: radial-gradient(circle at center, #1e293b 0%, #0a0f1d 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem;
+      overflow: hidden;
+    }
+
+    /* Scene Container */
+    .scene-content {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px) scale(0.99); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* Scene Top Info */
+    .scene-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .scene-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    .scene-counter {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      background: rgba(0, 0, 0, 0.4);
+      padding: 0.3rem 0.65rem;
+      border-radius: 8px;
+    }
+
+    /* Scene Body */
+    .scene-center {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 2.5rem;
+      align-items: center;
+      margin: 1rem 0;
+    }
+    .scene-text h2 {
+      font-size: clamp(1.6rem, 2.8vw, 2.4rem);
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 0.75rem;
+    }
+    .scene-text p {
+      color: #94a3b8;
+      font-size: 0.98rem;
+      line-height: 1.6;
+      margin-bottom: 1.25rem;
+    }
+    .scene-highlights {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .highlight-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.9rem;
+      color: #cbd5e1;
+    }
+    .highlight-icon {
+      color: var(--emerald);
+      font-weight: bold;
+    }
+
+    /* UI Device Mockup */
+    .scene-mockup {
+      position: relative;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 16px;
+      padding: 1.25rem;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      min-height: 250px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .mockup-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .mockup-dots {
+      display: flex;
+      gap: 5px;
+    }
+    .mockup-dots span {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+    }
+    .mockup-body {
+      padding: 1rem 0;
+      flex: 1;
+    }
+
+    /* Video Player Controls Bar */
+    .player-controls {
+      background: rgba(10, 15, 29, 0.98);
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .scrubber-track {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    .scrubber-fill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      background: linear-gradient(90deg, #f97316, #f43f5e);
+      border-radius: 999px;
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+
+    .controls-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .playback-buttons {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .play-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      color: white;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      box-shadow: 0 4px 12px var(--primary-glow);
+      transition: transform 0.15s;
+    }
+    .play-btn:hover {
+      transform: scale(1.05);
+    }
+    .ctrl-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.06);
+      color: #94a3b8;
+      border: 1px solid var(--card-border);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+    .ctrl-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: white;
+    }
+
+    .chapter-tabs {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      overflow-x: auto;
+      max-width: 100%;
+      padding-bottom: 2px;
+    }
+    .chapter-tab {
+      padding: 0.35rem 0.65rem;
+      border-radius: 8px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid transparent;
+      color: #64748b;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .chapter-tab.active {
+      background: rgba(249, 115, 22, 0.15);
+      border-color: rgba(249, 115, 22, 0.4);
+      color: #fb923c;
+    }
+
+    /* ROI Calculator Section */
+    .calc-section {
+      margin-top: 4rem;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 2.5rem;
+      backdrop-filter: blur(16px);
+    }
+    .calc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2.5rem;
+      align-items: center;
+    }
+    .calc-input-group {
+      margin-bottom: 1.25rem;
+    }
+    .calc-input-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #cbd5e1;
+      margin-bottom: 0.4rem;
+    }
+    .calc-input-group input[type="range"] {
+      width: 100%;
+      accent-color: var(--primary);
+    }
+    .calc-input-val {
+      font-family: 'JetBrains Mono', monospace;
+      color: #fb923c;
+      font-weight: 700;
+      float: right;
+    }
+    .calc-result-box {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(249, 115, 22, 0.3);
+      border-radius: 16px;
+      padding: 2rem;
+      text-align: center;
+    }
+    .calc-result-val {
+      font-size: 3rem;
+      font-weight: 800;
+      color: #34d399;
+      letter-spacing: -0.03em;
+      margin: 0.5rem 0;
+    }
+
+    /* Comparison / Features Grid */
+    .features-section {
+      margin-top: 4rem;
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+    .feature-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .feature-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(249, 115, 22, 0.4);
+    }
+    .feature-icon {
+      font-size: 2rem;
+      margin-bottom: 0.75rem;
+    }
+    .feature-card h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .feature-card p {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* Client Contact & Call to Action */
+    .cta-section {
+      margin-top: 4rem;
+      background: linear-gradient(135deg, rgba(249, 115, 22, 0.15), rgba(139, 92, 246, 0.15));
+      border: 1px solid rgba(249, 115, 22, 0.3);
+      border-radius: 20px;
+      padding: 3rem 2rem;
+      text-align: center;
+    }
+    .cta-section h2 {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+    }
+    .cta-email-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 0.75rem 1.5rem;
+      border-radius: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.1rem;
+      color: #fb923c;
+      margin-top: 1.5rem;
+    }
+
+    /* Print / PDF Mode */
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+      }
+      header, .player-controls, .ambient-bg, .btn, .hero-pill {
+        display: none !important;
+      }
+      .video-stage {
+        background: #f8fafc !important;
+        color: #000000 !important;
+        border: 1px solid #cbd5e1 !important;
+      }
+      .calc-section, .feature-card, .cta-section {
+        background: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
+        color: #000000 !important;
+        box-shadow: none !important;
+      }
+      .scene-text p, .feature-card p {
+        color: #475569 !important;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .scene-center {
+        grid-template-columns: 1fr;
+      }
+      .calc-grid {
+        grid-template-columns: 1fr;
+      }
+      .video-stage {
+        min-height: 540px;
+        padding: 1.25rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient Glowing Backdrop -->
+  <div class="ambient-bg">
+    <div class="orb-1"></div>
+    <div class="orb-2"></div>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <div class="brand">
+      <div class="brand-logo">Q</div>
+      <div>
+        <span class="brand-title">QuickTable</span>
+        <span class="brand-badge">Client Presentation Deck</span>
+      </div>
+    </div>
+    <div class="nav-actions">
+      <button class="btn btn-secondary" onclick="window.print()" title="Save as clean PDF proposal">
+        🖨️ Export PDF Pitch
+      </button>
+      <a href="mailto:tsubasadigital@gmail.com?subject=QuickTable%20Restaurant%20Demo%20Inquiry" class="btn btn-primary">
+        ✉️ Contact tsubasa digital
+      </a>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero Pitch -->
+    <section class="hero">
+      <div class="hero-pill">⚡ Restaurant Operating System 2026</div>
+      <h1>Accelerate Table Turnover.<br><span>Eliminate Order Chaos.</span></h1>
+      <p>A self-running presentation demo engineered for restaurant owners, general managers, and hospitality directors.</p>
+    </section>
+
+    <!-- Cinema Video / Slide Player -->
+    <div class="video-viewport">
+      <div class="video-stage" id="stage">
+        <!-- Injected via JavaScript -->
+      </div>
+
+      <!-- Controls Bar -->
+      <div class="player-controls">
+        <div class="scrubber-track" id="scrubberTrack" onclick="handleScrubberClick(event)">
+          <div class="scrubber-fill" id="scrubberFill"></div>
+        </div>
+
+        <div class="controls-row">
+          <div class="playback-buttons">
+            <button class="play-btn" id="playBtn" onclick="togglePlay()" title="Play / Pause Auto-Tour">
+              ▶
+            </button>
+            <button class="ctrl-btn" onclick="restartTour()" title="Restart from 0:00">
+              ↺
+            </button>
+            <button class="ctrl-btn" onclick="prevScene()" title="Previous Scene">
+              ⏮
+            </button>
+            <button class="ctrl-btn" onclick="nextScene()" title="Next Scene">
+              ⏭
+            </button>
+            <button class="ctrl-btn" id="soundBtn" onclick="toggleSound()" title="Sound Effects">
+              🔔
+            </button>
+          </div>
+
+          <div class="chapter-tabs" id="chapterTabs">
+            <!-- Tabs rendered via JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive ROI Calculator for Client Pitch -->
+    <section class="calc-section">
+      <div class="calc-grid">
+        <div>
+          <span style="color: var(--primary); font-weight: 700; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em;">Client Financial Return</span>
+          <h2 style="font-size: 1.8rem; font-weight: 800; margin: 0.35rem 0 1rem;">How Much Does QuickTable Earn Your Restaurant?</h2>
+          <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">
+            Faster table turn times (+25%), zero cashier order-entry bottlenecks, and automated upselling directly increase monthly gross profit.
+          </p>
+
+          <div class="calc-input-group">
+            <label>
+              Number of Dine-In Tables: 
+              <span class="calc-input-val" id="tablesVal">20 Tables</span>
+            </label>
+            <input type="range" id="tablesInput" min="5" max="100" value="20" step="5" oninput="calculateROI()">
+          </div>
+
+          <div class="calc-input-group">
+            <label>
+              Average Bill Amount: 
+              <span class="calc-input-val" id="billVal">$45 / Table</span>
+            </label>
+            <input type="range" id="billInput" min="10" max="150" value="45" step="5" oninput="calculateROI()">
+          </div>
+
+          <div class="calc-input-group">
+            <label>
+              Average Daily Table Turns: 
+              <span class="calc-input-val" id="turnsVal">3.5 Turns / Day</span>
+            </label>
+            <input type="range" id="turnsInput" min="1" max="8" value="3.5" step="0.5" oninput="calculateROI()">
+          </div>
+        </div>
+
+        <div class="calc-result-box">
+          <span style="font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Estimated Monthly Revenue Boost</span>
+          <div class="calc-result-val" id="roiResult">+$4,725</div>
+          <p style="font-size: 0.88rem; color: #cbd5e1; line-height: 1.5;">
+            Based on a conservative <strong>15% table turnaround boost</strong> and <strong>8% higher dessert/beverage upselling</strong> via the digital QR menu.
+          </p>
+          <div style="margin-top: 1.5rem; display: flex; justify-content: center; gap: 0.5rem;">
+            <span style="font-size: 0.75rem; background: rgba(16, 185, 129, 0.15); color: #34d399; padding: 0.3rem 0.6rem; border-radius: 6px;">✓ Pays for itself in 3 days</span>
+            <span style="font-size: 0.75rem; background: rgba(59, 130, 246, 0.15); color: #60a5fa; padding: 0.3rem 0.6rem; border-radius: 6px;">✓ Zero hardware lock-in</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Key Feature Breakdown -->
+    <section class="features-section">
+      <div style="text-align: center; max-width: 600px; margin: 0 auto;">
+        <h2 style="font-size: 1.8rem; font-weight: 800;">Everything a Modern Restaurant Demands</h2>
+        <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.4rem;">Built from the ground up for speed, reliability, and delightful customer experiences.</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">📱</div>
+          <h3>Zero-App Table QR Ordering</h3>
+          <p>Guests scan table QR codes using standard camera apps. No app download required. Instant high-resolution menu browsing and live dietary filters.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🍳</div>
+          <h3>Kitchen Display System (KDS)</h3>
+          <p>Paperless ticket routing directly to chef tablets. Real-time cooking timers, prep stages, and audible alerts for expedited service.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">💳</div>
+          <h3>Ultra-Fast POS & Split Billing</h3>
+          <p>Instant table settlement with cash, card, and dynamic UPI QR codes. One-click split bills and automated 80mm thermal receipt printing.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <h3>Real-Time Owner Insights</h3>
+          <p>Hourly sales velocity, category revenue breakdown, table turnover analytics, and food cost margin tracking on any mobile phone.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🏢</div>
+          <h3>Multi-Outlet Branch Support</h3>
+          <p>Manage 1 to 50+ restaurant branches with isolated tenant data, central franchise reporting, and custom staff permission roles.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔒</div>
+          <h3>Rock-Solid Cloud Architecture</h3>
+          <p>99.9% uptime SLA, automated real-time backups, and dedicated priority support provided by tsubasa digital engineers.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section class="cta-section">
+      <span style="font-size: 0.8rem; font-weight: 700; color: #fb923c; text-transform: uppercase; letter-spacing: 0.05em;">Get Started Today</span>
+      <h2>Deploy QuickTable in Your Restaurant This Week</h2>
+      <p style="color: #cbd5e1; max-width: 520px; margin: 0.5rem auto 0; font-size: 1rem;">
+        Contact tsubasa digital for customized deployment, on-site staff training, and menu digitization.
+      </p>
+
+      <div>
+        <div class="cta-email-box">
+          <span>✉️</span>
+          <span>tsubasadigital@gmail.com</span>
+        </div>
+      </div>
+
+      <div style="margin-top: 1.5rem;">
+        <a href="mailto:tsubasadigital@gmail.com?subject=QuickTable%20Restaurant%20Onboarding" class="btn btn-primary" style="font-size: 1rem; padding: 0.75rem 1.75rem;">
+          Schedule Live Onboarding
+        </a>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer style="margin-top: 4rem; text-align: center; border-top: 1px solid var(--card-border); padding-top: 2rem; color: var(--text-muted); font-size: 0.85rem;">
+      <p>© 2026 QuickTable by tsubasa digital. All rights reserved.</p>
+      <p style="margin-top: 0.35rem; font-size: 0.75rem;">Enterprise Restaurant Technology Solutions • Contact: tsubasadigital@gmail.com</p>
+    </footer>
+  </main>
+
+  <!-- Interactive Scene & Video Script -->
+  <script>
+    const SCENES = [
+      {
+        id: 1,
+        title: "The Problem & The Solution",
+        badge: "01. Executive Overview",
+        badgeBg: "#f97316",
+        headline: "Cut Waiter Bottlenecks by 60%",
+        desc: "Traditional paper menus and busy waiters cause customer frustration and lost dessert revenue. QuickTable creates a frictionless, instant ordering pipeline.",
+        highlights: [
+          "Zero app download for diners",
+          "Direct kitchen ticket dispatch in < 1 second",
+          "Works on any smartphone, iPad, or POS terminal"
+        ],
+        mockupHeader: "QuickTable Architecture",
+        mockupHtml: `
+          <div style="display:flex; flex-direction:column; gap:0.75rem; justify-content:center; height:100%;">
+            <div style="display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.05); padding:0.6rem 0.8rem; border-radius:8px;">
+              <span style="font-size:0.85rem;">📱 Table QR Order</span>
+              <span style="font-size:0.75rem; color:#34d399; font-weight:600;">Instant Web</span>
+            </div>
+            <div style="text-align:center; color:#f97316; font-size:0.8rem;">⬇️ Real-Time WebSocket Sync</div>
+            <div style="display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.05); padding:0.6rem 0.8rem; border-radius:8px;">
+              <span style="font-size:0.85rem;">🍳 Kitchen KDS Display</span>
+              <span style="font-size:0.75rem; color:#60a5fa; font-weight:600;">Chef Priority</span>
+            </div>
+            <div style="text-align:center; color:#f97316; font-size:0.8rem;">⬇️ Auto Billing Sync</div>
+            <div style="display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.05); padding:0.6rem 0.8rem; border-radius:8px;">
+              <span style="font-size:0.85rem;">💳 Cashier POS & Owner App</span>
+              <span style="font-size:0.75rem; color:#fbbf24; font-weight:600;">80mm Tax Bill</span>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 2,
+        title: "Guest Experience: Instant Table QR",
+        badge: "02. Customer Mobile",
+        badgeBg: "#10b981",
+        headline: "Diners Order Directly From Their Phone",
+        desc: "Customers scan a unique table acrylic QR code. They view appetizing photo menus, ingredient warnings, dietary tags, and submit orders in seconds.",
+        highlights: [
+          "Photos, prices, and chef recommendations",
+          "Customizable notes (e.g., 'Extra spicy', 'No onions')",
+          "Live table status without waving at staff"
+        ],
+        mockupHeader: "Guest View • Table #04",
+        mockupHtml: `
+          <div style="background:#111827; border-radius:12px; padding:0.75rem; border:1px solid #1f2937;">
+            <div style="display:flex; gap:0.6rem; align-items:center; margin-bottom:0.6rem;">
+              <div style="width:40px; height:40px; background:#f97316; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.2rem;">🍕</div>
+              <div style="flex:1;">
+                <div style="font-size:0.85rem; font-weight:700;">Wood-Fired Truffle Pizza</div>
+                <div style="font-size:0.7rem; color:#9ca3af;">Fresh mozzarella, truffle oil</div>
+              </div>
+              <div style="font-weight:700; color:#34d399; font-size:0.85rem;">$18.50</div>
+            </div>
+            <div style="background:rgba(16,185,129,0.15); color:#34d399; padding:0.4rem; border-radius:6px; font-size:0.75rem; text-align:center; font-weight:600;">
+              ✓ Sent to Kitchen (Prep Time: ~12m)
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 3,
+        title: "Kitchen Display System (KDS)",
+        badge: "03. Chef Display",
+        badgeBg: "#3b82f6",
+        headline: "Zero Lost Tickets. Zero Screaming.",
+        desc: "Replaces dirty paper slips with color-coded tablet stations. Chefs see order timestamp urgencies, allergen alerts, and tap to notify waitstaff.",
+        highlights: [
+          "Color-coded countdown clocks",
+          "Audible chime upon incoming orders",
+          "Table number, seat notes, and modifications clearly listed"
+        ],
+        mockupHeader: "Kitchen Live Ticket • Table #04",
+        mockupHtml: `
+          <div style="background:#1e1b4b; border:1px solid #4338ca; border-radius:10px; padding:0.75rem;">
+            <div style="display:flex; justify-content:space-between; font-size:0.75rem; font-weight:700; color:#a5b4fc; margin-bottom:0.5rem;">
+              <span>TICKET #108 • TABLE 4</span>
+              <span style="color:#f87171;">⏳ 04:12</span>
+            </div>
+            <div style="font-size:0.85rem; font-weight:600; color:white;">1x Wood-Fired Truffle Pizza</div>
+            <div style="font-size:0.7rem; color:#cbd5e1; margin-bottom:0.75rem;">Note: Extra crispy crust</div>
+            <div style="display:flex; gap:0.4rem;">
+              <button style="flex:1; background:#4f46e5; color:white; border:none; padding:0.35rem; border-radius:6px; font-size:0.7rem; font-weight:600;">Cooking</button>
+              <button style="flex:1; background:#059669; color:white; border:none; padding:0.35rem; border-radius:6px; font-size:0.7rem; font-weight:600;">Mark Ready</button>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 4,
+        title: "Cashier POS & Split Invoicing",
+        badge: "04. Cashier Desk",
+        badgeBg: "#8b5cf6",
+        headline: "10-Second Checkout with Dynamic QR",
+        desc: "Tables can settle instantly with Cash, Card, or Dynamic UPI QR codes. One click splits the bill evenly and triggers thermal invoice printing.",
+        highlights: [
+          "Instant thermal printer integration (80mm / 58mm)",
+          "Dynamic UPI QR generation for instant smartphone payments",
+          "Auto-calculates local taxes (GST / VAT) and service charge"
+        ],
+        mockupHeader: "POS Billing Terminal",
+        mockupHtml: `
+          <div style="display:flex; flex-direction:column; gap:0.5rem;">
+            <div style="display:flex; justify-content:space-between; font-size:0.85rem;">
+              <span style="color:#94a3b8;">Subtotal (3 items):</span>
+              <span style="font-weight:600;">$42.00</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:0.85rem;">
+              <span style="color:#94a3b8;">Tax (8.25%):</span>
+              <span style="font-weight:600;">$3.47</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:1rem; font-weight:800; border-top:1px dashed #334155; padding-top:0.4rem;">
+              <span>Total Bill:</span>
+              <span style="color:#34d399;">$45.47</span>
+            </div>
+            <div style="display:flex; gap:0.4rem; margin-top:0.4rem;">
+              <button style="flex:1; background:#10b981; color:white; border:none; padding:0.4rem; border-radius:6px; font-size:0.75rem; font-weight:600;">Print Bill</button>
+              <button style="flex:1; background:#3b82f6; color:white; border:none; padding:0.4rem; border-radius:6px; font-size:0.75rem; font-weight:600;">UPI QR Code</button>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 5,
+        title: "Owner Analytics & Staff Hub",
+        badge: "05. Owner Command",
+        badgeBg: "#06b6d4",
+        headline: "Track Everything From Anywhere",
+        desc: "Whether on vacation or in the back office, owners monitor gross margins, best-selling dishes, labor shifts, and multi-location branch performances.",
+        highlights: [
+          "Hourly revenue velocity graph",
+          "Real-time food ingredient inventory depletion",
+          "Role-based staff logins (Cashier, Waiter, Chef, Manager)"
+        ],
+        mockupHeader: "Owner Live Dashboard",
+        mockupHtml: `
+          <div style="display:flex; flex-direction:column; gap:0.7rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <div style="font-size:0.7rem; color:#94a3b8;">TODAY'S REVENUE</div>
+                <div style="font-size:1.3rem; font-weight:800; color:#38bdf8;">$2,840.50</div>
+              </div>
+              <div style="background:rgba(56,189,248,0.15); color:#38bdf8; font-size:0.75rem; padding:0.25rem 0.6rem; border-radius:6px; font-weight:700;">
+                +24.6% vs yesterday
+              </div>
+            </div>
+            <div style="height:60px; background:linear-gradient(to top, rgba(56,189,248,0.1), transparent); border-bottom:2px solid #38bdf8; border-radius:4px; display:flex; align-items:flex-end; justify-content:space-around; padding-bottom:4px;">
+              <span style="font-size:0.6rem; color:#64748b;">12 PM</span>
+              <span style="font-size:0.6rem; color:#64748b;">2 PM</span>
+              <span style="font-size:0.6rem; color:#64748b;">6 PM</span>
+              <span style="font-size:0.6rem; color:#64748b;">9 PM</span>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 6,
+        title: "Engineered by tsubasa digital",
+        badge: "06. Enterprise Guarantee",
+        badgeBg: "#eab308",
+        headline: "Reliable, Dedicated & Customized",
+        desc: "We don't just sell software. tsubasa digital handles full setup, menu input, staff training, and provides round-the-clock priority technical support.",
+        highlights: [
+          "Dedicated technical contact: tsubasadigital@gmail.com",
+          "Cloud database encryption & automated daily backups",
+          "Custom integrations with local payment gateways and hardware"
+        ],
+        mockupHeader: "tsubasa digital Support SLA",
+        mockupHtml: `
+          <div style="text-align:center; padding:0.5rem 0;">
+            <div style="font-size:1.5rem; margin-bottom:0.25rem;">🛡️</div>
+            <div style="font-weight:700; font-size:0.95rem; color:#fde047;">99.9% Uptime Commitment</div>
+            <div style="font-size:0.75rem; color:#94a3b8; margin:0.35rem 0 0.75rem;">Zero loss of sales during peak rush hour</div>
+            <div style="background:rgba(255,255,255,0.06); padding:0.5rem; border-radius:8px; font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:#cbd5e1;">
+              Direct Email: tsubasadigital@gmail.com
+            </div>
+          </div>
+        `
+      }
+    ];
+
+    let currentScene = 0;
+    let isPlaying = true;
+    let progress = 0;
+    const SCENE_DURATION_MS = 8000;
+    const TICK_INTERVAL_MS = 100;
+    let timer = null;
+    let soundEnabled = true;
+
+    // Web Audio Synthesizer
+    function playChime() {
+      if (!soundEnabled) return;
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+        osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15); // A5
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.35);
+      } catch (e) {}
+    }
+
+    function renderStage() {
+      const s = SCENES[currentScene];
+      const stage = document.getElementById('stage');
+      stage.innerHTML = `
+        <div class="scene-content">
+          <div class="scene-meta">
+            <span class="scene-badge" style="background:${s.badgeBg}22; border-color:${s.badgeBg}55; color:${s.badgeBg}">
+              ${s.badge}
+            </span>
+            <span class="scene-counter">${currentScene + 1} / ${SCENES.length}</span>
+          </div>
+
+          <div class="scene-center">
+            <div class="scene-text">
+              <h2>${s.headline}</h2>
+              <p>${s.desc}</p>
+              <div class="scene-highlights">
+                ${s.highlights.map(h => `
+                  <div class="highlight-item">
+                    <span class="highlight-icon">✓</span>
+                    <span>${h}</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+            <div class="scene-mockup">
+              <div class="mockup-header">
+                <span>${s.mockupHeader}</span>
+                <div class="mockup-dots">
+                  <span></span><span></span><span></span>
+                </div>
+              </div>
+              <div class="mockup-body">
+                ${s.mockupHtml}
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:#64748b; border-top:1px solid rgba(255,255,255,0.06); padding-top:0.75rem;">
+            <span>Chapter: <strong>${s.title}</strong></span>
+            <span>Auto-Tour Mode (${(progress / 100 * (SCENE_DURATION_MS / 1000)).toFixed(1)}s / ${(SCENE_DURATION_MS / 1000)}s)</span>
+          </div>
+        </div>
+      `;
+      renderTabs();
+    }
+
+    function renderTabs() {
+      const tabs = document.getElementById('chapterTabs');
+      tabs.innerHTML = SCENES.map((s, idx) => `
+        <button class="chapter-tab ${idx === currentScene ? 'active' : ''}" onclick="selectScene(${idx})">
+          ${s.badge.split(' ')[0]} ${s.title.split(':')[0]}
+        </button>
+      `).join('');
+    }
+
+    function togglePlay() {
+      isPlaying = !isPlaying;
+      document.getElementById('playBtn').innerHTML = isPlaying ? '⏸' : '▶';
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      document.getElementById('soundBtn').innerHTML = soundEnabled ? '🔔' : '🔕';
+    }
+
+    function restartTour() {
+      currentScene = 0;
+      progress = 0;
+      isPlaying = true;
+      document.getElementById('playBtn').innerHTML = '⏸';
+      renderStage();
+      playChime();
+    }
+
+    function nextScene() {
+      currentScene = (currentScene + 1) % SCENES.length;
+      progress = 0;
+      renderStage();
+      playChime();
+    }
+
+    function prevScene() {
+      currentScene = (currentScene - 1 + SCENES.length) % SCENES.length;
+      progress = 0;
+      renderStage();
+      playChime();
+    }
+
+    function selectScene(index) {
+      currentScene = index;
+      progress = 0;
+      renderStage();
+      playChime();
+    }
+
+    function handleScrubberClick(e) {
+      const track = document.getElementById('scrubberTrack');
+      const rect = track.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const pct = Math.max(0, Math.min(1, clickX / rect.width));
+      const targetScene = Math.floor(pct * SCENES.length);
+      selectScene(targetScene);
+    }
+
+    // Main ticker
+    function startLoop() {
+      timer = setInterval(() => {
+        if (!isPlaying) return;
+
+        progress += (TICK_INTERVAL_MS / SCENE_DURATION_MS) * 100;
+        
+        // Update scrubber fill
+        const totalPct = ((currentScene + (progress / 100)) / SCENES.length) * 100;
+        document.getElementById('scrubberFill').style.width = totalPct + '%';
+
+        if (progress >= 100) {
+          nextScene();
+        }
+      }, TICK_INTERVAL_MS);
+    }
+
+    // ROI Calculator
+    function calculateROI() {
+      const tables = Number(document.getElementById('tablesInput').value);
+      const bill = Number(document.getElementById('billInput').value);
+      const turns = Number(document.getElementById('turnsInput').value);
+
+      document.getElementById('tablesVal').innerText = tables + ' Tables';
+      document.getElementById('billVal').innerText = '$' + bill + ' / Table';
+      document.getElementById('turnsVal').innerText = turns.toFixed(1) + ' Turns / Day';
+
+      // Formula: 15% more turns + 8% upsell per bill
+      const dailyBaseRevenue = tables * turns * bill;
+      const additionalTurnsBoost = dailyBaseRevenue * 0.15;
+      const upsellBoost = (tables * turns * 1.15) * (bill * 0.08);
+      const monthlyGain = Math.round((additionalTurnsBoost + upsellBoost) * 30);
+
+      document.getElementById('roiResult').innerText = '+$' + monthlyGain.toLocaleString();
+    }
+
+    // Initialize
+    renderStage();
+    calculateROI();
+    startLoop();
+  </script>
+</body>
+</html>
