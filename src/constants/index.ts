@@ -176,7 +176,8 @@ export const APP_CONFIG = {
   APP_DESCRIPTION: 'Complete Restaurant Management System',
   APP_VERSION: '1.0.0',
   COMPANY_NAME: 'QuickTable by tsubasa digital',
-  SUPPORT_EMAIL: 'support@quicktable.com',
+  SUPPORT_EMAIL: 'tsubasadigital@gmail.com',
+  CONTACT_EMAIL: 'tsubasadigital@gmail.com',
   SUPPORT_PHONE: '+1-800-QUICKTABLE',
   ITEMS_PER_PAGE: 10,
   MAX_UPLOAD_SIZE: 5 * 1024 * 1024, // 5MB
