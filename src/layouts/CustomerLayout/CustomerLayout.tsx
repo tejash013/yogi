@@ -31,6 +31,7 @@ export default function CustomerLayout() {
   const navItems: NavItem[] = [
     { label: 'Home', href: ROUTES.CUSTOMER.HOME },
     { label: 'Menu', href: ROUTES.CUSTOMER.MENU },
+    { label: 'Showcase 🎬', href: ROUTES.INTRO },
     ...(user ? [
       { label: 'My Orders', href: ROUTES.CUSTOMER.MY_ORDERS },
       { label: 'Favorites', href: ROUTES.CUSTOMER.FAVORITES },
