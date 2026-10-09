@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui';
 import { ROUTES } from '@/constants';
 import { authApi } from '@/api';
+import { getApiErrorMessage } from '@/api/errors';
 import { useToastStore } from '@/store';
 
 export default function OTPVerification() {
@@ -47,7 +48,7 @@ export default function OTPVerification() {
       showToast('Account verified successfully! Please sign in.', 'success');
       navigate(ROUTES.AUTH.LOGIN);
     } catch (err: any) {
-      showToast(err?.response?.data?.message || 'Invalid or expired OTP', 'error');
+      showToast(getApiErrorMessage(err, 'Invalid or expired OTP. Please check the code and try again.'), 'error');
     } finally {
       setIsVerifying(false);
     }
@@ -63,7 +64,7 @@ export default function OTPVerification() {
       await authApi.forgotPassword(email);
       showToast('New OTP code dispatched to your email', 'success');
     } catch (err: any) {
-      showToast(err?.response?.data?.message || 'Failed to resend OTP', 'error');
+      showToast(getApiErrorMessage(err, 'Failed to resend OTP. Please try again in a moment.'), 'error');
     } finally {
       setIsResending(false);
     }

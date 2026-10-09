@@ -19,7 +19,7 @@ router.get('/schema', authenticate, requireRole('manager'), (_req, res) => {
           'Employee',
           'Inventory',
         ],
-        description: 'Mongoose schemas are defined for RestaurantOS entities.',
+        description: 'Mongoose schemas are defined for QuickTable entities.',
       },
       'Schema metadata loaded'
     )

@@ -3,6 +3,7 @@ import { authApi } from '@/api/endpoints';
 import { useOrderSyncStore } from '@/store/orderSyncStore';
 import { useTenantStore, DEFAULT_RESTAURANT_ID, DEFAULT_BRANCH_ID } from '@/store/tenantStore';
 import { socketService } from '@/services/socket';
+import { getApiErrorMessage } from '@/api/errors';
 import type { User, UserRole, LoginCredentials, RegisterData } from '@/types';
 
 interface AuthState {
@@ -107,11 +108,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         at: new Date().toISOString(),
       });
     } catch (error) {
-      const apiMessage =
-        typeof error === 'object' && error !== null && 'response' in error
-          ? (error as any).response?.data?.message
-          : undefined;
-      const message = apiMessage || (error instanceof Error ? error.message : 'Login failed. Please try again.');
+      const message = getApiErrorMessage(error, 'Login failed. Please check your credentials and try again.');
 
       set({
         user: null,
@@ -162,12 +159,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         at: new Date().toISOString(),
       });
     } catch (error) {
-      const apiMessage =
-        typeof error === 'object' && error !== null && 'response' in error
-          ? (error as any).response?.data?.message
-          : undefined;
-      const message = apiMessage || (error instanceof Error ? error.message : 'Registration failed. Please try again.');
-
+      const message = getApiErrorMessage(error, 'Registration failed. Please try again.');
       set({ isLoading: false, error: message });
     }
   },
@@ -212,11 +204,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         at: new Date().toISOString(),
       });
     } catch (error) {
-      const apiMessage =
-        typeof error === 'object' && error !== null && 'response' in error
-          ? (error as any).response?.data?.message
-          : undefined;
-      const message = apiMessage || (error instanceof Error ? error.message : 'Google authentication failed.');
+      const message = getApiErrorMessage(error, 'Google authentication was unsuccessful. Please try again.');
 
       set({
         user: null,

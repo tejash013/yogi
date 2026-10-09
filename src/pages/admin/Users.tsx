@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Badge, Search, Table } from '@/components/ui';
 import { PageHeader } from '@/components/common';
 import { usersApi, subscriptionsApi, tenantsApi } from '@/api/endpoints';
+import { getApiErrorMessage } from '@/api/errors';
 import { useOrderSyncStore, useAuthStore, useTenantStore, useToastStore } from '@/store';
 import type { Column } from '@/components/ui';
 import type { User, UserRole, Restaurant, Branch } from '@/types';
@@ -163,8 +164,8 @@ export default function Users() {
         resource: 'tenant',
         at: new Date().toISOString(),
       });
-    } catch {
-      setError('Access update failed. Your account may not have permission for this change.');
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Access update failed. Your account may not have permission for this change.'));
     } finally {
       setSavingId('');
     }
@@ -178,8 +179,8 @@ export default function Users() {
       setCreateForm({ firstName: '', lastName: '', email: '', phone: '', password: '', role: 'manager', restaurantId: '', branchId: '' });
       setShowCreate(false);
       await loadUsers();
-    } catch {
-      setCreateError('Unable to create the account. Check the tenant and branch assignment.');
+    } catch (err) {
+      setCreateError(getApiErrorMessage(err, 'Unable to create user account. Please check the entered details.'));
     }
   };
 

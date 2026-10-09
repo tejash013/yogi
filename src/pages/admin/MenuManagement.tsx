@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Button, Card, CardHeader, CardContent, Table, Badge, Search } from '@/components/ui';
 import { PageHeader } from '@/components/common';
 import { categoriesApi, menuApi } from '@/api';
+import { getApiErrorMessage } from '@/api/errors';
 import { APP_CONFIG } from '@/constants';
 import { useOrderSyncStore, useTenantStore } from '@/store';
 import type { Column } from '@/components/ui';
@@ -135,8 +136,7 @@ export default function MenuManagement() {
       setShowForm(false);
       await loadData();
     } catch (submitError: any) {
-      const serverMessage = submitError?.response?.data?.message || submitError?.response?.data?.error;
-      setError(serverMessage || (submitError instanceof Error ? submitError.message : 'Unable to save menu item.'));
+      setError(getApiErrorMessage(submitError, 'Unable to save menu item. Please check your inputs and try again.'));
     } finally {
       setIsSaving(false);
     }
@@ -193,8 +193,7 @@ export default function MenuManagement() {
       });
       await loadData();
     } catch (deleteError: any) {
-      const serverMessage = deleteError?.response?.data?.message || deleteError?.response?.data?.error;
-      setError(serverMessage || 'Unable to delete menu item.');
+      setError(getApiErrorMessage(deleteError, 'Unable to delete menu item. Please try again.'));
     }
   };
 

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/common/Navbar';
+import Footer from '@/components/common/Footer';
 import { ROUTES } from '@/constants';
 import { useAuthStore } from '@/store';
 
@@ -17,9 +18,9 @@ export default function PlatformAdminLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f4f1ea] text-[#17211d]">
+    <div className="flex min-h-screen flex-col bg-[#f4f1ea] text-[#17211d]">
       <Navbar
-        brand="RestaurantOS Platform"
+        brand="QuickTable Platform"
         showThemeToggle={true}
         showMobileMenu={false}
         showAuthControls={false}
@@ -45,6 +46,7 @@ export default function PlatformAdminLayout() {
         </aside>
         <main className="min-w-0 flex-1"><Outlet /></main>
       </div>
+      <Footer />
     </div>
   );
 }

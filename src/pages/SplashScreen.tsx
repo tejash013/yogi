@@ -26,12 +26,12 @@ export default function SplashScreen() {
       {/* Logo Animation */}
       <div className="animate-fade-in-up mb-8">
         <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-lg">
-          <span className="text-5xl font-bold text-white">R</span>
+          <span className="text-5xl font-bold text-white">Q</span>
         </div>
       </div>
 
       <h1 className="animate-fade-in-up text-4xl font-bold text-white" style={{ animationDelay: '0.2s' }}>
-        RestaurantOS
+        QuickTable
       </h1>
       <p className="animate-fade-in-up mt-2 text-lg text-white/70" style={{ animationDelay: '0.4s' }}>
         Delicious food, delivered fast

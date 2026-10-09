@@ -1,11 +1,11 @@
 const config = {
   app: {
-    name: 'RestaurantOS',
+    name: 'QuickTable',
     description: 'Complete Restaurant Management System',
     version: '1.0.0',
-    company: 'RestaurantOS Inc.',
-    supportEmail: 'support@restaurantos.com',
-    supportPhone: '+1-800-RESTAURANT',
+    company: 'QuickTable by tsubasa digital',
+    supportEmail: 'support@quicktable.com',
+    supportPhone: '+1-800-QUICKTABLE',
   },
   api: {
     baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:3000',

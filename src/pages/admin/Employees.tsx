@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Button, Card, CardContent, Table, Badge, Search } from '@/components/ui';
 import { PageHeader, TenantSelector } from '@/components/common';
 import { employeesApi } from '@/api';
+import { getApiErrorMessage } from '@/api/errors';
 import { useTenantStore } from '@/store';
 import type { Column } from '@/components/ui';
 import type { Employee, UserRole } from '@/types';
@@ -85,7 +86,7 @@ export default function Employees() {
       setShowForm(false);
       await fetchEmployees();
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'Unable to create employee.');
+      setError(getApiErrorMessage(submitError, 'Unable to create employee. Please check the values entered.'));
     } finally {
       setIsSaving(false);
     }

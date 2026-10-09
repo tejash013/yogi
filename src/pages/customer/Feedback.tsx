@@ -3,6 +3,7 @@ import { Button, Card, Textarea } from '@/components/ui';
 import { Rating } from '@/components/customer';
 import { useAuthStore, useToastStore } from '@/store';
 import { menuApi, reviewsApi } from '@/api';
+import { getApiErrorMessage } from '@/api/errors';
 
 export default function Feedback() {
   const user = useAuthStore((s) => s.user);
@@ -79,7 +80,7 @@ export default function Feedback() {
       showToast('Review submitted successfully! Thank you.', 'success');
       setStep('thanks');
     } catch (error: any) {
-      setSubmitError(error?.response?.data?.message || 'Unable to submit your review. Please try again.');
+      setSubmitError(getApiErrorMessage(error, 'Unable to submit your review. Please try again.'));
     } finally {
       setIsSubmitting(false);
     }

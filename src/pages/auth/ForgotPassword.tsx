@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button, Input } from '@/components/ui';
 import { ROUTES } from '@/constants';
 import { authApi } from '@/api';
+import { getApiErrorMessage } from '@/api/errors';
 import { useToastStore } from '@/store';
 
 export default function ForgotPassword() {
@@ -21,7 +22,7 @@ export default function ForgotPassword() {
       showToast('Password reset link sent to your email', 'success');
       setSubmitted(true);
     } catch (err: any) {
-      showToast(err?.response?.data?.message || 'Failed to send reset link', 'error');
+      showToast(getApiErrorMessage(err, 'Failed to send reset link. Please check the email address.'), 'error');
     } finally {
       setIsLoading(false);
     }

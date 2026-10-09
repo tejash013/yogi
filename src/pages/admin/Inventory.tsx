@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Button, Card, CardContent, Table, Badge, Search } from '@/components/ui';
 import { PageHeader, TenantSelector } from '@/components/common';
 import { inventoryApi } from '@/api';
+import { getApiErrorMessage } from '@/api/errors';
 import { useTenantStore } from '@/store';
 import type { Column } from '@/components/ui';
 import type { InventoryItem } from '@/types';
@@ -86,7 +87,7 @@ export default function Inventory() {
       setShowForm(false);
       await fetchInventory();
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'Unable to create inventory item.');
+      setError(getApiErrorMessage(submitError, 'Unable to create inventory item. Please check the values entered.'));
     } finally {
       setIsSaving(false);
     }

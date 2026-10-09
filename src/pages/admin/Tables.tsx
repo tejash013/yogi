@@ -3,6 +3,7 @@ import { Button, Card } from '@/components/ui';
 import { PageHeader, TenantSelector } from '@/components/common';
 import RestaurantFloorView, { type TableItem } from '@/components/common/RestaurantFloorView';
 import { tablesApi } from '@/api';
+import { getApiErrorMessage } from '@/api/errors';
 import { useTenantStore, useOrderSyncStore } from '@/store';
 import { QRCodeCanvas } from 'qrcode.react';
 
@@ -133,7 +134,7 @@ export default function Tables() {
         }
       }
     } catch (error) {
-      setCreateError(error instanceof Error ? error.message : 'Unable to create table.');
+      setCreateError(getApiErrorMessage(error, 'Unable to create table. Please check your inputs and try again.'));
     } finally {
       setIsSaving(false);
     }
@@ -184,7 +185,7 @@ export default function Tables() {
       setEditingTable(null);
       await loadTables();
     } catch (error) {
-      setEditError(error instanceof Error ? error.message : 'Unable to update table.');
+      setEditError(getApiErrorMessage(error, 'Unable to update table. Please check your inputs and try again.'));
     } finally {
       setIsSaving(false);
     }

@@ -111,7 +111,7 @@ export default function OwnerLayout() {
   return (
     <div className="flex min-h-screen flex-col bg-neutral-50 dark:bg-neutral-900">
       <Navbar
-        brand="RestaurantOS Owner"
+        brand="QuickTable Owner"
         showThemeToggle={true}
         showMobileMenu={false}
         showAuthControls={false}

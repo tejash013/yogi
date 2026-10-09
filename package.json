@@ -12,6 +12,8 @@
     "start": "npm --prefix backend start",
     "docker:up": "docker-compose up --build",
     "lint": "oxlint",
+    "test": "npm --prefix backend test",
+    "check:final": "node scripts/run-final-checks.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

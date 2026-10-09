@@ -56,7 +56,7 @@ export default function KitchenHeader({ onMenuClick }: Props) {
           <Logo size="sm" showText={false} />
           <div className="hidden sm:block">
             <h1 className="text-base font-bold text-neutral-900 dark:text-white">Kitchen</h1>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400">RestaurantOS · Kitchen</p>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">QuickTable · Kitchen</p>
           </div>
         </div>
 

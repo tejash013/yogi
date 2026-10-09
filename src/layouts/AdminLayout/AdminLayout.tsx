@@ -4,6 +4,7 @@ import Navbar from '@/components/common/Navbar';
 import Sidebar, { type SidebarItem } from '@/components/common/Sidebar';
 import Logo from '@/components/common/Logo';
 import TenantSelector from '@/components/common/TenantSelector';
+import Footer from '@/components/common/Footer';
 import { ROUTES } from '@/constants';
 import { useAuthStore, useOrderSyncStore } from '@/store';
 import { ordersApi } from '@/api';
@@ -179,7 +180,7 @@ export default function AdminLayout() {
   return (
     <div className="flex min-h-screen flex-col bg-neutral-50 dark:bg-neutral-900">
       <Navbar
-        brand="RestaurantOS Admin"
+        brand="QuickTable Admin"
         showMobileMenu={false}
         showAuthControls={false}
         rightContent={
@@ -239,7 +240,7 @@ export default function AdminLayout() {
                 <Logo size="sm" showText={true} />
                 <div>
                   <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Manager Control Center</p>
-                  <h1 className="text-2xl font-semibold text-neutral-900 dark:text-white">RestaurantOS Manager</h1>
+                  <h1 className="text-2xl font-semibold text-neutral-900 dark:text-white">QuickTable Manager</h1>
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-3">
@@ -252,6 +253,7 @@ export default function AdminLayout() {
           </div>
         </main>
       </div>
+      <Footer />
     </div>
   );
 }

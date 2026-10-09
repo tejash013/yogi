@@ -136,7 +136,7 @@ export default function CashierHeader({ onLogout }: Props) {
           <Logo size="sm" showText={false} />
           <div className="hidden sm:block">
             <h1 className="text-sm font-bold leading-none text-neutral-900 dark:text-white">Cashier POS</h1>
-            <p className="text-[11px] text-neutral-500 dark:text-neutral-400">RestaurantOS</p>
+            <p className="text-[11px] text-neutral-500 dark:text-neutral-400">QuickTable</p>
           </div>
 
           <TenantSelector variant="pill" className="hidden xl:flex text-xs" />

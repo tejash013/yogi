@@ -20,7 +20,7 @@ export default function OwnerSubscription() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Subscription" description="Your plan and billing period. All RestaurantOS features remain available." />
+      <PageHeader title="Subscription" description="Your plan and billing period. All QuickTable features remain available." />
       {loading ? (
         <div className="flex justify-center py-16"><Loader /></div>
       ) : subscription ? (
@@ -28,7 +28,7 @@ export default function OwnerSubscription() {
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-wider text-neutral-500">Current plan</p>
-              <h2 className="mt-2 text-2xl font-bold text-neutral-900 dark:text-white">{subscription.plan?.name || 'RestaurantOS Pro'}</h2>
+              <h2 className="mt-2 text-2xl font-bold text-neutral-900 dark:text-white">{subscription.plan?.name || 'QuickTable Pro'}</h2>
               <p className="mt-1 text-sm text-neutral-500">{subscription.plan?.description || 'Full access to restaurant operations, KDS, POS & digital menu.'}</p>
             </div>
             <span className="rounded-full bg-emerald-100 px-3 py-1.5 text-sm font-bold capitalize text-emerald-800">{subscription.status ? subscription.status.replace('_', ' ') : 'Active'}</span>
@@ -45,7 +45,7 @@ export default function OwnerSubscription() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">Standard Active</span>
-              <h2 className="mt-2 text-xl font-bold text-neutral-900 dark:text-white">RestaurantOS Workspace Plan</h2>
+              <h2 className="mt-2 text-xl font-bold text-neutral-900 dark:text-white">QuickTable Workspace Plan</h2>
               <p className="mt-1 text-sm text-neutral-500">Full operational features active across all your branch outlets.</p>
             </div>
           </div>

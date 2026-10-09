@@ -172,12 +172,12 @@ export const API_ENDPOINTS = {
 
 // App Constants
 export const APP_CONFIG = {
-  APP_NAME: 'RestaurantOS',
+  APP_NAME: 'QuickTable',
   APP_DESCRIPTION: 'Complete Restaurant Management System',
   APP_VERSION: '1.0.0',
-  COMPANY_NAME: 'RestaurantOS Inc.',
-  SUPPORT_EMAIL: 'support@restaurantos.com',
-  SUPPORT_PHONE: '+1-800-RESTAURANT',
+  COMPANY_NAME: 'QuickTable by tsubasa digital',
+  SUPPORT_EMAIL: 'support@quicktable.com',
+  SUPPORT_PHONE: '+1-800-QUICKTABLE',
   ITEMS_PER_PAGE: 10,
   MAX_UPLOAD_SIZE: 5 * 1024 * 1024, // 5MB
   CURRENCY: 'INR',

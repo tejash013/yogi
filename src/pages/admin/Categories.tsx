@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button, Card, Badge, CardHeader, CardContent, Search } from '@/components/ui';
 import { PageHeader } from '@/components/common';
 import { categoriesApi, menuApi } from '@/api';
+import { getApiErrorMessage } from '@/api/errors';
 import { useOrderSyncStore, useTenantStore } from '@/store';
 
 type CategoryRow = {
@@ -115,7 +116,7 @@ export default function Categories() {
         icon: category?.icon ?? categoryIcons[index % categoryIcons.length],
       })));
     } catch (error) {
-      setCreateError(error instanceof Error ? error.message : 'Unable to create category.');
+      setCreateError(getApiErrorMessage(error, 'Unable to create category. Please check your input and try again.'));
     } finally {
       setIsSaving(false);
     }

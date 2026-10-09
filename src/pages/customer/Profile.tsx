@@ -4,6 +4,7 @@ import { Button, Card, Badge } from '@/components/ui';
 import { ROUTES } from '@/constants';
 import { useAuthStore, useToastStore } from '@/store';
 import { ordersApi, usersApi, offersApi } from '@/api';
+import { getApiErrorMessage } from '@/api/errors';
 import { formatCurrency } from '@/utils';
 
 export default function CustomerProfile() {
@@ -106,7 +107,7 @@ export default function CustomerProfile() {
       showToast('Profile updated successfully', 'success');
       setIsEditing(false);
     } catch (err: any) {
-      showToast(err?.response?.data?.message || 'Failed to update profile', 'error');
+      showToast(getApiErrorMessage(err, 'Failed to update profile'), 'error');
     } finally {
       setIsSaving(false);
     }
@@ -134,7 +135,7 @@ export default function CustomerProfile() {
             {user?.lastName ? user.lastName.charAt(0).toUpperCase() : ''}
           </div>
           <h2 className="text-2xl font-bold">{`${user?.firstName || 'Guest'} ${user?.lastName || ''}`.trim()}</h2>
-          <p className="text-sm text-white/80">{user?.email || 'customer@restaurantos.com'}</p>
+          <p className="text-sm text-white/80">{user?.email || 'customer@quicktable.com'}</p>
           <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3.5 py-1 text-xs font-semibold backdrop-blur-sm">
             <span className="text-yellow-300">✦</span>
             {membershipTier} Member

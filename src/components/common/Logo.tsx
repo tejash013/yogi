@@ -24,11 +24,11 @@ export default function Logo({ size = 'md', showText = true, className }: LogoPr
           s.container
         )}
       >
-        <span className={cn('font-bold text-white', s.icon)}>R</span>
+        <span className={cn('font-bold text-white', s.icon)}>Q</span>
       </div>
       {showText && (
         <span className={cn('font-bold text-neutral-900 dark:text-white', s.text)}>
-          RestaurantOS
+          QuickTable
         </span>
       )}
     </Link>

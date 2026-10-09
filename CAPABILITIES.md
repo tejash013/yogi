@@ -1,4 +1,4 @@
-# RestaurantOS - What You Can Do
+# QuickTable (by tsubasa digital) - What You Can Do
 
 ## 👤 Customer Portal
 

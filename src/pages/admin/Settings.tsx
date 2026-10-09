@@ -10,8 +10,8 @@ const emptyHours = Object.fromEntries(days.map((day) => [day, { status: 'open', 
 
 export default function AdminSettings() {
   const [form, setForm] = useState({
-    name: 'RestaurantOS',
-    email: 'contact@restaurantos.com',
+    name: 'QuickTable',
+    email: 'contact@quicktable.com',
     phone: '+1-555-0000',
     address: '123 Main Street, New York, NY 10001',
     businessHours: emptyHours,
@@ -29,8 +29,8 @@ export default function AdminSettings() {
         const data = (response?.data?.data ?? {}) as Record<string, any>;
         const nextHours = { ...emptyHours, ...(data.businessHours ?? {}) } as Record<string, { status: 'open' | 'closed'; open: string; close: string }>;
         setForm({
-          name: String(data.name ?? 'RestaurantOS'),
-          email: String(data.email ?? 'contact@restaurantos.com'),
+          name: String(data.name ?? 'QuickTable'),
+          email: String(data.email ?? 'contact@quicktable.com'),
           phone: String(data.phone ?? '+1-555-0000'),
           address: String(data.address ?? '123 Main Street, New York, NY 10001'),
           businessHours: nextHours,
@@ -133,7 +133,7 @@ export default function AdminSettings() {
         {message ? <p className="text-sm text-neutral-700 dark:text-neutral-200">{message}</p> : null}
 
         <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={() => setForm({ name: 'RestaurantOS', email: 'contact@restaurantos.com', phone: '+1-555-0000', address: '123 Main Street, New York, NY 10001', businessHours: emptyHours })}>Reset</Button>
+          <Button variant="outline" onClick={() => setForm({ name: 'QuickTable', email: 'contact@quicktable.com', phone: '+1-555-0000', address: '123 Main Street, New York, NY 10001', businessHours: emptyHours })}>Reset</Button>
           <Button onClick={() => void handleSave()} disabled={isSaving || isLoading}>{isSaving ? 'Saving...' : 'Save Settings'}</Button>
         </div>
       </div>
