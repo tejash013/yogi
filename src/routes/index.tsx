@@ -85,7 +85,6 @@ const OwnerSubscription = safeLazy(() => import('@/pages/owner/Subscription'));
 const Error403 = safeLazy(() => import('@/pages/errors/Error403'));
 const Workspace = safeLazy(() => import('@/pages/saas/Workspace'));
 const Subscriptions = safeLazy(() => import('@/pages/saas/Subscriptions'));
-const Showcase = safeLazy(() => import('@/pages/Showcase'));
 
 const router = createBrowserRouter([
   // Root redirect
@@ -94,11 +93,9 @@ const router = createBrowserRouter([
     element: <RootRedirect />,
   },
 
-  // Splash & Welcome & Showcase
+  // Splash & Welcome
   { path: ROUTES.SPLASH, element: <SplashScreen /> },
   { path: ROUTES.WELCOME, element: <WelcomeScreen /> },
-  { path: ROUTES.INTRO, element: <Showcase /> },
-  { path: ROUTES.SHOWCASE, element: <Showcase /> },
 
   {
     path: ROUTES.WORKSPACE,

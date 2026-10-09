@@ -3,8 +3,6 @@ export const ROUTES = {
   // Splash & Welcome
   SPLASH: '/splash',
   WELCOME: '/welcome',
-  INTRO: '/intro',
-  SHOWCASE: '/showcase',
 
   // Auth routes
   AUTH: {
