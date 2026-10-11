@@ -59,7 +59,10 @@ export async function verifyGoogleIdToken(token: string): Promise<VerifiedGoogle
     throw new Error('Google token has expired');
   }
 
-  const expectedClientId = process.env.GOOGLE_CLIENT_ID?.trim();
+  const rawExpectedClientId = process.env.GOOGLE_CLIENT_ID;
+  const expectedClientId = (typeof rawExpectedClientId === 'string' && rawExpectedClientId.replace(/["'\s]/g, '').trim())
+    ? rawExpectedClientId.replace(/["'\s]/g, '').trim()
+    : '701643326789-u2ro7qsscjs586a3eipv8m6o57ifhul3.apps.googleusercontent.com';
   if (expectedClientId && payload.aud !== expectedClientId) {
     throw new Error('Google token audience does not match configured client ID');
   }

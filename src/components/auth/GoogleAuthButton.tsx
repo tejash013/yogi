@@ -53,7 +53,9 @@ export default function GoogleAuthButton({
   const [configNotice, setConfigNotice] = useState<string | null>(null);
   const [isGsiMounted, setIsGsiMounted] = useState(false);
 
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim();
+  const rawClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  const sanitizedEnvId = typeof rawClientId === 'string' ? rawClientId.replace(/["'\s]/g, '').trim() : '';
+  const googleClientId = sanitizedEnvId || '701643326789-u2ro7qsscjs586a3eipv8m6o57ifhul3.apps.googleusercontent.com';
 
   useEffect(() => {
     if (!googleClientId) return;

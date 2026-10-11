@@ -78,7 +78,7 @@ async function ensureStarterPlan() {
         $setOnInsert: {
             name: 'Starter',
             key: 'starter',
-            description: 'Full RestaurantOS access with flexible billing.',
+            description: 'Full QuickTable access with flexible billing.',
             amount: 0,
             currency: 'INR',
             billingCycle: 'monthly',
