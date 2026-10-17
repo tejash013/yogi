@@ -307,13 +307,6 @@ export default function Menu() {
     setTimeout(() => setIsLoading(false), 200);
   };
 
-  const handleFilterSingleCategory = (catId: string) => {
-    setIsLoading(true);
-    setSelectedCategory(catId);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    setTimeout(() => setIsLoading(false), 200);
-  };
-
   const toggleFavorite = (id: string) => {
     setFavorites((current) => {
       const next = current.includes(id) ? current.filter((favoriteId) => favoriteId !== id) : [...current, id];
@@ -431,29 +424,6 @@ export default function Menu() {
         })}
       </div>
 
-      {/* Single Category Focus Banner */}
-      {selectedCategory !== 'all' && (
-        <div className="flex items-center justify-between rounded-2xl border border-primary-200/70 bg-primary-50/70 p-3.5 text-xs text-primary-900 dark:border-primary-800/60 dark:bg-primary-950/30 dark:text-primary-200 shadow-2xs">
-          <div className="flex items-center gap-2">
-            <span className="text-base">📂</span>
-            <span>
-              Showing dishes for category:{' '}
-              <span className="font-bold underline decoration-primary-400 underline-offset-2">
-                {categories.find((c) => c.id === selectedCategory || c.name.toLowerCase() === selectedCategory.toLowerCase())?.name || selectedCategory}
-              </span>
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={() => handleCategoryFilter('all')}
-            className="flex items-center gap-1 rounded-lg bg-white px-3 py-1 font-bold text-primary-700 shadow-xs hover:bg-primary-100 dark:bg-neutral-800 dark:text-primary-300 dark:hover:bg-neutral-700 transition"
-          >
-            <span>View All Categories</span>
-            <span>→</span>
-          </button>
-        </div>
-      )}
-
       {/* Filter Row */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         {/* Sort */}
@@ -511,53 +481,23 @@ export default function Menu() {
             >
               {/* Category Header - Category mentioned first */}
               <div className="relative overflow-hidden rounded-2xl border border-neutral-200/80 bg-gradient-to-r from-neutral-50 via-white to-amber-50/30 p-4 shadow-xs dark:border-neutral-800 dark:from-neutral-850 dark:via-neutral-850 dark:to-neutral-800">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-center gap-3.5">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary-500/10 text-2xl shadow-inner dark:bg-primary-500/20">
-                      <span>{group.icon}</span>
-                    </div>
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2.5">
-                        <h2 className="text-xl sm:text-2xl font-black tracking-tight text-neutral-900 dark:text-white">
-                          {group.name}
-                        </h2>
-                        <span className="rounded-full bg-primary-500/15 border border-primary-500/30 px-2.5 py-0.5 text-xs font-bold text-primary-700 dark:text-primary-300">
-                          {group.items.length} {group.items.length === 1 ? 'dish' : 'dishes'}
-                        </span>
-                      </div>
-                      {group.description && (
-                        <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400 line-clamp-1">
-                          {group.description}
-                        </p>
-                      )}
-                    </div>
+                <div className="flex items-center gap-3.5">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary-500/10 text-2xl shadow-inner dark:bg-primary-500/20">
+                    <span>{group.icon}</span>
                   </div>
-
-                  {/* Category Action */}
-                  <div className="flex items-center gap-2 self-start sm:self-auto pt-1 sm:pt-0">
-                    {selectedCategory === 'all' ? (
-                      <button
-                        type="button"
-                        onClick={() => handleFilterSingleCategory(group.id)}
-                        className="flex items-center gap-1 rounded-xl border border-neutral-200/80 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-600 shadow-2xs transition hover:border-primary-400 hover:text-primary-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:border-primary-500 dark:hover:text-primary-400"
-                        title={`Filter only ${group.name}`}
-                      >
-                        <span>Only {group.name}</span>
-                        <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => handleCategoryFilter('all')}
-                        className="flex items-center gap-1.5 rounded-xl border border-primary-300 bg-primary-50 px-3 py-1.5 text-xs font-bold text-primary-700 shadow-2xs transition hover:bg-primary-100 dark:border-primary-800 dark:bg-primary-950/40 dark:text-primary-300"
-                      >
-                        <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                        <span>View All Categories</span>
-                      </button>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <h2 className="text-xl sm:text-2xl font-black tracking-tight text-neutral-900 dark:text-white">
+                        {group.name}
+                      </h2>
+                      <span className="rounded-full bg-primary-500/15 border border-primary-500/30 px-2.5 py-0.5 text-xs font-bold text-primary-700 dark:text-primary-300">
+                        {group.items.length} {group.items.length === 1 ? 'dish' : 'dishes'}
+                      </span>
+                    </div>
+                    {group.description && (
+                      <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400 line-clamp-1">
+                        {group.description}
+                      </p>
                     )}
                   </div>
                 </div>
