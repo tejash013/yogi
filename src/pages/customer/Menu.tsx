@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { FoodCard, LoadingSkeleton } from '@/components/customer';
 import { categoriesApi, menuApi } from '@/api';
@@ -11,12 +11,17 @@ function getCategoryIcon(name: string): string {
   const lower = name.toLowerCase();
   if (lower.includes('pizza')) return '🍕';
   if (lower.includes('burger')) return '🍔';
-  if (lower.includes('beverage') || lower.includes('drink') || lower.includes('shake') || lower.includes('juice')) return '🥤';
-  if (lower.includes('coffee') || lower.includes('tea')) return '☕';
-  if (lower.includes('extra') || lower.includes('side') || lower.includes('snack')) return '🍿';
-  if (lower.includes('dessert') || lower.includes('ice cream') || lower.includes('sweet')) return '🍦';
-  if (lower.includes('noodle') || lower.includes('pasta') || lower.includes('chinese')) return '🍜';
-  if (lower.includes('main') || lower.includes('thali') || lower.includes('dish')) return '🍛';
+  if (lower.includes('beverage') || lower.includes('drink') || lower.includes('shake') || lower.includes('juice') || lower.includes('mocktail')) return '🥤';
+  if (lower.includes('coffee') || lower.includes('tea') || lower.includes('chai')) return '☕';
+  if (lower.includes('extra') || lower.includes('side') || lower.includes('snack') || lower.includes('starter') || lower.includes('appetizer')) return '🍿';
+  if (lower.includes('dessert') || lower.includes('ice cream') || lower.includes('sweet') || lower.includes('cake') || lower.includes('pastry')) return '🍦';
+  if (lower.includes('noodle') || lower.includes('pasta') || lower.includes('chinese') || lower.includes('chowmein')) return '🍜';
+  if (lower.includes('main') || lower.includes('thali') || lower.includes('dish') || lower.includes('curry') || lower.includes('gravy')) return '🍛';
+  if (lower.includes('biryani') || lower.includes('rice') || lower.includes('pulao')) return '🍚';
+  if (lower.includes('roti') || lower.includes('bread') || lower.includes('naan') || lower.includes('paratha')) return '🫓';
+  if (lower.includes('salad') || lower.includes('healthy')) return '🥗';
+  if (lower.includes('soup')) return '🍲';
+  if (lower.includes('sandwich') || lower.includes('wrap') || lower.includes('roll')) return '🥪';
   return '🍽️';
 }
 
@@ -212,9 +217,100 @@ export default function Menu() {
       break;
   }
 
+  // Group filtered items by category with category mentioned first
+  const categoryGroups = useMemo(() => {
+    if (filtered.length === 0) return [];
+
+    const groups: Array<{
+      id: string;
+      name: string;
+      icon: string;
+      description?: string;
+      items: MenuItem[];
+    }> = [];
+
+    const matchedItemIds = new Set<string>();
+
+    // 1. Group items under visibleCategories in configured order
+    for (const cat of visibleCategories) {
+      const catId = String(cat.id || '').trim();
+      const catName = String(cat.name || '').trim().toLowerCase();
+
+      const itemsForCat = filtered.filter((item) => {
+        const itemCatId = String(item.categoryId || '').trim();
+        const itemCatName = String(item.categoryName || '').trim().toLowerCase();
+
+        return (
+          (catId && itemCatId === catId) ||
+          (catName && itemCatName === catName) ||
+          (catId && itemCatId.toLowerCase() === catName)
+        );
+      });
+
+      if (itemsForCat.length > 0) {
+        itemsForCat.forEach((it) => matchedItemIds.add(it.id));
+        groups.push({
+          id: cat.id,
+          name: cat.name,
+          icon: cat.icon || getCategoryIcon(cat.name),
+          description: cat.description,
+          items: itemsForCat,
+        });
+      }
+    }
+
+    // 2. Any items that did not match a known category
+    const unmatchedItems = filtered.filter((item) => !matchedItemIds.has(item.id));
+    if (unmatchedItems.length > 0) {
+      const unmatchedMap = new Map<string, MenuItem[]>();
+      for (const item of unmatchedItems) {
+        const cName = (item.categoryName || 'Chef Specials').trim();
+        if (!unmatchedMap.has(cName)) {
+          unmatchedMap.set(cName, []);
+        }
+        unmatchedMap.get(cName)!.push(item);
+      }
+
+      unmatchedMap.forEach((uItems, uName) => {
+        groups.push({
+          id: `cat-${uName.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+          name: uName,
+          icon: getCategoryIcon(uName),
+          description: undefined,
+          items: uItems,
+        });
+      });
+    }
+
+    return groups;
+  }, [filtered, visibleCategories]);
+
   const handleCategoryFilter = (catId: string) => {
+    if (catId === 'all') {
+      setSelectedCategory('all');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    // If viewing all categories, scroll directly to that category section
+    if (selectedCategory === 'all') {
+      const el = document.getElementById(`category-section-${catId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+    }
+
     setIsLoading(true);
     setSelectedCategory(catId);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(() => setIsLoading(false), 200);
+  };
+
+  const handleFilterSingleCategory = (catId: string) => {
+    setIsLoading(true);
+    setSelectedCategory(catId);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     setTimeout(() => setIsLoading(false), 200);
   };
 
@@ -249,7 +345,7 @@ export default function Menu() {
             )}
           </div>
           <p className="text-xs text-neutral-500 dark:text-neutral-400">
-            Freshly prepared dishes & beverages
+            Freshly prepared dishes & beverages organized by category
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -300,73 +396,188 @@ export default function Menu() {
         )}
       </div>
 
-      {/* Categories Filter */}
+      {/* Categories Bar */}
       <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none snap-x touch-pan-x -mx-1 px-1">
         <button
           onClick={() => handleCategoryFilter('all')}
-          className={`flex-shrink-0 snap-start rounded-full px-4 py-2 text-xs font-bold transition-all border ${
+          className={`flex-shrink-0 snap-start rounded-full px-4 py-2 text-xs font-bold transition-all border flex items-center gap-1.5 ${
             selectedCategory === 'all'
               ? 'bg-primary-500 text-white border-primary-400 shadow-md shadow-primary-500/25'
               : 'bg-white text-neutral-700 border-neutral-200/80 hover:bg-neutral-50 dark:bg-neutral-850 dark:border-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-800'
           }`}
         >
-          All Items
+          <span>🍽️</span>
+          <span>All Items</span>
+          <span className={`rounded-full px-1.5 py-0.2 text-[10px] ${selectedCategory === 'all' ? 'bg-white/20 text-white' : 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300'}`}>
+            {menuItems.length}
+          </span>
         </button>
-        {visibleCategories.map((cat) => (
-          <button
-            key={cat.id}
-            onClick={() => handleCategoryFilter(cat.id)}
-            className={`flex-shrink-0 snap-start rounded-full px-4 py-2 text-xs font-bold transition-all border ${
-              selectedCategory === cat.id
-                ? 'bg-primary-500 text-white border-primary-400 shadow-md shadow-primary-500/25'
-                : 'bg-white text-neutral-700 border-neutral-200/80 hover:bg-neutral-50 dark:bg-neutral-850 dark:border-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-800'
-            }`}
-          >
-            {getCategoryIcon(cat.name)} {cat.name}
-          </button>
-        ))}
+        {visibleCategories.map((cat) => {
+          const isSelected = selectedCategory === cat.id;
+          return (
+            <button
+              key={cat.id}
+              onClick={() => handleCategoryFilter(cat.id)}
+              className={`flex-shrink-0 snap-start rounded-full px-4 py-2 text-xs font-bold transition-all border flex items-center gap-1.5 ${
+                isSelected
+                  ? 'bg-primary-500 text-white border-primary-400 shadow-md shadow-primary-500/25'
+                  : 'bg-white text-neutral-700 border-neutral-200/80 hover:bg-neutral-50 dark:bg-neutral-850 dark:border-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-800'
+              }`}
+            >
+              <span>{cat.icon || getCategoryIcon(cat.name)}</span>
+              <span>{cat.name}</span>
+            </button>
+          );
+        })}
       </div>
+
+      {/* Single Category Focus Banner */}
+      {selectedCategory !== 'all' && (
+        <div className="flex items-center justify-between rounded-2xl border border-primary-200/70 bg-primary-50/70 p-3.5 text-xs text-primary-900 dark:border-primary-800/60 dark:bg-primary-950/30 dark:text-primary-200 shadow-2xs">
+          <div className="flex items-center gap-2">
+            <span className="text-base">📂</span>
+            <span>
+              Showing dishes for category:{' '}
+              <span className="font-bold underline decoration-primary-400 underline-offset-2">
+                {categories.find((c) => c.id === selectedCategory || c.name.toLowerCase() === selectedCategory.toLowerCase())?.name || selectedCategory}
+              </span>
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => handleCategoryFilter('all')}
+            className="flex items-center gap-1 rounded-lg bg-white px-3 py-1 font-bold text-primary-700 shadow-xs hover:bg-primary-100 dark:bg-neutral-800 dark:text-primary-300 dark:hover:bg-neutral-700 transition"
+          >
+            <span>View All Categories</span>
+            <span>→</span>
+          </button>
+        </div>
+      )}
 
       {/* Filter Row */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         {/* Sort */}
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
-          className="rounded-xl border border-neutral-200/90 bg-white px-3.5 py-2 text-xs font-semibold text-neutral-700 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-800 dark:bg-neutral-850 dark:text-neutral-200"
-        >
-          <option value="recommended">Recommended</option>
-          <option value="popular">Popular</option>
-          <option value="rating">Highest Rated</option>
-          <option value="price-low">Price: Low to High</option>
-          <option value="price-high">Price: High to Low</option>
-        </select>
+        <div className="flex items-center gap-2">
+          <label htmlFor="sort-by" className="text-xs font-semibold text-neutral-500 dark:text-neutral-400">
+            Sort by:
+          </label>
+          <select
+            id="sort-by"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="rounded-xl border border-neutral-200/90 bg-white px-3.5 py-2 text-xs font-semibold text-neutral-700 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-800 dark:bg-neutral-850 dark:text-neutral-200"
+          >
+            <option value="recommended">Recommended</option>
+            <option value="popular">Popular</option>
+            <option value="rating">Highest Rated</option>
+            <option value="price-low">Price: Low to High</option>
+            <option value="price-high">Price: High to Low</option>
+          </select>
+        </div>
 
         {/* Result count */}
-        <span className="text-xs font-semibold text-neutral-500 dark:text-neutral-400">
-          {filtered.length} items found
-        </span>
+        <div className="flex items-center gap-2 text-xs font-semibold text-neutral-500 dark:text-neutral-400">
+          <span>{filtered.length} {filtered.length === 1 ? 'item' : 'items'} found</span>
+          <span>·</span>
+          <span>{categoryGroups.length} {categoryGroups.length === 1 ? 'category' : 'categories'}</span>
+        </div>
       </div>
 
-
-      {/* Menu Grid */}
+      {/* Menu Categories & Items Display */}
       {isLoading ? (
         <LoadingSkeleton type="card" count={6} />
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16">
           <span className="mb-4 text-6xl">🍽️</span>
           <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">No items found</h3>
-          <p className="mt-1 text-sm text-neutral-500">Try adjusting your filters</p>
+          <p className="mt-1 text-sm text-neutral-500">Try adjusting your filters or search term</p>
+          {selectedCategory !== 'all' && (
+            <button
+              type="button"
+              onClick={() => handleCategoryFilter('all')}
+              className="mt-4 rounded-xl bg-primary-500 px-4 py-2 text-xs font-bold text-white shadow-md hover:bg-primary-600 transition"
+            >
+              View All Categories
+            </button>
+          )}
         </div>
       ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filtered.map((item) => (
-            <FoodCard
-              key={item.id}
-              item={item}
-              isFavorite={favorites.includes(item.id)}
-              onFavoriteToggle={toggleFavorite}
-            />
+        <div className="space-y-10 sm:space-y-12">
+          {categoryGroups.map((group) => (
+            <section
+              key={group.id}
+              id={`category-section-${group.id}`}
+              className="scroll-mt-28 space-y-5"
+            >
+              {/* Category Header - Category mentioned first */}
+              <div className="relative overflow-hidden rounded-2xl border border-neutral-200/80 bg-gradient-to-r from-neutral-50 via-white to-amber-50/30 p-4 shadow-xs dark:border-neutral-800 dark:from-neutral-850 dark:via-neutral-850 dark:to-neutral-800">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-3.5">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary-500/10 text-2xl shadow-inner dark:bg-primary-500/20">
+                      <span>{group.icon}</span>
+                    </div>
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2.5">
+                        <h2 className="text-xl sm:text-2xl font-black tracking-tight text-neutral-900 dark:text-white">
+                          {group.name}
+                        </h2>
+                        <span className="rounded-full bg-primary-500/15 border border-primary-500/30 px-2.5 py-0.5 text-xs font-bold text-primary-700 dark:text-primary-300">
+                          {group.items.length} {group.items.length === 1 ? 'dish' : 'dishes'}
+                        </span>
+                      </div>
+                      {group.description && (
+                        <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400 line-clamp-1">
+                          {group.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Category Action */}
+                  <div className="flex items-center gap-2 self-start sm:self-auto pt-1 sm:pt-0">
+                    {selectedCategory === 'all' ? (
+                      <button
+                        type="button"
+                        onClick={() => handleFilterSingleCategory(group.id)}
+                        className="flex items-center gap-1 rounded-xl border border-neutral-200/80 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-600 shadow-2xs transition hover:border-primary-400 hover:text-primary-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:border-primary-500 dark:hover:text-primary-400"
+                        title={`Filter only ${group.name}`}
+                      >
+                        <span>Only {group.name}</span>
+                        <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleCategoryFilter('all')}
+                        className="flex items-center gap-1.5 rounded-xl border border-primary-300 bg-primary-50 px-3 py-1.5 text-xs font-bold text-primary-700 shadow-2xs transition hover:bg-primary-100 dark:border-primary-800 dark:bg-primary-950/40 dark:text-primary-300"
+                      >
+                        <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                        <span>View All Categories</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Decorative accent gradient divider */}
+                <div className="mt-3.5 h-0.5 w-full rounded-full bg-gradient-to-r from-primary-500 via-primary-300/40 to-transparent dark:from-primary-400 dark:via-primary-700/30 dark:to-transparent" />
+              </div>
+
+              {/* Items grid for this category */}
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {group.items.map((item) => (
+                  <FoodCard
+                    key={item.id}
+                    item={item}
+                    isFavorite={favorites.includes(item.id)}
+                    onFavoriteToggle={toggleFavorite}
+                  />
+                ))}
+              </div>
+            </section>
           ))}
         </div>
       )}

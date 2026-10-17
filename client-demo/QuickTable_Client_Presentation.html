@@ -645,28 +645,119 @@
       font-size: 0.85rem;
     }
 
-    /* Print / PDF Mode */
+    /* =========================================================
+       EXECUTIVE PRESENTATION DECK PRINT & PDF MODE
+       Automatically turns interactive presentation into a 
+       pristine 9-slide landscape PDF pitch deck.
+       ========================================================= */
+    .print-deck {
+      display: none;
+    }
+
     @media print {
-      body {
-        background: #ffffff !important;
-        color: #000000 !important;
+      @page {
+        size: 297mm 210mm;
+        margin: 0;
       }
-      header, .player-controls, .ambient-bg, .btn, .hero-pill {
+      *, *::before, *::after {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      html, body {
+        width: 297mm !important;
+        height: auto !important;
+        min-height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #060911 !important;
+        color: #f8fafc !important;
+        overflow: visible !important;
+      }
+      header, main, .ambient-bg {
         display: none !important;
       }
-      .video-stage {
-        background: #f8fafc !important;
-        color: #000000 !important;
-        border: 1px solid #cbd5e1 !important;
+      .print-deck {
+        display: block !important;
+        width: 297mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
       }
-      .calc-section, .feature-card, .cta-section {
-        background: #ffffff !important;
-        border: 1px solid #e2e8f0 !important;
-        color: #000000 !important;
-        box-shadow: none !important;
+      .print-slide {
+        width: 297mm !important;
+        height: 210mm !important;
+        max-height: 210mm !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        box-sizing: border-box !important;
+        padding: 14mm 18mm !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        background: #090e1a !important;
+        color: #f8fafc !important;
+        position: relative !important;
+        overflow: hidden !important;
       }
-      .scene-text p, .feature-card p {
-        color: #475569 !important;
+      .print-slide:last-child {
+        page-break-after: avoid !important;
+        break-after: avoid !important;
+      }
+      .print-slide-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding-bottom: 4mm;
+      }
+      .print-brand-badge {
+        font-size: 8.5pt;
+        color: #94a3b8;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        padding: 3px 10px;
+        border-radius: 6px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+      .print-slide-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 8pt;
+        color: #64748b;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding-top: 3.5mm;
+      }
+      .print-slide-body {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 1.15fr 1fr;
+        gap: 12mm;
+        align-items: center;
+        padding: 5mm 0;
+      }
+      .print-slide-title {
+        font-size: 20pt;
+        font-weight: 800;
+        line-height: 1.18;
+        margin-bottom: 3.5mm;
+        letter-spacing: -0.025em;
+        color: #ffffff;
+      }
+      .print-slide-desc {
+        color: #94a3b8;
+        font-size: 10pt;
+        line-height: 1.55;
+        margin-bottom: 4.5mm;
+      }
+      .print-slide-mockup {
+        background: rgba(13, 19, 34, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 14px;
+        padding: 14px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
       }
     }
 
@@ -704,8 +795,8 @@
       </div>
     </div>
     <div class="nav-actions">
-      <button class="btn btn-secondary" onclick="window.print()" title="Save as clean PDF proposal">
-        🖨️ Export PDF Pitch
+      <button class="btn btn-secondary" onclick="exportPresentationPDF()" title="Export complete 9-slide PDF pitch deck">
+        🖨️ Export PDF Pitch Deck
       </button>
       <a href="mailto:tsubasadigitals@gmail.com?subject=QuickTable%20Restaurant%20Demo%20Inquiry" class="btn btn-primary">
         ✉️ Contact tsubasa digital
@@ -877,6 +968,576 @@
       <p style="margin-top: 0.35rem; font-size: 0.78rem;">Enterprise Restaurant Technology Solutions • Contact: tsubasadigitals@gmail.com</p>
     </footer>
   </main>
+
+  <!-- =========================================================
+       PRINT DECK CONTAINER: Renders all 9 slides for PDF export
+       ========================================================= -->
+  <div class="print-deck" id="printDeck">
+    <!-- SLIDE 1: COVER -->
+    <div class="print-slide" style="background: radial-gradient(circle at 70% 30%, rgba(249, 115, 22, 0.22) 0%, rgba(99, 102, 241, 0.15) 50%, #080d19 85%);">
+      <div class="print-slide-header">
+        <div style="display:flex; align-items:center; gap:0.75rem;">
+          <div class="brand-logo" style="width:36px; height:36px; font-size:1.2rem;">Q</div>
+          <span style="font-weight:800; font-size:1.15rem; letter-spacing:-0.02em;">QuickTable</span>
+          <span class="print-brand-badge">Executive Deck</span>
+        </div>
+        <div style="font-size:8.5pt; color:#94a3b8; font-weight:700;">
+          tsubasa digital • 2026 Edition
+        </div>
+      </div>
+
+      <div style="flex:1; display:flex; flex-direction:column; justify-content:center; padding:10mm 0;">
+        <div style="display:inline-block; margin-bottom:4mm;">
+          <span style="background:rgba(249,115,22,0.18); border:1px solid rgba(249,115,22,0.4); color:#fb923c; font-size:8.5pt; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; padding:3px 10px; border-radius:999px;">
+            ⚡ Next-Generation Restaurant OS
+          </span>
+        </div>
+        <h1 style="font-size:28pt; font-weight:800; line-height:1.15; margin-bottom:5mm; letter-spacing:-0.03em;">
+          Accelerate Table Turnover.<br>
+          <span style="background:linear-gradient(135deg, #fb923c 10%, #f43f5e 50%, #c084fc 90%); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">
+            Eliminate Order Chaos.
+          </span>
+        </h1>
+        <p style="font-size:11.5pt; color:#cbd5e1; max-width:800px; line-height:1.55; margin-bottom:8mm;">
+          A complete client presentation deck engineered for restaurant owners, general managers, and hospitality directors. Cut waitstaff bottlenecks by 60%, speed up kitchen prep, and settle bills in 10 seconds.
+        </p>
+
+        <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:4mm;">
+          <div style="background:rgba(15,23,42,0.85); border:1px solid rgba(249,115,22,0.3); border-radius:10px; padding:3.5mm 4mm;">
+            <div style="color:#fb923c; font-size:13pt; font-weight:800;">+28% Faster</div>
+            <div style="color:#94a3b8; font-size:8pt; margin-top:1mm;">Table Turnaround Speed</div>
+          </div>
+          <div style="background:rgba(15,23,42,0.85); border:1px solid rgba(16,185,129,0.3); border-radius:10px; padding:3.5mm 4mm;">
+            <div style="color:#34d399; font-size:13pt; font-weight:800;">Zero Apps</div>
+            <div style="color:#94a3b8; font-size:8pt; margin-top:1mm;">Instant Camera QR Ordering</div>
+          </div>
+          <div style="background:rgba(15,23,42,0.85); border:1px solid rgba(59,130,246,0.3); border-radius:10px; padding:3.5mm 4mm;">
+            <div style="color:#60a5fa; font-size:13pt; font-weight:800;">&lt;500ms Sync</div>
+            <div style="color:#94a3b8; font-size:8pt; margin-top:1mm;">Real-Time Kitchen KDS Tickets</div>
+          </div>
+          <div style="background:rgba(15,23,42,0.85); border:1px solid rgba(168,85,247,0.3); border-radius:10px; padding:3.5mm 4mm;">
+            <div style="color:#c084fc; font-size:13pt; font-weight:800;">10 Seconds</div>
+            <div style="color:#94a3b8; font-size:8pt; margin-top:1mm;">Thermal POS & Dynamic UPI</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="print-slide-footer">
+        <span>Confidential Client Pitch Deck • Prepared by tsubasa digital</span>
+        <span>Contact: tsubasadigitals@gmail.com • Slide 01 of 09</span>
+      </div>
+    </div>
+
+    <!-- SLIDE 2: CHAPTER 1 - ARCHITECTURE -->
+    <div class="print-slide" style="background: radial-gradient(circle at 60% 40%, rgba(249, 115, 22, 0.16) 0%, #080d19 80%);">
+      <div class="print-slide-header">
+        <span class="scene-badge" style="background:rgba(249,115,22,0.2); border-color:rgba(249,115,22,0.5); color:#fb923c;">
+          01. Executive Overview
+        </span>
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <span style="font-weight:700; font-size:9pt; color:#cbd5e1;">QuickTable</span>
+          <span class="print-brand-badge">Slide 02 / 09</span>
+        </div>
+      </div>
+
+      <div class="print-slide-body">
+        <div>
+          <h2 class="print-slide-title">Cut Waiter Bottlenecks by 60%</h2>
+          <p class="print-slide-desc">
+            Traditional paper menus and busy waiters cause customer frustration and lost dessert revenue. QuickTable creates a frictionless, instant ordering pipeline connecting tables, kitchen tablets, and cashier desks in real time.
+          </p>
+          <div class="scene-highlights">
+            <div class="highlight-item">
+              <span class="highlight-icon">✓</span>
+              <span>Zero app download required for diners (instant browser loading)</span>
+            </div>
+            <div class="highlight-item">
+              <span class="highlight-icon">✓</span>
+              <span>Direct kitchen ticket dispatch in &lt;500ms via WebSocket</span>
+            </div>
+            <div class="highlight-item">
+              <span class="highlight-icon">✓</span>
+              <span>Hardware agnostic: Runs on any iPad, Android tablet, phone, or POS</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="print-slide-mockup">
+          <div class="mockup-header">
+            <span>QuickTable Architecture</span>
+            <div class="mockup-dots"><span></span><span></span><span></span></div>
+          </div>
+          <div class="mockup-body">
+            <div style="display:flex; flex-direction:column; gap:0.75rem; justify-content:center; height:100%;">
+              <div style="display:flex; align-items:center; justify-content:space-between; background:rgba(249,115,22,0.12); border:1px solid rgba(249,115,22,0.35); padding:0.65rem 0.85rem; border-radius:10px;">
+                <span style="font-size:0.88rem; font-weight:700;">📱 Table QR Order</span>
+                <span style="font-size:0.75rem; color:#34d399; font-weight:700; background:rgba(16,185,129,0.15); padding:2px 8px; border-radius:6px;">Instant Web</span>
+              </div>
+              <div style="text-align:center; color:#fb923c; font-size:0.8rem; font-weight:700; letter-spacing:0.04em;">⬇️ Real-Time WebSocket Sync</div>
+              <div style="display:flex; align-items:center; justify-content:space-between; background:rgba(59,130,246,0.12); border:1px solid rgba(59,130,246,0.35); padding:0.65rem 0.85rem; border-radius:10px;">
+                <span style="font-size:0.88rem; font-weight:700;">🍳 Kitchen KDS Display</span>
+                <span style="font-size:0.75rem; color:#60a5fa; font-weight:700; background:rgba(59,130,246,0.15); padding:2px 8px; border-radius:6px;">Chef Priority</span>
+              </div>
+              <div style="text-align:center; color:#fb923c; font-size:0.8rem; font-weight:700; letter-spacing:0.04em;">⬇️ Auto Billing Sync</div>
+              <div style="display:flex; align-items:center; justify-content:space-between; background:rgba(168,85,247,0.12); border:1px solid rgba(168,85,247,0.35); padding:0.65rem 0.85rem; border-radius:10px;">
+                <span style="font-size:0.88rem; font-weight:700;">💳 Cashier POS & Owner App</span>
+                <span style="font-size:0.75rem; color:#c084fc; font-weight:700; background:rgba(168,85,247,0.15); padding:2px 8px; border-radius:6px;">80mm Tax Bill</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="print-slide-footer">
+        <span>Chapter 01: The Problem & The Solution</span>
+        <span>QuickTable by tsubasa digital • tsubasadigitals@gmail.com</span>
+      </div>
+    </div>
+
+    <!-- SLIDE 3: CHAPTER 2 - GUEST EXPERIENCE -->
+    <div class="print-slide" style="background: radial-gradient(circle at 60% 40%, rgba(16, 185, 129, 0.16) 0%, #080d19 80%);">
+      <div class="print-slide-header">
+        <span class="scene-badge" style="background:rgba(16,185,129,0.2); border-color:rgba(16,185,129,0.5); color:#34d399;">
+          02. Customer Mobile Experience
+        </span>
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <span style="font-weight:700; font-size:9pt; color:#cbd5e1;">QuickTable</span>
+          <span class="print-brand-badge">Slide 03 / 09</span>
+        </div>
+      </div>
+
+      <div class="print-slide-body">
+        <div>
+          <h2 class="print-slide-title">Diners Order Directly From Their Phone</h2>
+          <p class="print-slide-desc">
+            Customers scan a unique table acrylic QR code. They view appetizing photo menus, ingredient warnings, dietary tags, and submit orders in seconds without waiting for a waiter.
+          </p>
+          <div class="scene-highlights">
+            <div class="highlight-item">
+              <span class="highlight-icon">✓</span>
+              <span>High-res food photography, pricing, and chef recommendations</span>
+            </div>
+            <div class="highlight-item">
+              <span class="highlight-icon">✓</span>
+              <span>Customizable dish cooking notes (e.g. 'Extra spicy', 'No onions')</span>
+            </div>
+            <div class="highlight-item">
+              <span class="highlight-icon">✓</span>
+              <span>Live table status tracking without waving hands at staff</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="print-slide-mockup">
+          <div class="mockup-header">
+            <span>Guest View • Table #04</span>
+            <div class="mockup-dots"><span></span><span></span><span></span></div>
+          </div>
+          <div class="mockup-body">
+            <div style="background:#0f172a; border-radius:14px; padding:0.85rem; border:1px solid rgba(16,185,129,0.3); box-shadow:0 10px 25px rgba(0,0,0,0.5);">
+              <div style="display:flex; gap:0.75rem; align-items:center; margin-bottom:0.75rem;">
+                <div style="width:44px; height:44px; background:linear-gradient(135deg, #10b981, #059669); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.35rem; box-shadow:0 4px 12px rgba(16,185,129,0.3);">🍕</div>
+                <div style="flex:1;">
+                  <div style="font-size:0.92rem; font-weight:800; color:#fff;">Wood-Fired Truffle Pizza</div>
+                  <div style="font-size:0.72rem; color:#94a3b8;">Fresh mozzarella, black truffle oil</div>
+                  <div style="display:flex; gap:4px; margin-top:3px;">
+                    <span style="font-size:0.65rem; background:rgba(16,185,129,0.15); color:#34d399; padding:1px 5px; border-radius:4px; font-weight:700;">🌱 Vegetarian</span>
+                    <span style="font-size:0.65rem; background:rgba(239,68,68,0.15); color:#f87171; padding:1px 5px; border-radius:4px; font-weight:700;">🔥 Mild Spice</span>
+                  </div>
+                </div>
+                <div style="font-weight:800; color:#34d399; font-size:0.95rem;">$18.50</div>
+              </div>
+              <div style="background:rgba(16,185,129,0.18); border:1px solid rgba(16,185,129,0.35); color:#34d399; padding:0.45rem; border-radius:8px; font-size:0.78rem; text-align:center; font-weight:700;">
+                ✓ Dispatched to Kitchen (Prep Time: ~12 mins)
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="print-slide-footer">
+        <span>Chapter 02: Guest Mobile QR Experience</span>
+        <span>QuickTable by tsubasa digital • tsubasadigitals@gmail.com</span>
+      </div>
+    </div>
+
+    <!-- SLIDE 4: CHAPTER 3 - KDS -->
+    <div class="print-slide" style="background: radial-gradient(circle at 60% 40%, rgba(59, 130, 246, 0.16) 0%, #080d19 80%);">
+      <div class="print-slide-header">
+        <span class="scene-badge" style="background:rgba(59,130,246,0.2); border-color:rgba(59,130,246,0.5); color:#60a5fa;">
+          03. Chef Display Station
+        </span>
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <span style="font-weight:700; font-size:9pt; color:#cbd5e1;">QuickTable</span>
+          <span class="print-brand-badge">Slide 04 / 09</span>
+        </div>
+      </div>
+
+      <div class="print-slide-body">
+        <div>
+          <h2 class="print-slide-title">Zero Lost Tickets. Zero Screaming.</h2>
+          <p class="print-slide-desc">
+            Replaces dirty paper slips with color-coded tablet stations. Chefs see order timestamp urgencies, allergen alerts, and tap to notify waitstaff when dishes are plated.
+          </p>
+          <div class="scene-highlights">
+            <div class="highlight-item">
+              <span class="highlight-icon">✓</span>
+              <span>Color-coded countdown clocks (Green/Amber/Red rush alert)</span>
+            </div>
+            <div class="highlight-item">
+              <span class="highlight-icon">✓</span>
+              <span>Audible incoming ticket chimes for busy kitchen lines</span>
+            </div>
+            <div class="highlight-item">
+              <span class="highlight-icon">✓</span>
+              <span>Table number, seat notes, and allergen modifications clearly highlighted</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="print-slide-mockup">
+          <div class="mockup-header">
+            <span>Kitchen Live Ticket • Table #04</span>
+            <div class="mockup-dots"><span></span><span></span><span></span></div>
+          </div>
+          <div class="mockup-body">
+            <div style="background:#131c38; border:1px solid rgba(59,130,246,0.35); border-radius:12px; padding:0.85rem; box-shadow:0 10px 25px rgba(0,0,0,0.5);">
+              <div style="display:flex; justify-content:space-between; font-size:0.78rem; font-weight:800; color:#93c5fd; margin-bottom:0.5rem;">
+                <span>TICKET #108 • TABLE 4</span>
+                <span style="color:#f87171; font-family:'JetBrains Mono',monospace; background:rgba(239,68,68,0.15); padding:2px 6px; border-radius:4px;">⏳ 04:12 RUSH</span>
+              </div>
+              <div style="font-size:0.92rem; font-weight:800; color:white;">1x Wood-Fired Truffle Pizza</div>
+              <div style="font-size:0.74rem; color:#cbd5e1; margin-bottom:0.85rem;">Note: <em>Extra crispy crust, slice into 8</em></div>
+              <div style="display:flex; gap:0.5rem;">
+                <button style="flex:1; background:linear-gradient(135deg, #3b82f6, #2563eb); color:white; border:none; padding:0.45rem; border-radius:8px; font-size:0.75rem; font-weight:800;">🍳 Cooking</button>
+                <button style="flex:1; background:linear-gradient(135deg, #10b981, #059669); color:white; border:none; padding:0.45rem; border-radius:8px; font-size:0.75rem; font-weight:800;">✓ Mark Ready</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="print-slide-footer">
+        <span>Chapter 03: Kitchen Display System (KDS)</span>
+        <span>QuickTable by tsubasa digital • tsubasadigitals@gmail.com</span>
+      </div>
+    </div>
+
+    <!-- SLIDE 5: CHAPTER 4 - POS BILLING -->
+    <div class="print-slide" style="background: radial-gradient(circle at 60% 40%, rgba(139, 92, 246, 0.16) 0%, #080d19 80%);">
+      <div class="print-slide-header">
+        <span class="scene-badge" style="background:rgba(139,92,246,0.2); border-color:rgba(139,92,246,0.5); color:#c084fc;">
+          04. Cashier Desk & Settlement
+        </span>
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <span style="font-weight:700; font-size:9pt; color:#cbd5e1;">QuickTable</span>
+          <span class="print-brand-badge">Slide 05 / 09</span>
+        </div>
+      </div>
+
+      <div class="print-slide-body">
+        <div>
+          <h2 class="print-slide-title">10-Second Checkout with Dynamic QR</h2>
+          <p class="print-slide-desc">
+            Tables settle instantly with Cash, Card, or Dynamic UPI QR codes. One click splits the bill evenly and triggers thermal invoice printing.
+          </p>
+          <div class="scene-highlights">
+            <div class="highlight-item">
+              <span class="highlight-icon">✓</span>
+              <span>Direct thermal printer integration (standard 80mm & 58mm paper)</span>
+            </div>
+            <div class="highlight-item">
+              <span class="highlight-icon">✓</span>
+              <span>Dynamic UPI QR generation for instant customer smartphone payments</span>
+            </div>
+            <div class="highlight-item">
+              <span class="highlight-icon">✓</span>
+              <span>Automatic tax calculations (GST / VAT) and custom service charges</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="print-slide-mockup">
+          <div class="mockup-header">
+            <span>POS Billing Terminal • Table #04</span>
+            <div class="mockup-dots"><span></span><span></span><span></span></div>
+          </div>
+          <div class="mockup-body">
+            <div style="display:flex; flex-direction:column; gap:0.5rem; background:#121829; border:1px solid rgba(139,92,246,0.3); padding:0.85rem; border-radius:12px;">
+              <div style="display:flex; justify-content:space-between; font-size:0.88rem;">
+                <span style="color:#94a3b8;">Subtotal (3 items):</span>
+                <span style="font-weight:700;">$42.00</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:0.88rem;">
+                <span style="color:#94a3b8;">Tax (GST / VAT 8.25%):</span>
+                <span style="font-weight:700;">$3.47</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:1.05rem; font-weight:800; border-top:1px dashed rgba(255,255,255,0.15); padding-top:0.45rem;">
+                <span>Total Settle:</span>
+                <span style="color:#34d399;">$45.47</span>
+              </div>
+              <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
+                <button style="flex:1; background:linear-gradient(135deg, #10b981, #059669); color:white; border:none; padding:0.45rem; border-radius:8px; font-size:0.78rem; font-weight:800;">🖨️ Print 80mm</button>
+                <button style="flex:1; background:linear-gradient(135deg, #8b5cf6, #7c3aed); color:white; border:none; padding:0.45rem; border-radius:8px; font-size:0.78rem; font-weight:800;">📱 Dynamic UPI QR</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="print-slide-footer">
+        <span>Chapter 04: Cashier POS & Split Invoicing</span>
+        <span>QuickTable by tsubasa digital • tsubasadigitals@gmail.com</span>
+      </div>
+    </div>
+
+    <!-- SLIDE 6: CHAPTER 5 - OWNER COMMAND -->
+    <div class="print-slide" style="background: radial-gradient(circle at 60% 40%, rgba(6, 182, 212, 0.16) 0%, #080d19 80%);">
+      <div class="print-slide-header">
+        <span class="scene-badge" style="background:rgba(6,182,212,0.2); border-color:rgba(6,182,212,0.5); color:#38bdf8;">
+          05. Owner Command Center
+        </span>
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <span style="font-weight:700; font-size:9pt; color:#cbd5e1;">QuickTable</span>
+          <span class="print-brand-badge">Slide 06 / 09</span>
+        </div>
+      </div>
+
+      <div class="print-slide-body">
+        <div>
+          <h2 class="print-slide-title">Track Everything From Anywhere</h2>
+          <p class="print-slide-desc">
+            Whether on vacation or in the back office, owners monitor gross margins, best-selling dishes, labor shifts, and multi-location branch performances in real time.
+          </p>
+          <div class="scene-highlights">
+            <div class="highlight-item">
+              <span class="highlight-icon">✓</span>
+              <span>Hourly sales velocity charts and peak-hour turnover trends</span>
+            </div>
+            <div class="highlight-item">
+              <span class="highlight-icon">✓</span>
+              <span>Real-time kitchen inventory depletion alerts</span>
+            </div>
+            <div class="highlight-item">
+              <span class="highlight-icon">✓</span>
+              <span>Custom staff access roles (Cashier, Waiter, Chef, Branch Manager)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="print-slide-mockup">
+          <div class="mockup-header">
+            <span>Owner Live Dashboard</span>
+            <div class="mockup-dots"><span></span><span></span><span></span></div>
+          </div>
+          <div class="mockup-body">
+            <div style="display:flex; flex-direction:column; gap:0.75rem; background:#0c1829; border:1px solid rgba(6,182,212,0.3); padding:0.85rem; border-radius:12px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <div style="font-size:0.72rem; color:#94a3b8; font-weight:700;">TODAY'S GROSS SALES</div>
+                  <div style="font-size:1.45rem; font-weight:800; color:#38bdf8;">$2,840.50</div>
+                </div>
+                <div style="background:rgba(56,189,248,0.18); border:1px solid rgba(56,189,248,0.35); color:#38bdf8; font-size:0.78rem; padding:0.3rem 0.75rem; border-radius:8px; font-weight:800;">
+                  +24.6% vs yesterday
+                </div>
+              </div>
+              <div style="height:65px; background:linear-gradient(to top, rgba(56,189,248,0.15), transparent); border-bottom:2px solid #38bdf8; border-radius:6px; display:flex; align-items:flex-end; justify-content:space-around; padding-bottom:4px;">
+                <span style="font-size:0.65rem; color:#94a3b8; font-weight:600;">12 PM</span>
+                <span style="font-size:0.65rem; color:#94a3b8; font-weight:600;">2 PM</span>
+                <span style="font-size:0.65rem; color:#94a3b8; font-weight:600;">6 PM</span>
+                <span style="font-size:0.65rem; color:#94a3b8; font-weight:600;">9 PM (Peak)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="print-slide-footer">
+        <span>Chapter 05: Owner Analytics & Command Hub</span>
+        <span>QuickTable by tsubasa digital • tsubasadigitals@gmail.com</span>
+      </div>
+    </div>
+
+    <!-- SLIDE 7: CHAPTER 6 - ENTERPRISE GUARANTEE -->
+    <div class="print-slide" style="background: radial-gradient(circle at 60% 40%, rgba(234, 179, 8, 0.16) 0%, #080d19 80%);">
+      <div class="print-slide-header">
+        <span class="scene-badge" style="background:rgba(234,179,8,0.2); border-color:rgba(234,179,8,0.5); color:#fde047;">
+          06. Enterprise Guarantee
+        </span>
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <span style="font-weight:700; font-size:9pt; color:#cbd5e1;">QuickTable</span>
+          <span class="print-brand-badge">Slide 07 / 09</span>
+        </div>
+      </div>
+
+      <div class="print-slide-body">
+        <div>
+          <h2 class="print-slide-title">Reliable, Dedicated & Customized</h2>
+          <p class="print-slide-desc">
+            We don't just sell software. tsubasa digital handles full setup, menu input, staff training, and provides round-the-clock priority technical support so you never worry about downtime.
+          </p>
+          <div class="scene-highlights">
+            <div class="highlight-item">
+              <span class="highlight-icon">✓</span>
+              <span>Dedicated engineering contact: tsubasadigitals@gmail.com</span>
+            </div>
+            <div class="highlight-item">
+              <span class="highlight-icon">✓</span>
+              <span>Bank-grade cloud encryption & automated daily database backups</span>
+            </div>
+            <div class="highlight-item">
+              <span class="highlight-icon">✓</span>
+              <span>Tailored integration with local payment gateways and receipt hardware</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="print-slide-mockup">
+          <div class="mockup-header">
+            <span>tsubasa digital Support SLA</span>
+            <div class="mockup-dots"><span></span><span></span><span></span></div>
+          </div>
+          <div class="mockup-body">
+            <div style="text-align:center; padding:0.75rem 0; background:#1c1809; border:1px solid rgba(234,179,8,0.3); border-radius:12px;">
+              <div style="font-size:1.75rem; margin-bottom:0.25rem;">🛡️</div>
+              <div style="font-weight:800; font-size:1rem; color:#fde047;">99.9% Cloud Uptime Commitment</div>
+              <div style="font-size:0.78rem; color:#cbd5e1; margin:0.35rem 0 0.85rem;">Zero loss of sales during peak dinner rush</div>
+              <div style="background:rgba(255,255,255,0.08); padding:0.6rem 0.85rem; border-radius:8px; font-family:'JetBrains Mono',monospace; font-size:0.85rem; color:#fbbf24; display:inline-block; font-weight:700;">
+                Direct Email: tsubasadigitals@gmail.com
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="print-slide-footer">
+        <span>Chapter 06: Enterprise Support & Deployment SLA</span>
+        <span>QuickTable by tsubasa digital • tsubasadigitals@gmail.com</span>
+      </div>
+    </div>
+
+    <!-- SLIDE 8: FINANCIAL RETURN & ROI -->
+    <div class="print-slide" style="background: radial-gradient(circle at 60% 40%, rgba(16, 185, 129, 0.16) 0%, #080d19 80%);">
+      <div class="print-slide-header">
+        <span class="scene-badge" style="background:rgba(16,185,129,0.2); border-color:rgba(16,185,129,0.5); color:#34d399;">
+          07. Client Financial Return
+        </span>
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <span style="font-weight:700; font-size:9pt; color:#cbd5e1;">QuickTable</span>
+          <span class="print-brand-badge">Slide 08 / 09</span>
+        </div>
+      </div>
+
+      <div class="print-slide-body">
+        <div>
+          <h2 class="print-slide-title">How QuickTable Pays For Itself in 3 Days</h2>
+          <p class="print-slide-desc">
+            By eliminating waiter order-taking delays and empowering customers to order drinks and desserts with one tap, QuickTable unlocks measurable additional monthly profit.
+          </p>
+          <div class="scene-highlights">
+            <div class="highlight-item">
+              <span class="highlight-icon">✓</span>
+              <span><strong>+15% Table Turnaround:</strong> Seating 1-2 additional parties per table per night.</span>
+            </div>
+            <div class="highlight-item">
+              <span class="highlight-icon">✓</span>
+              <span><strong>+8% Upsell Value:</strong> High-resolution photos trigger impulse appetizer & dessert sales.</span>
+            </div>
+            <div class="highlight-item">
+              <span class="highlight-icon">✓</span>
+              <span><strong>Zero Capital Risk:</strong> No proprietary hardware required. Runs on existing devices.</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:rgba(15,23,42,0.92); border:1px solid rgba(16,185,129,0.35); border-radius:14px; padding:16px;">
+          <div style="font-size:8pt; color:#94a3b8; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:8px;">
+            Estimated Monthly Revenue Increase
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; margin-bottom:12px;">
+            <div style="background:rgba(255,255,255,0.04); border-radius:8px; padding:8px; text-align:center;">
+              <div style="font-size:7.5pt; color:#94a3b8;">10 TABLES</div>
+              <div style="font-size:12pt; font-weight:800; color:#34d399; margin-top:2px;">+$2,360</div>
+              <div style="font-size:6.5pt; color:#64748b;">per month</div>
+            </div>
+            <div style="background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.4); border-radius:8px; padding:8px; text-align:center;">
+              <div style="font-size:7.5pt; color:#34d399; font-weight:700;">20 TABLES</div>
+              <div style="font-size:13pt; font-weight:800; color:#34d399; margin-top:2px;">+$4,725</div>
+              <div style="font-size:6.5pt; color:#34d399;">Typical Casual</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.04); border-radius:8px; padding:8px; text-align:center;">
+              <div style="font-size:7.5pt; color:#94a3b8;">40 TABLES</div>
+              <div style="font-size:12pt; font-weight:800; color:#34d399; margin-top:2px;">+$9,450</div>
+              <div style="font-size:6.5pt; color:#64748b;">per month</div>
+            </div>
+          </div>
+          <div style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); border-radius:8px; padding:8px; text-align:center; font-size:8.5pt; color:#34d399; font-weight:700;">
+            ✓ Return on Investment achieved in the first 72 hours of live operation
+          </div>
+        </div>
+      </div>
+
+      <div class="print-slide-footer">
+        <span>Chapter 07: Financial ROI & Revenue Model</span>
+        <span>QuickTable by tsubasa digital • tsubasadigitals@gmail.com</span>
+      </div>
+    </div>
+
+    <!-- SLIDE 9: FULL MODULES & 72-HOUR ROLLOUT -->
+    <div class="print-slide" style="background: radial-gradient(circle at 60% 40%, rgba(244, 63, 94, 0.16) 0%, #080d19 80%);">
+      <div class="print-slide-header">
+        <span class="scene-badge" style="background:rgba(244,63,94,0.2); border-color:rgba(244,63,94,0.5); color:#fb7185;">
+          08. Rollout Plan & Next Steps
+        </span>
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <span style="font-weight:700; font-size:9pt; color:#cbd5e1;">QuickTable</span>
+          <span class="print-brand-badge">Slide 09 / 09</span>
+        </div>
+      </div>
+
+      <div class="print-slide-body">
+        <div>
+          <h2 class="print-slide-title">Live in Your Restaurant in 72 Hours</h2>
+          <p class="print-slide-desc">
+            tsubasa digital handles the full deployment pipeline so your restaurant staff experiences a painless transition with zero disruption.
+          </p>
+          <div style="display:flex; flex-direction:column; gap:3mm;">
+            <div style="background:rgba(255,255,255,0.04); border-left:3px solid #fb923c; padding:3mm 4mm; border-radius:0 8px 8px 0;">
+              <strong style="color:#fb923c; font-size:8.5pt;">DAY 1: Menu & Photo Onboarding</strong>
+              <div style="font-size:7.5pt; color:#94a3b8; margin-top:1px;">We digitize your menu, dietary flags, modifier options, and high-resolution dish photos.</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.04); border-left:3px solid #3b82f6; padding:3mm 4mm; border-radius:0 8px 8px 0;">
+              <strong style="color:#60a5fa; font-size:8.5pt;">DAY 2: QR Stand Deployment & Hardware Setup</strong>
+              <div style="font-size:7.5pt; color:#94a3b8; margin-top:1px;">Custom acrylic table QR stands delivered. Kitchen KDS tablets and 80mm printers linked.</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.04); border-left:3px solid #10b981; padding:3mm 4mm; border-radius:0 8px 8px 0;">
+              <strong style="color:#34d399; font-size:8.5pt;">DAY 3: Staff Training & Rush Hour Go-Live</strong>
+              <div style="font-size:7.5pt; color:#94a3b8; margin-top:1px;">Hands-on staff drill with real orders. Engineer on-call during your first peak dinner rush.</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:rgba(15,23,42,0.95); border:1px solid rgba(244,63,94,0.3); border-radius:14px; padding:18px; text-align:center;">
+          <div style="font-size:1.5rem; margin-bottom:4px;">🚀</div>
+          <div style="font-size:12pt; font-weight:800; color:#fff; margin-bottom:4px;">Schedule Your Restaurant Pilot</div>
+          <p style="font-size:8pt; color:#94a3b8; margin-bottom:12px; line-height:1.45;">
+            Join modern restaurants cutting wait times and boosting revenue with QuickTable.
+          </p>
+          <div style="background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.18); padding:8px 14px; border-radius:8px; font-family:'JetBrains Mono',monospace; font-size:9.5pt; color:#fb923c; font-weight:700; margin-bottom:10px;">
+            ✉️ tsubasadigitals@gmail.com
+          </div>
+          <div style="font-size:7pt; color:#64748b;">
+            Direct Onboarding • On-Site Support • Zero Obligation Trial
+          </div>
+        </div>
+      </div>
+
+      <div class="print-slide-footer">
+        <span>Chapter 08: Rapid Deployment & Direct Support</span>
+        <span>tsubasa digital • Contact: tsubasadigitals@gmail.com</span>
+      </div>
+    </div>
+  </div>
 
   <!-- Interactive Scene & Video Script with Adaptive Color Grading -->
   <script>
@@ -1256,6 +1917,13 @@
       const monthlyGain = Math.round((additionalTurnsBoost + upsellBoost) * 30);
 
       document.getElementById('roiResult').innerText = '+$' + monthlyGain.toLocaleString();
+    }
+
+    function exportPresentationPDF() {
+      if (isPlaying) {
+        togglePlay();
+      }
+      window.print();
     }
 
     // Initialize
