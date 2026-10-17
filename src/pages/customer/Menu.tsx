@@ -76,6 +76,8 @@ export default function Menu() {
 
   const [search, setSearch] = useState(searchParams.get('q') || searchParams.get('search') || '');
   const [selectedCategory, setSelectedCategory] = useState<string>(searchParams.get('category') || 'all');
+  const [activeSectionId, setActiveSectionId] = useState<string>('');
+  const [isMenuDrawerOpen, setIsMenuDrawerOpen] = useState(false);
   const [sortBy, setSortBy] = useState<string>('recommended');
   const [favorites, setFavorites] = useState<string[]>(() => {
     try {
@@ -285,6 +287,50 @@ export default function Menu() {
     return groups;
   }, [filtered, visibleCategories]);
 
+  useEffect(() => {
+    if (categoryGroups.length === 0) return;
+
+    const handleScroll = () => {
+      const scrollPos = window.scrollY + 220;
+      for (let i = categoryGroups.length - 1; i >= 0; i--) {
+        const group = categoryGroups[i];
+        const el = document.getElementById(`category-section-${group.id}`);
+        if (el && el.offsetTop <= scrollPos) {
+          setActiveSectionId(group.id);
+          return;
+        }
+      }
+      if (categoryGroups[0]) {
+        setActiveSectionId(categoryGroups[0].id);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [categoryGroups]);
+
+  const handleJumpToCategory = (catId: string) => {
+    setIsMenuDrawerOpen(false);
+
+    if (selectedCategory !== 'all') {
+      setSelectedCategory('all');
+    }
+
+    setTimeout(() => {
+      if (catId === 'all') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+
+      const el = document.getElementById(`category-section-${catId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setActiveSectionId(catId);
+      }
+    }, 60);
+  };
+
   const handleCategoryFilter = (catId: string) => {
     if (catId === 'all') {
       setSelectedCategory('all');
@@ -297,6 +343,7 @@ export default function Menu() {
       const el = document.getElementById(`category-section-${catId}`);
       if (el) {
         el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setActiveSectionId(catId);
         return;
       }
     }
@@ -406,14 +453,14 @@ export default function Menu() {
           </span>
         </button>
         {visibleCategories.map((cat) => {
-          const isSelected = selectedCategory === cat.id;
+          const isSelected = selectedCategory === cat.id || (selectedCategory === 'all' && activeSectionId === cat.id);
           return (
             <button
               key={cat.id}
               onClick={() => handleCategoryFilter(cat.id)}
               className={`flex-shrink-0 snap-start rounded-full px-4 py-2 text-xs font-bold transition-all border flex items-center gap-1.5 ${
                 isSelected
-                  ? 'bg-primary-500 text-white border-primary-400 shadow-md shadow-primary-500/25'
+                  ? 'bg-primary-500 text-white border-primary-400 shadow-md shadow-primary-500/25 ring-2 ring-primary-500/20'
                   : 'bg-white text-neutral-700 border-neutral-200/80 hover:bg-neutral-50 dark:bg-neutral-850 dark:border-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-800'
               }`}
             >
@@ -519,6 +566,141 @@ export default function Menu() {
               </div>
             </section>
           ))}
+        </div>
+      )}
+
+      {/* Zomato-Style Floating "Menu" Pill Button */}
+      {categoryGroups.length > 0 && !isOutletPaused && (
+        <div className="fixed bottom-20 lg:bottom-8 left-1/2 -translate-x-1/2 z-40">
+          <button
+            type="button"
+            onClick={() => setIsMenuDrawerOpen(true)}
+            className="group flex items-center gap-2.5 rounded-full border border-neutral-800/90 bg-neutral-900/95 px-5 py-3 text-white shadow-2xl shadow-black/40 backdrop-blur-md transition-all duration-300 hover:scale-105 active:scale-95 hover:bg-black dark:border-white/20 dark:bg-neutral-100 dark:text-neutral-950 dark:hover:bg-white"
+            aria-label="Browse Menu Categories"
+          >
+            <span className="text-base transition-transform group-hover:rotate-12">🍽️</span>
+            <span className="text-xs font-black uppercase tracking-wider">Menu</span>
+            <span className="h-3.5 w-px bg-white/20 dark:bg-black/20" />
+            <span className="flex items-center justify-center rounded-full bg-primary-500/25 px-2 py-0.5 text-[11px] font-bold text-primary-300 dark:text-primary-700">
+              {categoryGroups.length} categories
+            </span>
+          </button>
+        </div>
+      )}
+
+      {/* Zomato-Style Category Bottom Sheet / Modal */}
+      {isMenuDrawerOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+            onClick={() => setIsMenuDrawerOpen(false)}
+          />
+
+          {/* Modal / Sheet Container */}
+          <div className="relative z-10 w-full max-h-[85vh] sm:max-w-md rounded-t-3xl sm:rounded-3xl border border-neutral-200/80 bg-white shadow-2xl dark:border-neutral-800 dark:bg-neutral-900 flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-300">
+            {/* Mobile Drag Indicator */}
+            <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-neutral-300 dark:bg-neutral-700 sm:hidden" />
+
+            {/* Sheet Header */}
+            <div className="flex items-center justify-between border-b border-neutral-200/80 p-4 dark:border-neutral-800">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-500/10 text-lg dark:bg-primary-500/20">
+                  🍽️
+                </div>
+                <div>
+                  <h3 className="text-base font-black tracking-tight text-neutral-900 dark:text-white">
+                    Menu Categories
+                  </h3>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                    {categoryGroups.length} categories · {filtered.length} dishes
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsMenuDrawerOpen(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 text-neutral-500 hover:bg-neutral-200 hover:text-neutral-900 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-white transition"
+                title="Close"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Category Items List */}
+            <div className="overflow-y-auto p-3 space-y-1.5 max-h-[60vh] scrollbar-thin">
+              {/* Quick Jump: Top of Menu */}
+              <button
+                type="button"
+                onClick={() => handleJumpToCategory('all')}
+                className="w-full flex items-center justify-between p-3 rounded-2xl border border-neutral-200/60 bg-neutral-50 hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-850 dark:hover:bg-neutral-800 text-left transition group"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">🔝</span>
+                  <div>
+                    <span className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
+                      Top of Menu
+                    </span>
+                    <p className="text-[11px] text-neutral-400">Scroll to top</p>
+                  </div>
+                </div>
+                <span className="text-xs font-bold text-neutral-400 group-hover:translate-x-0.5 transition-transform">
+                  ↑
+                </span>
+              </button>
+
+              {/* Categories */}
+              {categoryGroups.map((group) => {
+                const isActive = activeSectionId === group.id;
+                return (
+                  <button
+                    key={group.id}
+                    type="button"
+                    onClick={() => handleJumpToCategory(group.id)}
+                    className={`w-full flex items-center justify-between p-3 rounded-2xl border transition-all text-left ${
+                      isActive
+                        ? 'border-primary-500/50 bg-primary-500/10 shadow-xs dark:bg-primary-500/20 dark:border-primary-500/40'
+                        : 'border-transparent hover:border-neutral-200 hover:bg-neutral-50 dark:hover:border-neutral-800 dark:hover:bg-neutral-800/60'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-lg dark:bg-neutral-800">
+                        {group.icon}
+                      </div>
+                      <div className="min-w-0">
+                        <p className={`text-sm font-bold truncate ${isActive ? 'text-primary-700 dark:text-primary-300' : 'text-neutral-900 dark:text-white'}`}>
+                          {group.name}
+                        </p>
+                        {group.description && (
+                          <p className="text-[11px] text-neutral-400 truncate">
+                            {group.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0 ml-2">
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${
+                        isActive
+                          ? 'bg-primary-500 text-white shadow-xs'
+                          : 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300'
+                      }`}>
+                        {group.items.length}
+                      </span>
+                      <span className="text-xs text-neutral-400">→</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Sheet Footer */}
+            <div className="border-t border-neutral-200/80 bg-neutral-50/80 p-3 text-center text-xs text-neutral-500 dark:border-neutral-800 dark:bg-neutral-850/80 dark:text-neutral-400">
+              <span>📍 {currentRestaurant?.name || 'QuickTable'}</span>
+              {tableNumber && <span className="ml-1.5 font-bold text-primary-600 dark:text-primary-400">· Table #{tableNumber}</span>}
+            </div>
+          </div>
         </div>
       )}
     </div>
